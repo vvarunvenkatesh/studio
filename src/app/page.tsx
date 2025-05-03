@@ -3,20 +3,19 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-// Removed unused Header import
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, TicketIcon as TicketCategoryIcon } from 'lucide-react'; // Renamed Calendar icon
+import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, TicketIcon as TicketCategoryIcon } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-// Simple Advertisement Slider Component (replace with a proper carousel library if needed)
+// Simple Advertisement Slider Component
 const advertisements = [
-  { id: 1, src: 'https://picsum.photos/1200/448?random=1', alt: 'concert', hint: 'concert crowd music' }, // Updated dimensions for new aspect ratio
-  { id: 2, src: 'https://picsum.photos/1200/448?random=2', alt: 'train travel', hint: 'train window journey' }, // Updated dimensions
-  { id: 3, src: 'https://picsum.photos/1200/448?random=3', alt: 'movie theatre', hint: 'movie theater screen' }, // Updated dimensions
+  { id: 1, src: 'https://picsum.photos/1200/448?random=1', alt: 'concert', hint: 'concert crowd music' },
+  { id: 2, src: 'https://picsum.photos/1200/448?random=2', alt: 'train travel', hint: 'train window journey' },
+  { id: 3, src: 'https://picsum.photos/1200/448?random=3', alt: 'movie theatre', hint: 'movie theater screen' },
 ];
 
 function AdvertisementSlider() {
@@ -30,8 +29,9 @@ function AdvertisementSlider() {
   }, []);
 
   return (
-    // Increased height classes: h-72 (small), md:h-96 (medium), lg:h-[28rem] (large - 448px)
-    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden rounded-lg shadow-lg mb-8 md:mb-12">
+    // Increased height classes: h-72 (small), md:h-96 (large), lg:h-[28rem] (extra large - 448px)
+    // Also added mt-2 (margin top) and mb-10/md:mb-16 (margin bottom)
+    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden rounded-lg shadow-lg mt-2 mb-10 md:mb-16">
       {advertisements.map((ad, index) => (
         <Image
           key={ad.id}
@@ -45,8 +45,7 @@ function AdvertisementSlider() {
         />
       ))}
        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-       <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-10"> {/* Increased font size slightly */}
-          {/* Can add dynamic text based on currentAd if needed */}
+       <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-10">
           Find Last Minute Deals!
        </div>
     </div>
@@ -82,7 +81,6 @@ function SearchForm() {
     const query = new URLSearchParams();
     if (fromCity) query.set('from', fromCity);
     if (toCity) query.set('to', toCity);
-    // Always navigate, even if empty, to the tickets page, potentially clearing previous searches
     router.push(`/tickets?${query.toString()}`);
   };
 
@@ -112,7 +110,7 @@ function SearchForm() {
                 className="bg-background"
             />
          </div>
-        <Button type="submit" className="w-full sm:w-auto gap-2"> {/* Added gap-2 */}
+        <Button type="submit" className="w-full sm:w-auto gap-2">
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
        </form>
@@ -120,27 +118,49 @@ function SearchForm() {
   );
 }
 
+// Bottom Advertisement Card Component
+interface BottomAdCardProps {
+  src: string;
+  alt: string;
+  title: string;
+  description: string;
+  href: string;
+  hint: string;
+}
+
+function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCardProps) {
+  return (
+    <Link href={href} passHref>
+      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col">
+        <div className="relative h-40 w-full">
+          <Image src={src} alt={alt} layout="fill" objectFit="cover" data-ai-hint={hint} />
+        </div>
+        <CardHeader className="pb-2 pt-4">
+          <CardTitle className="text-lg">{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <CardDescription>{description}</CardDescription>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Restored original header structure */}
        <header className="sticky top-0 z-40 w-full border-b bg-card">
          <div className="container flex h-16 items-center justify-between">
-            {/* Profile Icon on the left */}
              <Avatar className="h-9 w-9 cursor-pointer">
                 <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" />
                 <AvatarFallback>U</AvatarFallback>
              </Avatar>
-
-            {/* Title Centered */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <Link href="/" className="text-2xl font-bold text-card-foreground whitespace-nowrap">
                   LastminIT<span className="text-primary">tickets</span>
                 </Link>
             </div>
-
-           {/* Post Ticket Button on the right */}
            <Button asChild variant="default" size="sm">
              <Link href="/post-ticket">
                 Post Ticket
@@ -150,20 +170,45 @@ export default function Home() {
        </header>
 
       <main className="flex-1 container py-6 md:py-10">
-         {/* Advertisement Wallposter */}
          <AdvertisementSlider />
-
-         {/* Search Form */}
          <SearchForm />
 
-         {/* Category Icons */}
          <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
-         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6"> {/* Adjusted grid columns */}
+         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16"> {/* Added margin bottom */}
             <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
             <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
             <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
             <CategoryIcon icon={CalendarIconLucide} label="Event Tickets" href="/tickets?category=event" />
             <CategoryIcon icon={TicketCategoryIcon} label="All Tickets" href="/tickets" />
+         </div>
+
+          {/* Bottom Advertisements Section */}
+         <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            <BottomAdCard
+                src="https://picsum.photos/400/300?random=10"
+                alt="Travel Deal"
+                title="Weekend Getaway Special"
+                description="Save up to 20% on last-minute train tickets this weekend."
+                href="/tickets?category=train"
+                hint="train travel discount"
+            />
+             <BottomAdCard
+                src="https://picsum.photos/400/300?random=11"
+                alt="Event Promotion"
+                title="Hot Event Tickets Available"
+                description="Don't miss the biggest concerts and sports events. Find tickets now!"
+                href="/tickets?category=event"
+                hint="concert event tickets"
+            />
+             <BottomAdCard
+                src="https://picsum.photos/400/300?random=12"
+                alt="Movie Night Offer"
+                title="Movie Buffs Rejoice!"
+                description="Grab cheap movie tickets for tonight's blockbusters."
+                href="/tickets?category=movie"
+                hint="movie cinema tickets"
+             />
          </div>
 
       </main>
