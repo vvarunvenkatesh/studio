@@ -20,13 +20,20 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-      className
+      "flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+      // Ensure width is handled correctly, default to w-auto if not specified
+      !className?.includes('w-') && 'w-auto', // Changed default to w-auto
+      // Adjustments for icon positioning and line clamp
+      "data-[placeholder]:text-muted-foreground [&>span]:line-clamp-1",
+      className // Allow className overrides
     )}
     {...props}
   >
-    {children}
-    <SelectPrimitive.Icon asChild>
+    {/* Wrap children in a div to ensure SelectPrimitive.Trigger receives only one child */}
+    <div className="flex items-center gap-1 overflow-hidden">
+        {children}
+    </div>
+    <SelectPrimitive.Icon asChild className="ml-2 flex-shrink-0"> {/* Ensure icon doesn't get pushed out */}
       <ChevronDown className="h-4 w-4 opacity-50" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
@@ -185,3 +192,4 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 }
+

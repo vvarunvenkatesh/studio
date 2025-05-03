@@ -4,29 +4,37 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { User } from 'lucide-react'; // User icon for fallback
+import { User, MapPin } from 'lucide-react'; // User icon for fallback, MapPin for location
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select
 import { cn } from '@/lib/utils'; // Import cn utility
 
 interface HeaderProps {
   className?: string; // Add className prop
 }
 
+// Hardcoded locations for now
+const availableLocations = ['New York', 'Boston', 'Chicago', 'Los Angeles', 'Online'];
 
 export function Header({ className }: HeaderProps) { // Destructure className
   // State to track login status
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   // State to store user profile image URL
   const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(null);
+  // State for selected location
+  const [selectedLocation, setSelectedLocation] = React.useState<string>('');
 
 
   // Check localStorage on component mount (client-side only)
-  // Avoid hydration errors by ensuring this runs only on the client
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const loggedInStatus = localStorage.getItem('isLoggedIn');
       const storedImageUrl = localStorage.getItem('profileImageUrl');
+      const storedLocation = localStorage.getItem('selectedLocation') || availableLocations[0]; // Default to first location if none stored
+
       setIsLoggedIn(loggedInStatus === 'true');
+      setSelectedLocation(storedLocation); // Set initial location
+
       if (loggedInStatus === 'true' && storedImageUrl) {
         setProfileImageUrl(storedImageUrl);
       } else {
@@ -34,29 +42,29 @@ export function Header({ className }: HeaderProps) { // Destructure className
         setProfileImageUrl(null);
       }
 
-      // Add event listener for storage changes (optional, for cross-tab updates)
+      // Add event listener for storage changes
       const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'isLoggedIn') {
           const newLoginStatus = event.newValue === 'true';
           setIsLoggedIn(newLoginStatus);
-           // Reset image if logging out
            if (!newLoginStatus) {
-             setProfileImageUrl(null);
-             // Also clear from storage if desired
-             // localStorage.removeItem('profileImageUrl');
+             setProfileImageUrl(null); // Clear image if logged out
            } else {
-              // If logging in, try to load image immediately
+              // Fetch image if newly logged in
               const updatedImageUrl = localStorage.getItem('profileImageUrl');
               setProfileImageUrl(updatedImageUrl);
            }
         }
          if (event.key === 'profileImageUrl') {
-            // Update image only if currently logged in
+            // Update image only if user is logged in
             if (localStorage.getItem('isLoggedIn') === 'true') {
                setProfileImageUrl(event.newValue);
             } else {
                 setProfileImageUrl(null); // Clear if somehow updated while logged out
             }
+         }
+         if (event.key === 'selectedLocation') {
+             setSelectedLocation(event.newValue || availableLocations[0]);
          }
       };
 
@@ -69,6 +77,21 @@ export function Header({ className }: HeaderProps) { // Destructure className
     }
   }, []); // Run only once on mount
 
+  // Handle location change
+  const handleLocationChange = (newLocation: string) => {
+    setSelectedLocation(newLocation);
+    if (typeof window !== 'undefined') {
+       localStorage.setItem('selectedLocation', newLocation);
+        // Optional: Dispatch storage event if needed for other components
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'selectedLocation',
+            newValue: newLocation,
+            storageArea: localStorage,
+         }));
+    }
+    // You might want to trigger a data refetch based on the new location here
+  }
+
 
   return (
     // Apply className prop here, changed background to bg-background
@@ -76,32 +99,45 @@ export function Header({ className }: HeaderProps) { // Destructure className
        {/* Increased container padding for more space */}
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
 
-        {/* Left side: Login/Signup or Profile Button */}
-         {/* Added margin for desktop */}
-         <div className="flex items-center md:ml-4"> {/* Adjusted ml */}
+        {/* Left side: Location and Login/Signup or Profile Button */}
+         {/* Adjusted ml for desktop, added gap */}
+         <div className="flex items-center gap-3 md:gap-4 md:ml-4"> {/* Use gap-3 on mobile, gap-4 on md */}
+           {/* Location Selector */}
+            <Select value={selectedLocation} onValueChange={handleLocationChange}>
+                <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <SelectValue placeholder="Select Location" />
+                </SelectTrigger>
+                <SelectContent>
+                    {availableLocations.map(location => (
+                        <SelectItem key={location} value={location}>
+                            {location}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+           {/* Profile or Login/Signup */}
            {isLoggedIn ? (
-               <div className="flex items-center gap-3"> {/* Removed ml-4 */}
-                 <Link href="/profile">
-                   <Avatar className="h-8 w-8 cursor-pointer ml-4"> {/* Added ml-4 */}
-                     {/* Use state for image URL, provide fallback */}
-                     <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
-                     <AvatarFallback>
-                       <User className="h-4 w-4 text-muted-foreground" />
-                     </AvatarFallback>
-                   </Avatar>
-                 </Link>
-               </div>
+               <Link href="/profile" className="ml-1 md:ml-0"> {/* Add margin left for profile icon */}
+                 <Avatar className="h-8 w-8 cursor-pointer">
+                   <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
+                   <AvatarFallback>
+                     <User className="h-4 w-4 text-muted-foreground" />
+                   </AvatarFallback>
+                 </Avatar>
+               </Link>
             ) : (
-                 // Login/Signup Button: White background, black border, black text, light green hover
+                 // Login/Signup Button: White background, black border, black text, red hover
                  <Button
                      asChild
                      variant="outline"
                      size="sm"
-                     className="border-foreground bg-background text-foreground hover:bg-[#FF2459] hover:text-white gap-2" // Apply requested styles
+                      className="border-foreground bg-background text-foreground hover:bg-[#FF2459] hover:text-white" // Updated hover style
                  >
                    <Link href="/login">
-                     {/* Wrap children in a div as Button with asChild expects a single element */}
-                     <div>Login/Signup</div>
+                       {/* Wrap text in a span */}
+                       <span>Login/Signup</span>
                    </Link>
                  </Button>
             )}
@@ -124,17 +160,16 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
 
         {/* Right side: Post Ticket Button */}
-         {/* Adjusted margin for desktop - changed md:mr-4 to md:mr-6 */}
-        <nav className="flex items-center md:mr-6"> {/* Adjusted mr to 6 (1.5rem ~ 24px) */}
+         {/* Adjusted margin for desktop */}
+         <nav className="flex items-center md:mr-4"> {/* Adjusted mr */}
            {/* Post Ticket button with specified color #FF2459 */}
-           {/* Added mr-4 to create gap */}
-          <Button asChild size="sm" className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
+           <Button asChild size="sm" className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
             <Link href="/post-ticket">
-                {/* Wrap children in a div as Button with asChild expects a single element */}
-                <div className="flex items-center">
-                  <span className="hidden sm:inline">Post Ticket</span>
-                  <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
-                </div>
+              {/* Wrap multiple children in a single span */}
+              <span>
+                 <span className="hidden sm:inline">Post Ticket</span>
+                 <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
+              </span>
             </Link>
           </Button>
         </nav>
