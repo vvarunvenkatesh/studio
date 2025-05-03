@@ -76,7 +76,7 @@ function AdvertisementSlider() {
        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
        {/* Added padding to the text container */}
        <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-20 p-4">
-          Find Last Minute Deals!
+          Last Minute Deals..!
        </div>
 
        {/* Navigation Arrows */}
