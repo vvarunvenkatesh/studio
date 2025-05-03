@@ -33,8 +33,9 @@ const SelectTrigger = React.forwardRef<
     <div className="flex items-center gap-1 overflow-hidden">
         {children}
     </div>
-    <SelectPrimitive.Icon asChild className="ml-2 flex-shrink-0"> {/* Ensure icon doesn't get pushed out */}
-      <ChevronDown className="h-4 w-4 opacity-50" />
+    {/* Remove asChild and render ChevronDown directly inside Icon */}
+    <SelectPrimitive.Icon className="ml-2 flex-shrink-0 h-4 w-4 opacity-50">
+      <ChevronDown />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ))
@@ -192,4 +193,5 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 }
+
 
