@@ -8,9 +8,11 @@ export function Header() {
   return (
     // Changed bg-background to bg-card to use a slightly different shade for the header
     <header className="sticky top-0 z-40 w-full border-b bg-card">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-16 items-center justify-between relative"> {/* Added relative positioning */}
+
          {/* Profile Icon or Placeholder */}
-         <Avatar className="h-9 w-9 cursor-pointer mr-3"> {/* Updated margin to mr-3 (approx 12px) */}
+         {/* Added md:ml-4 for desktop left margin */}
+         <Avatar className="h-9 w-9 cursor-pointer md:ml-4">
             <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" /> {/* Added data-ai-hint */}
             <AvatarFallback>U</AvatarFallback>
          </Avatar>
@@ -22,10 +24,11 @@ export function Header() {
 
 
         {/* Navigation/Actions on the right */}
-        <nav> {/* This nav ensures the button is grouped on the right */}
+        {/* Added ml-auto to push the nav to the right */}
+        <nav className="ml-auto">
           <Button asChild variant="default" size="sm">
             <Link href="/post-ticket" className="gap-2">
-              <PlusCircle className="h-4 w-4" /> Post Ticket {/* Removed mr-2 from icon as gap-2 handles spacing */}
+              <PlusCircle className="h-4 w-4" /> Post Ticket
             </Link>
           </Button>
         </nav>
@@ -33,3 +36,4 @@ export function Header() {
     </header>
   );
 }
+
