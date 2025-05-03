@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'; // Import cn
 interface TicketCardProps {
   ticket: Ticket;
   variant?: 'browse' | 'manage'; // Add variant prop, default to 'browse'
-  onPurchaseSuccess?: (ticketId: string, purchasedTicket: Ticket) => void; // Update callback to include ticket data
+  onPurchaseSuccess?: (ticketId: string) => void; // Simplified callback: only ID needed
   onCancelListing?: (ticketId: string) => Promise<void> | void; // Add callback for cancelling listing
   isCancelling?: boolean; // Add state for cancellation loading
   className?: string; // Add className prop
@@ -94,7 +94,7 @@ export function TicketCard({
 
 
         if (onPurchaseSuccess) {
-          onPurchaseSuccess(result.ticket.id, result.ticket); // Notify parent component with full ticket data
+          onPurchaseSuccess(result.ticket.id); // Notify parent component with just the ID
         }
       } else {
         toast({
@@ -208,12 +208,22 @@ export function TicketCard({
     </AlertDialog>
   );
 
+   // Helper to render the "Pending" badge or similar indicator
+  const renderPendingIndicator = () => (
+    <Badge variant="outline" className="text-xs text-muted-foreground gap-1.5">
+      <Hourglass className="h-3 w-3" />
+      Pending Sale
+    </Badge>
+  );
+
 
   return (
     <Card className={cn(
         "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full", // Added h-full
         // Adjust opacity/styling based on variant and status
-        (isSold) ? 'opacity-60 bg-muted/50' : 'bg-card', // Apply sold style regardless of variant
+        (isSold && variant !== 'manage') ? 'hidden' : // Hide sold tickets in browse view
+        (isSold && variant === 'manage') ? 'opacity-60 bg-muted/50' : // Show sold tickets dimmed in manage view
+        'bg-card', // Default for available tickets
         className // Apply the className prop here
     )}>
       <CardHeader className="pb-2">
@@ -223,7 +233,7 @@ export function TicketCard({
              <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
            {/* Added margin-right to badge to avoid overlap with potential Cancel button in manage variant */}
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", variant === 'manage' ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
+           <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage' || isSeller) ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
              {currentTicket.description}
@@ -265,7 +275,7 @@ export function TicketCard({
              {currentTicket.price.toFixed(2)}
          </div>
 
-         {/* Footer Action Logic: Download, Sold, Cancel, or Buy */}
+         {/* Footer Action Logic: Download, Sold, Cancel, Pending, or Buy */}
          {isSold ? (
              // 1. If sold: Show Download if available, else "Sold" badge
              currentTicket.originalTicketDataUri ? (
@@ -282,8 +292,8 @@ export function TicketCard({
                  <Badge variant="destructive">Sold</Badge>
              )
          ) : isSeller ? (
-             // 2. If not sold AND user is the seller: Show "Cancel Listing" button
-             renderCancelButton()
+             // 2. If not sold AND user is the seller:
+             variant === 'manage' ? renderCancelButton() : renderPendingIndicator()
          ) : (
              // 3. If not sold AND user is NOT the seller: Show "Buy Ticket" button
              <Button
@@ -305,4 +315,3 @@ export function TicketCard({
     </Card>
   );
 }
-

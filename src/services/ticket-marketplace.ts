@@ -73,6 +73,7 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
                          ...ticket,
                          // Assign a default sellerId if missing (e.g., 'unknown' or derive)
                          sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
+                         status: ticket.status || 'available', // Ensure status defaults to available
                       }));
                    }
                 }
@@ -82,11 +83,12 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
             }
         }
     }
-    // Add sellerId to default value if it's ticket data
+    // Add sellerId and status to default value if it's ticket data
     if ((key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) && Array.isArray(defaultValue)) {
       return defaultValue.map((ticket: Partial<Ticket>) => ({
           ...ticket,
           sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
+          status: ticket.status || 'available', // Ensure status defaults to available
       })) as T;
     }
     return defaultValue;
@@ -192,12 +194,13 @@ let tickets: Ticket[] = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, ge
 if (typeof window !== 'undefined' && !localStorage.getItem(marketplaceTicketsKey)) {
     saveToLocalStorage(marketplaceTicketsKey, tickets);
 } else {
-    // Ensure loaded tickets have sellerId
-    const needsUpdate = tickets.some(ticket => !ticket.sellerId);
+    // Ensure loaded tickets have sellerId and status
+    const needsUpdate = tickets.some(ticket => !ticket.sellerId || !ticket.status);
     if (needsUpdate) {
         tickets = tickets.map(ticket => ({
             ...ticket,
             sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
+            status: ticket.status || 'available', // Ensure status defaults to available
         }));
         saveToLocalStorage(marketplaceTicketsKey, tickets);
     }
@@ -228,6 +231,7 @@ const addUserOrder = (ticket: Ticket) => saveUserOrders([...getUserOrders(), tic
 /**
  * Asynchronously retrieves a list of available tickets, optionally filtered.
  * Ensures the global `tickets` array is up-to-date with localStorage.
+ * Filters out tickets with status 'sold'.
  *
  * @param filters Optional filters for category, fromCity, toCity.
  * @returns A promise that resolves to an array of available Ticket objects matching the filters.
@@ -243,9 +247,8 @@ export async function getAvailableTickets(filters?: {
   // Refresh global tickets state from localStorage before filtering
   tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
 
-  // We now return all tickets (available and sold) for the browse view
-  // The card component will handle display logic based on status and sellerId
-  let filteredTickets = tickets; // Start with all tickets
+  // Start with only available tickets
+  let filteredTickets = tickets.filter(ticket => ticket.status === 'available');
 
   if (filters?.category) {
     filteredTickets = filteredTickets.filter(ticket => ticket.type === filters.category);
@@ -261,7 +264,7 @@ export async function getAvailableTickets(filters?: {
     filteredTickets = filteredTickets.filter(ticket => ticket.toCity?.toLowerCase().includes(toLower));
   }
 
-  // Return all matching tickets regardless of status for the browse page
+  // Return only available tickets for the browse pages
   return filteredTickets;
 }
 
@@ -388,7 +391,13 @@ if (typeof window !== 'undefined') {
     window.addEventListener('storage', (event) => {
         if (event.key === marketplaceTicketsKey && event.newValue) {
              try {
-                 tickets = JSON.parse(event.newValue);
+                 // Make sure to parse and apply migrations/defaults if necessary
+                 const parsedTickets = JSON.parse(event.newValue).map((ticket: Partial<Ticket>) => ({
+                     ...ticket,
+                     sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
+                     status: ticket.status || 'available',
+                 }));
+                 tickets = parsedTickets;
                  console.log('Marketplace tickets updated from storage event.');
              } catch (e) {
                  console.error('Failed to parse marketplace tickets from storage event', e);

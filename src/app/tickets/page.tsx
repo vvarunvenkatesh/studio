@@ -92,7 +92,7 @@ export default function TicketsPage() {
         if (fromCity) filters.fromCity = fromCity;
         if (toCity) filters.toCity = toCity;
 
-        const fetchedTickets = await getAvailableTickets(filters);
+        const fetchedTickets = await getAvailableTickets(filters); // getAvailableTickets now only returns available ones
         setTickets(fetchedTickets);
       } catch (err) {
         console.error("Failed to fetch tickets:", err);
@@ -122,15 +122,13 @@ export default function TicketsPage() {
   }, [loadTickets]); // Depend on the memoized loadTickets function
 
 
-  // Callback function to handle purchased ticket state update
-  const handlePurchaseSuccess = (purchasedTicketId: string, purchasedTicket: Ticket) => {
-      // Update the specific ticket in the local state to reflect 'sold' status and potentially the data URI
+  // Callback function to handle purchased ticket state update (removes ticket from browse view)
+  const handlePurchaseSuccess = (purchasedTicketId: string) => {
+      // Remove the purchased ticket from the local state in the browse view
       setTickets(prevTickets =>
-          prevTickets.map(ticket =>
-              ticket.id === purchasedTicketId ? { ...ticket, status: 'sold', originalTicketDataUri: purchasedTicket.originalTicketDataUri } : ticket
-          )
+          prevTickets.filter(ticket => ticket.id !== purchasedTicketId)
       );
-     console.log("Ticket purchased:", purchasedTicket);
+     console.log("Ticket purchased and removed from browse view:", purchasedTicketId);
   };
 
   // Handle cancelling a ticket listing
@@ -144,8 +142,8 @@ export default function TicketsPage() {
                 title: 'Listing Cancelled',
                 description: 'Your ticket listing has been removed.',
             });
-            // Reload tickets after successful deletion
-            loadTickets();
+            // Reload tickets after successful deletion (or filter locally)
+            setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== ticketId));
         } else {
             toast({
                 title: 'Cancellation Failed',
@@ -186,7 +184,7 @@ export default function TicketsPage() {
       const query = new URLSearchParams(searchParams);
       query.delete('from');
       query.delete('to');
-      query.delete('category'); // Also clear category if "Clear Filters" is pressed
+      // Don't clear category here, let the user navigate via category icons
       router.push(`/tickets?${query.toString()}`);
   };
 
@@ -249,7 +247,7 @@ export default function TicketsPage() {
                   <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
 
-                {(hasActiveFilters || currentCategory) && ( // Show clear if from/to filters or category filter is active
+                {hasActiveFilters && ( // Show clear only if from/to filters are active
                     <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground gap-2">
                         <X className="mr-2 h-4 w-4" /> Clear
                     </Button>
@@ -297,7 +295,7 @@ export default function TicketsPage() {
             ) : (
                  <p>It looks like no tickets are listed currently. Check back later!</p>
             )}
-            {(hasActiveFilters || currentCategory) && ( // Only show clear if filters are active
+            {hasActiveFilters && ( // Only show clear if from/to filters are active
                 <Button variant="link" onClick={clearFilters}>
                     Clear Filters
                 </Button>
