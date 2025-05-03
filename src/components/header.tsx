@@ -82,7 +82,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
            {isLoggedIn ? (
                <div className="flex items-center gap-3"> {/* Removed ml-4 */}
                  <Link href="/profile">
-                   <Avatar className="h-8 w-8 cursor-pointer">
+                   <Avatar className="h-8 w-8 cursor-pointer ml-4"> {/* Added ml-4 */}
                      {/* Use state for image URL, provide fallback */}
                      <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
                      <AvatarFallback>
@@ -97,11 +97,10 @@ export function Header({ className }: HeaderProps) { // Destructure className
                      asChild
                      variant="outline"
                      size="sm"
-                     className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground gap-2"
+                     className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground gap-2" // Apply requested styles
                  >
-                    {/* Wrap Link children in a div */}
                    <Link href="/login">
-                    <div>Login/Signup</div>
+                     <div>Login/Signup</div>
                    </Link>
                  </Button>
             )}
@@ -125,11 +124,10 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
         {/* Right side: Post Ticket Button */}
          {/* Added margin for desktop */}
-        <nav className="flex items-center md:mr-4">
+        <nav className="flex items-center md:mr-0"> {/* Adjusted mr */}
            {/* Post Ticket button with specified color #FF2459 */}
-           {/* Added mr-0 to remove forced right margin */}
-          <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
-            {/* Wrap Link children in a div */}
+           {/* Added mr-4 to create gap */}
+          <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors mr-4">
             <Link href="/post-ticket">
                 <div className="flex items-center gap-2"> {/* Ensure icon and text are together */}
                   <PlusCircle className="h-4 w-4" />
