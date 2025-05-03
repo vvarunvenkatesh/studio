@@ -82,11 +82,13 @@ export default function LoginPage() {
                  </span>
              </Link>
              {/* Slogan */}
+              {/* Reduced opacity */}
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
                Ticket Reselling Platform
              </span>
           </CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+           {/* Added mt-2 for 10px down */}
+           <CardDescription className="mt-2">Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
