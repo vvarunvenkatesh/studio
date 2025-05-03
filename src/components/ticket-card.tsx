@@ -210,7 +210,8 @@ export function TicketCard({
 
    // Helper to render the "Pending" badge or similar indicator
   const renderPendingIndicator = () => (
-    <Badge variant="outline" className="text-xs text-black bg-[#FFC812] border-[#FFC812] gap-1.5"> {/* Updated color */}
+    // Reverted to default outline variant styling
+    <Badge variant="outline" className="text-xs text-muted-foreground gap-1.5">
       <Hourglass className="h-3 w-3" />
       Pending Sale
     </Badge>
@@ -293,7 +294,7 @@ export function TicketCard({
              )
          ) : isSeller ? (
              // 2. If not sold AND user is the seller:
-             (variant === 'manage' || variant === 'browse') ? renderCancelButton() : renderPendingIndicator()
+              (variant === 'manage' || variant === 'browse') ? renderCancelButton() : renderPendingIndicator() // Show cancel on manage/browse, pending otherwise
          ) : (
              // 3. If not sold AND user is NOT the seller: Show "Buy Ticket" button
              <Button
@@ -315,5 +316,3 @@ export function TicketCard({
     </Card>
   );
 }
-
-    
