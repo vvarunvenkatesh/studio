@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel, Hourglass for Pending
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, Rupee, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Changed DollarSign to Rupee
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -226,12 +226,9 @@ export function TicketCard({
 
 
   // Hide card completely if it's sold and in browse mode
-  // Also hide if it's not sold but the seller is viewing in browse mode (they should manage it elsewhere)
-  // if ((isSold && variant === 'browse') || (!isSold && isSeller && variant === 'browse')) {
-  // Now only hide if sold and in browse mode
-   if (isSold && variant === 'browse') {
+  if (isSold && variant === 'browse') {
       return null;
-   }
+  }
 
 
   return (
@@ -249,7 +246,7 @@ export function TicketCard({
              <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
            {/* Added margin-right to badge to avoid overlap with potential Cancel button in manage variant */}
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage' || isSeller) ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
+           <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
              {currentTicket.description}
@@ -287,7 +284,7 @@ export function TicketCard({
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4 mt-auto">
          <div className="flex items-center font-semibold text-lg text-primary">
-             <DollarSign className="mr-1 h-5 w-5" />
+             <Rupee className="mr-1 h-5 w-5" /> {/* Changed DollarSign to Rupee */}
              {currentTicket.price.toFixed(2)}
          </div>
 
@@ -318,7 +315,7 @@ export function TicketCard({
                  size="sm"
                  onClick={handlePurchase}
                  disabled={isPurchasing}
-                 aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
+                 aria-label={`Buy ${currentTicket.type} ticket for ₹${currentTicket.price.toFixed(2)}`} // Changed $ to ₹
                  className="gap-2" // Uses default button style
              >
                  {isPurchasing ? (
@@ -333,5 +330,3 @@ export function TicketCard({
     </Card>
   );
 }
-
-

@@ -45,7 +45,7 @@ const formSchema = z.object({
     .number({ invalid_type_error: 'Price must be a number.' })
     .positive({ message: 'Price must be positive.' })
     .multipleOf(0.01, { message: 'Price can have up to 2 decimal places.'})
-    .min(0.01, { message: 'Price must be at least $0.01' }),
+    .min(0.01, { message: 'Price must be at least ₹0.01' }), // Updated currency symbol
   date: z.date({ required_error: 'A date is required.' })
          .min(startOfToday(), { message: "Date cannot be in the past." }),
   time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: 'Invalid time format (HH:MM).' }), // HH:MM format
@@ -394,12 +394,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Price ($) *</FormLabel>
+                <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Price (₹) *</FormLabel>
                 <FormControl>
                    <Input
                       type="number"
                       step="0.01"
-                      placeholder="e.g., 25.50"
+                      placeholder="e.g., 1500.50" // Updated placeholder
                       className={cn(
                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
                       )}

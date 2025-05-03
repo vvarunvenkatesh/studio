@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, DollarSign, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2 } from 'lucide-react'; // Added Trash2
+import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, Rupee, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2 } from 'lucide-react'; // Changed DollarSign to Rupee
 import type { Ticket } from '@/services/ticket-marketplace';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -126,7 +126,7 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
        {/* Price, Download, and Delete */}
        <div className="flex sm:flex-col items-end sm:items-center justify-between sm:justify-start mt-2 sm:mt-0 sm:ml-4 gap-2">
           <div className="flex items-center font-semibold text-lg text-primary">
-             <DollarSign className="mr-1 h-5 w-5" />
+             <Rupee className="mr-1 h-5 w-5" /> {/* Changed DollarSign to Rupee */}
              {order.price.toFixed(2)}
          </div>
           {order.originalTicketDataUri ? (
@@ -291,7 +291,7 @@ export default function ProfileOrdersPage() {
           <div className="space-y-4">
             {/* Map over the state which is already guaranteed to be unique */}
             {orders.map((order) => (
-              <OrderItem key={order.id} order={order} onDelete={handleDeleteOrder} />
+              <OrderItem key={order.id} order={order} onDelete={handleDeleteOrder} /> // Pass handleDeleteOrder
             ))}
           </div>
         )}
@@ -302,4 +302,3 @@ export default function ProfileOrdersPage() {
     </Card>
   );
 }
-
