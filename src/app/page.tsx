@@ -133,6 +133,7 @@ function CategoryIcon({ icon: Icon, label, href }: CategoryIconProps) {
   return (
     <Link href={href} passHref>
       {/* Added ml-2 (approx 8px) to shift each card right */}
+      {/* Rely on theme for hover color */}
       <Card className="ml-2 text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-card hover:bg-card/90">
         <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary mb-2" />
         <span className="text-sm md:text-base font-medium text-card-foreground">{label}</span>
@@ -289,3 +290,4 @@ export default function Home() {
     </div>
   );
 }
+

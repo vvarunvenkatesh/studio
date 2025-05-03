@@ -11,8 +11,8 @@ body {
     /* Light Theme */
     --background: 0 0% 100%; /* White */
     --foreground: 0 0% 9%; /* Near Black */
-    --card: 94 33% 65%; /* #9CAF88 Green */
-    --card-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --card: 94 33% 95%; /* Lighter Greenish White for cards */
+    --card-foreground: 0 0% 9%; /* Near Black for text on cards */
     --popover: 0 0% 100%; /* White */
     --popover-foreground: 0 0% 9%; /* Near Black */
     --primary: 94 30% 40%; /* Darker Green */
@@ -21,8 +21,8 @@ body {
     --secondary-foreground: 0 0% 9%; /* Near Black */
     --muted: 94 13% 90%; /* Light greenish gray for subtle backgrounds */
     --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
-    --accent: 120 70% 75%; /* Light fluorescent green for hover */
-    --accent-foreground: 120 60% 15%; /* Dark green for text on hover */
+    --accent: 341 100% 57%; /* Red (#FF2459) for hover/accent */
+    --accent-foreground: 0 0% 98%; /* Near White for text on accent */
     --destructive: 0 84.2% 60.2%; /* Default Destructive Red */
     --destructive-foreground: 0 0% 98%; /* Near White */
     --border: 94 13% 80%; /* Light Greenish Gray border */
@@ -35,13 +35,13 @@ body {
     --chart-5: 27 87% 67%;
 
     /* Sidebar variables (adjust if needed, keeping header white) */
-    --sidebar-background: 94 13% 60%; /* #9CAF88 Green */
+    --sidebar-background: 94 30% 35%; /* Dark Green */
     --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
     --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
-    --sidebar-primary-foreground: 0 0% 9%; /* Near Black */
-    --sidebar-accent: 94 13% 75%; /* Lighter Green */
-    --sidebar-accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
-    --sidebar-border: 94 13% 50%; /* Medium Dark Green */
+    --sidebar-primary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --sidebar-accent: 341 100% 57%; /* Red (#FF2459) for sidebar accent */
+    --sidebar-accent-foreground: 0 0% 98%; /* Near White */
+    --sidebar-border: 94 30% 25%; /* Darker Green border */
     --sidebar-ring: 94 10% 95%; /* Very Light Greenish White */
 
     --radius: 0.5rem;
@@ -51,8 +51,8 @@ body {
     /* Dark Theme */
     --background: 94 20% 10%; /* Dark Greenish Black */
     --foreground: 94 10% 95%; /* Very Light Greenish White */
-    --card: 94 33% 65%; /* #9CAF88 Green */
-    --card-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --card: 94 30% 35%; /* Dark Green for cards */
+    --card-foreground: 94 10% 95%; /* Very Light Greenish White for text on cards */
     --popover: 94 13% 55%; /* Slightly darker green */
     --popover-foreground: 94 20% 5%; /* Very Dark Greenish Black */
     --primary: 94 10% 95%; /* Light color for primary elements on green background */
@@ -61,8 +61,8 @@ body {
     --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
     --muted: 94 13% 25%; /* Darker green-ish shade for muted */
     --muted-foreground: 94 10% 75%; /* Lighter greenish-white */
-    --accent: 120 70% 35%; /* Darker fluorescent green for dark mode hover */
-    --accent-foreground: 120 30% 95%; /* Light text for dark mode hover */
+    --accent: 341 100% 57%; /* Red (#FF2459) for hover/accent */
+    --accent-foreground: 0 0% 98%; /* Near White for text on accent */
     --destructive: 0 70% 50%; /* Adjusted red */
     --destructive-foreground: 0 0% 98%;
     --border: 94 13% 50%; /* Medium Dark Green */
@@ -75,13 +75,13 @@ body {
     --chart-5: 340 75% 55%;
 
     /* Sidebar variables (adjust if needed, keeping header white) */
-    --sidebar-background: 94 30% 35%; /* Dark Green */
+    --sidebar-background: 94 20% 10%; /* Dark Greenish Black */
     --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
     --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
     --sidebar-primary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --sidebar-accent: 94 13% 75%; /* Lighter Green */
-    --sidebar-accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
-    --sidebar-border: 94 30% 25%; /* Darker Green border */
+    --sidebar-accent: 341 100% 57%; /* Red (#FF2459) for sidebar accent */
+    --sidebar-accent-foreground: 0 0% 98%; /* Near White */
+    --sidebar-border: 94 13% 50%; /* Medium Dark Green */
     --sidebar-ring: 94 10% 95%; /* Very Light Greenish White */
 
     /* --radius: 0.5rem; */ /* Already defined in :root */

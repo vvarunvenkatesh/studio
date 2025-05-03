@@ -99,9 +99,24 @@ export function Header({ className }: HeaderProps) { // Destructure className
        {/* Increased container padding for more space */}
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
 
-        {/* Left side: Location and Login/Signup or Profile Button */}
+        {/* Left side: Brand Title */}
+         <div className="flex flex-col items-center">
+             <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
+                 {/* Consistent LastMiniT styling - Updated text color */}
+                 <span className="text-3xl font-bold text-foreground">
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                 </span>
+             </Link>
+             {/* Slogan */}
+             <span className="text-xs text-foreground mt-[-4px] opacity-80">
+               Ticket Reselling Platform
+             </span>
+         </div>
+
+
+        {/* Right side: Location, Profile/Login, Post Ticket */}
          {/* Adjusted ml for desktop, added gap */}
-         <div className="flex items-center gap-3 md:gap-4 md:ml-4"> {/* Use gap-3 on mobile, gap-4 on md */}
+         <div className="flex items-center gap-3 md:gap-4 md:mr-4"> {/* Use gap-3 on mobile, gap-4 on md */}
            {/* Location Selector */}
             <Select value={selectedLocation} onValueChange={handleLocationChange}>
                 <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
@@ -119,7 +134,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
            {/* Profile or Login/Signup */}
            {isLoggedIn ? (
-               <Link href="/profile" className="ml-1 md:ml-0"> {/* Add margin left for profile icon */}
+               <Link href="/profile" className="ml-1 md:ml-1"> {/* Adjusted margin left */}
                  <Avatar className="h-8 w-8 cursor-pointer">
                    <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
                    <AvatarFallback>
@@ -133,7 +148,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
                      asChild
                      variant="outline"
                      size="sm"
-                      className="border-foreground bg-background text-foreground hover:bg-[#FF2459] hover:text-white" // Updated hover style
+                      className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground" // Use accent colors for hover
                  >
                    <Link href="/login">
                        {/* Wrap text in a span */}
@@ -141,29 +156,9 @@ export function Header({ className }: HeaderProps) { // Destructure className
                    </Link>
                  </Button>
             )}
-        </div>
 
-
-        {/* Centered Title and Slogan */}
-         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-             <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Consistent LastMiniT styling - Updated text color */}
-                 <span className="text-3xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
-                 </span>
-             </Link>
-             {/* Slogan */}
-             <span className="text-xs text-foreground mt-[-4px] opacity-80">
-               Ticket Reselling Platform
-             </span>
-         </div>
-
-
-        {/* Right side: Post Ticket Button */}
-         {/* Adjusted margin for desktop */}
-         <nav className="flex items-center md:mr-4"> {/* Adjusted mr */}
-           {/* Post Ticket button with specified color #FF2459 */}
-           <Button asChild size="sm" className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
+            {/* Post Ticket button with specified color #FF2459 */}
+            <Button asChild size="sm" className="ml-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
             <Link href="/post-ticket">
               {/* Wrap multiple children in a single span */}
               <span>
@@ -172,7 +167,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
               </span>
             </Link>
           </Button>
-        </nav>
+        </div>
       </div>
     </header>
   );
