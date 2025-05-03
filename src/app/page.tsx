@@ -241,35 +241,37 @@ export default function Home() {
                 <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" />
              </div>
 
-              {/* Bottom Advertisements Section */}
-             <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
-             {/* Kept max-w-5xl and mx-auto here to center the ad grid */}
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
-                <BottomAdCard
-                    src="https://picsum.photos/400/300?random=10"
-                    alt="Travel Deal"
-                    title="Weekend Getaway Special"
-                    description="Save up to 20% on last-minute train tickets this weekend."
-                    href="/tickets?category=train"
-                    hint="train travel discount"
-                />
-                 <BottomAdCard
-                    src="https://picsum.photos/400/300?random=11"
-                    alt="Event Promotion"
-                    title="Hot Event Tickets Available"
-                    description="Don't miss the biggest concerts and sports events. Find tickets now!"
-                    href="/tickets?category=event"
-                    hint="concert event tickets"
-                />
-                 <BottomAdCard
-                    src="https://picsum.photos/400/300?random=12"
-                    alt="Movie Night Offer"
-                    title="Movie Buffs Rejoice!"
-                    description="Grab cheap movie tickets for tonight's blockbusters."
-                    href="/tickets?category=movie"
-                    hint="movie cinema tickets"
-                 />
-             </div>
+              {/* Bottom Advertisements Section - Centered */}
+              <div className="max-w-5xl mx-auto">
+                 <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
+                 {/* Kept max-w-5xl and mx-auto here to center the ad grid */}
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <BottomAdCard
+                        src="https://picsum.photos/400/300?random=10"
+                        alt="Travel Deal"
+                        title="Weekend Getaway Special"
+                        description="Save up to 20% on last-minute train tickets this weekend."
+                        href="/tickets?category=train"
+                        hint="train travel discount"
+                    />
+                     <BottomAdCard
+                        src="https://picsum.photos/400/300?random=11"
+                        alt="Event Promotion"
+                        title="Hot Event Tickets Available"
+                        description="Don't miss the biggest concerts and sports events. Find tickets now!"
+                        href="/tickets?category=event"
+                        hint="concert event tickets"
+                    />
+                     <BottomAdCard
+                        src="https://picsum.photos/400/300?random=12"
+                        alt="Movie Night Offer"
+                        title="Movie Buffs Rejoice!"
+                        description="Grab cheap movie tickets for tonight's blockbusters."
+                        href="/tickets?category=movie"
+                        hint="movie cinema tickets"
+                     />
+                 </div>
+              </div>
          </div>
 
       </main>
