@@ -52,9 +52,9 @@ export function Header() {
 
 
         {/* Right side: Post Ticket Button */}
-        {/* Adjusted margin for desktop. Applied accent background and foreground. */}
+        {/* Adjusted margin for desktop. Applied gradient background and white text. */}
         <nav className="flex items-center md:mr-2">
-          <Button asChild variant="default" size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+          <Button asChild variant="default" size="sm" className="bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] text-white hover:opacity-90">
             <Link href="/post-ticket" className="gap-2">
               <PlusCircle className="h-4 w-4" />
               <span className="hidden sm:inline">Post Ticket</span>
