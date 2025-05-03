@@ -18,15 +18,18 @@ export function Header() {
         <div className="flex items-center md:ml-2">
           {isLoggedIn ? (
              <Link href="/profile" passHref>
+                 {/* If Button needs `asChild` here, ensure only one child */}
                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <User className="h-5 w-5"/> {/* Use User icon */}
+                    <User className="h-5 w-5"/> {/* Single child icon */}
+                    {/* Screen reader text doesn't count as a renderable child for Slot */}
                     <span className="sr-only">Profile</span>
                  </Button>
             </Link>
           ) : (
             // Apply accent hover effect directly
-            <Button asChild variant="ghost" size="sm" className="hover:bg-accent hover:text-accent-foreground">
-               <Link href="/login" className="gap-2">
+            // Moved gap-2 from Link to Button
+            <Button asChild variant="ghost" size="sm" className="hover:bg-accent hover:text-accent-foreground gap-2">
+               <Link href="/login">
                    <LogIn className="h-4 w-4" />
                    <span className="hidden sm:inline">Login</span>
                </Link>
@@ -37,11 +40,12 @@ export function Header() {
 
         {/* Centered Title and Slogan */}
          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-             <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline gap-1">
+             <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center">
                   {/* Updated Brand Name with colored letters */}
                  <span className="text-3xl font-bold">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
+                 {/* Slogan moved below */}
              </Link>
              {/* Slogan */}
              {/* Changed text color to text-foreground and added opacity */}
@@ -52,10 +56,11 @@ export function Header() {
 
 
         {/* Right side: Post Ticket Button */}
-        {/* Adjusted margin for desktop. Applied gradient background and white text. */}
+        {/* Adjusted margin for desktop. Applied gradient background and black text. */}
+        {/* Moved gap-2 from Link to Button */}
         <nav className="flex items-center md:mr-2">
-          <Button asChild variant="default" size="sm" className="bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] text-white hover:opacity-90">
-            <Link href="/post-ticket" className="gap-2">
+          <Button asChild variant="default" size="sm" className="bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] text-black hover:opacity-90 gap-2">
+            <Link href="/post-ticket">
               <PlusCircle className="h-4 w-4" />
               <span className="hidden sm:inline">Post Ticket</span>
               <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
