@@ -64,9 +64,9 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
-             <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Consistent LastMiniT styling */}
-                 <span className="text-3xl font-bold">
+             <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
+                 {/* Consistent LastMiniT styling - Updated text color */}
+                 <span className="text-3xl font-bold text-foreground">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
              </Link>
