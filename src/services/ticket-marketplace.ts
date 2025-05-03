@@ -9,7 +9,7 @@ export interface Ticket {
   /**
    * The type of ticket (e.g., train, event, movie, bus).
    */
-  type: string;
+  type: 'train' | 'event' | 'movie' | 'bus';
   /**
    * A description of the ticket.
    */
@@ -19,13 +19,25 @@ export interface Ticket {
    */
   price: number;
   /**
-   * The date of the event or travel.
+   * The date of the event or travel (YYYY-MM-DD).
    */
   date: string;
   /**
-   * The location of the event or departure.
+   * The time of the event or travel (HH:MM).
    */
-  location: string;
+  time: string;
+  /**
+   * The location/venue, mainly for events/movies.
+   */
+  location: string; // Keep location for venue/general purpose
+   /**
+   * The departure city, mainly for train/bus.
+   */
+  fromCity?: string;
+  /**
+   * The destination city, mainly for train/bus.
+   */
+  toCity?: string;
   /**
    * Status of the ticket (e.g., available, sold).
    */
@@ -37,51 +49,104 @@ let tickets: Ticket[] = [
   {
     id: '1',
     type: 'train',
-    description: 'Train ticket from New York to Boston',
+    description: 'Express train, window seat',
     price: 50,
-    date: '2024-08-15', // Updated date to be in the future
-    location: 'New York',
+    date: '2024-09-15', // Future date
+    time: '09:30',
+    location: 'Platform 5', // General location detail
+    fromCity: 'New York',
+    toCity: 'Boston',
     status: 'available',
   },
   {
     id: '2',
     type: 'event',
-    description: 'Concert ticket - Rock Band Live',
+    description: 'Concert ticket - Rock Band Live, General Admission',
     price: 75,
-    date: '2024-09-22', // Updated date to be in the future
-    location: 'Boston Arena',
+    date: '2024-10-22', // Future date
+    time: '20:00',
+    location: 'Boston Arena', // Venue
+    // fromCity/toCity not applicable
     status: 'available',
   },
    {
     id: '3',
     type: 'movie',
-    description: 'Movie Premiere - Sci-Fi Adventure',
+    description: 'Movie Premiere - Sci-Fi Adventure, Seat J12',
     price: 25,
-    date: '2024-08-10', // Updated date to be in the future
-    location: 'Downtown Cinema',
+    date: '2024-09-10', // Future date
+    time: '19:00',
+    location: 'Downtown Cinema', // Venue
+     // fromCity/toCity not applicable
+    status: 'available',
+  },
+  {
+    id: '4',
+    type: 'bus',
+    description: 'Comfort Coach, aisle seat',
+    price: 35,
+    date: '2024-09-05', // Future date
+    time: '14:00',
+    location: 'Gate 3B', // General location detail
+    fromCity: 'Philadelphia',
+    toCity: 'Washington DC',
+    status: 'available',
+  },
+    {
+    id: '5',
+    type: 'train',
+    description: 'Sleeper car, lower berth',
+    price: 120,
+    date: '2024-09-20', // Future date
+    time: '22:00',
+    location: 'Track 12',
+    fromCity: 'Chicago',
+    toCity: 'Denver',
     status: 'available',
   },
 ];
 
-
 /**
- * Asynchronously retrieves a list of available tickets.
- * Filters out tickets marked as 'sold'.
+ * Asynchronously retrieves a list of available tickets, optionally filtered.
  *
- * @returns A promise that resolves to an array of available Ticket objects.
+ * @param filters Optional filters for category, fromCity, toCity.
+ * @returns A promise that resolves to an array of available Ticket objects matching the filters.
  */
-export async function getAvailableTickets(): Promise<Ticket[]> {
+export async function getAvailableTickets(filters?: {
+  category?: Ticket['type'];
+  fromCity?: string;
+  toCity?: string;
+}): Promise<Ticket[]> {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 50));
-  // Return only available tickets
-  return tickets.filter(ticket => ticket.status !== 'sold');
+
+  let filteredTickets = tickets.filter(ticket => ticket.status !== 'sold');
+
+  if (filters?.category) {
+    filteredTickets = filteredTickets.filter(ticket => ticket.type === filters.category);
+  }
+
+  if (filters?.fromCity) {
+    // Case-insensitive search
+    const fromLower = filters.fromCity.toLowerCase();
+    filteredTickets = filteredTickets.filter(ticket => ticket.fromCity?.toLowerCase().includes(fromLower));
+  }
+
+  if (filters?.toCity) {
+     // Case-insensitive search
+    const toLower = filters.toCity.toLowerCase();
+    filteredTickets = filteredTickets.filter(ticket => ticket.toCity?.toLowerCase().includes(toLower));
+  }
+
+
+  return filteredTickets;
 }
 
 /**
  * Asynchronously posts a new ticket for sale.
  * Adds the ticket to the in-memory store.
  *
- * @param ticketData The data for the ticket to be posted.
+ * @param ticketData The data for the ticket to be posted. Must include type, description, price, date, time, and location/fromCity/toCity as appropriate.
  * @returns A promise that resolves to the created Ticket object.
  */
 export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status'>): Promise<Ticket> {
@@ -93,6 +158,16 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status'>): Pro
     id: Math.random().toString(36).substring(2, 15), // Generate a simple random ID
     status: 'available', // New tickets are available by default
   };
+
+   // Ensure specific fields are present based on type (optional backend validation)
+   if ((newTicket.type === 'train' || newTicket.type === 'bus') && (!newTicket.fromCity || !newTicket.toCity)) {
+     console.warn(`Warning: Train/Bus ticket posted without 'fromCity' or 'toCity' (ID: ${newTicket.id})`);
+   }
+   if ((newTicket.type === 'event' || newTicket.type === 'movie') && !newTicket.location) {
+      console.warn(`Warning: Event/Movie ticket posted without 'location' (ID: ${newTicket.id})`);
+   }
+
+
   tickets.push(newTicket);
   console.log('Posted Ticket:', newTicket);
   console.log('Current Tickets:', tickets);

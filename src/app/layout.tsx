@@ -1,21 +1,19 @@
+
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google'; // Using Inter font as Geist is not default
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"; // Import Toaster
+import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+// Setup Inter font
+const inter = Inter({
   subsets: ['latin'],
+  variable: '--font-inter', // Define CSS variable
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
-  title: 'LastminIT tickets', // Updated title
-  description: 'Resell your train, event, movie, or bus tickets easily.', // Updated description
+  title: 'LastminIT - Resell Your Tickets', // Updated title for branding
+  description: 'Easily resell your train, bus, event, or movie tickets at the last minute.', // More descriptive
 };
 
 export default function RootLayout({
@@ -25,9 +23,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {/* Apply the font class to the body */}
+      <body className={`${inter.variable} font-sans antialiased`}> {/* Use font-sans utility */}
         {children}
-        <Toaster /> {/* Add Toaster component */}
+        <Toaster />
       </body>
     </html>
   );
