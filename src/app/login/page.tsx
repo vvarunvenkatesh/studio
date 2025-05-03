@@ -71,7 +71,7 @@ export default function LoginPage() {
       />
 
       {/* Login Card */}
-      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Added slight transparency and blur */}
+      <Card className="w-full max-w-sm bg-background/90 backdrop-blur-sm"> {/* Changed bg-card/90 to bg-background/90 */}
         <CardHeader className="text-center">
            {/* CardTitle now contains the brand name and slogan */}
           <CardTitle className="flex flex-col items-center">
@@ -149,3 +149,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

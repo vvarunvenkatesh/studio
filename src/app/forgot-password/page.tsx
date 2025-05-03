@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
       />
 
       {/* Forgot Password Card */}
-      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm">
+      <Card className="w-full max-w-sm bg-background/90 backdrop-blur-sm"> {/* Changed bg-card/90 to bg-background/90 */}
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
@@ -125,4 +125,5 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+
 
