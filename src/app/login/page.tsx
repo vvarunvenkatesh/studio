@@ -87,8 +87,8 @@ export default function LoginPage() {
                Ticket Reselling Platform
              </span>
           </CardTitle>
-           {/* Added mt-2 for 10px down */}
-           <CardDescription className="mt-2">Enter your credentials to access your account</CardDescription>
+           {/* Removed description text */}
+           <CardDescription className="mt-2"></CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -151,4 +151,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
 
