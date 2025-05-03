@@ -27,7 +27,6 @@ export function Header() {
             </Link>
           ) : (
             // Apply accent hover effect directly
-            // Moved gap-2 from Link to Button
             <Button asChild variant="ghost" size="sm" className="hover:bg-accent hover:text-accent-foreground gap-2">
                <Link href="/login">
                    <LogIn className="h-4 w-4" />
@@ -43,7 +42,7 @@ export function Header() {
              <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center">
                   {/* Updated Brand Name with colored letters */}
                  <span className="text-3xl font-bold">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-amber-700">T</span>
                  </span>
                  {/* Slogan moved below */}
              </Link>
@@ -57,8 +56,8 @@ export function Header() {
 
         {/* Right side: Post Ticket Button */}
         {/* Adjusted margin for desktop. Applied gradient background and black text. */}
-        {/* Moved gap-2 from Link to Button */}
         <nav className="flex items-center md:mr-2">
+           {/* Ensured Link is the direct child when using asChild */}
           <Button asChild variant="default" size="sm" className="bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] text-black hover:opacity-90 gap-2">
             <Link href="/post-ticket">
               <PlusCircle className="h-4 w-4" />
@@ -71,4 +70,3 @@ export function Header() {
     </header>
   );
 }
-

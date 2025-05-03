@@ -65,7 +65,7 @@ export default function LoginPage() {
              <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center gap-1">
                  {/* Updated Brand Name with colored letters */}
                  <span className="text-3xl font-bold">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-amber-700">T</span>
                  </span>
              </Link>
              {/* Slogan */}
