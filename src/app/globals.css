@@ -8,74 +8,73 @@ body {
 
 @layer base {
   :root {
-    /* Swapped Dark mode colors (originally in .dark) */
-    --background: 94 15% 10%; /* Very Dark Greenish Gray */
-    --foreground: 94 10% 85%; /* Light Greenish Gray */
-    --card: 94 15% 15%; /* Slightly Lighter Dark Greenish Gray */
-    --card-foreground: 94 10% 85%; /* Light Greenish Gray */
-    --popover: 94 15% 5%; /* Near Black Greenish Gray */
-    --popover-foreground: 94 10% 85%; /* Light Greenish Gray */
-    --primary: 94 13% 60%; /* Main Green color from original light mode */
+    /* Light Theme (Default) */
+    --background: 0 0% 100%; /* White */
+    --foreground: 94 20% 10%; /* Dark Greenish Black */
+    --card: 94 13% 60%; /* #9CAF88 Green */
+    --card-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --primary: 94 30% 40%; /* Darker Green */
+    --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --secondary: 94 13% 75%; /* Lighter Green */
+    --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --muted: 0 0% 96%; /* Very Light Gray (almost white) */
+    --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
+    --accent: 100 20% 55%; /* Slightly different Green */
+    --accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
+    --destructive: 0 84.2% 60.2%; /* Default Destructive Red */
+    --destructive-foreground: 0 0% 98%; /* Near White */
+    --border: 94 13% 80%; /* Light Greenish Gray border */
+    --input: 0 0% 98%; /* Slightly off-white for inputs */
+    --ring: 94 30% 40%; /* Darker Green - same as primary */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    /* Light Sidebar (Matches Card) */
+    --sidebar-background: 94 13% 60%; /* #9CAF88 Green */
+    --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
+    --sidebar-primary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --sidebar-accent: 94 13% 75%; /* Lighter Green */
+    --sidebar-accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
+    --sidebar-border: 94 13% 50%; /* Medium Dark Green */
+    --sidebar-ring: 94 10% 95%; /* Very Light Greenish White */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark Theme */
+    --background: 94 13% 60%; /* #9CAF88 Green */
+    --foreground: 94 10% 95%; /* Very Light Greenish White */
+    --card: 0 0% 100%; /* White for header/cards */
+    --card-foreground: 94 20% 10%; /* Dark Greenish Black for card text */
+    --popover: 94 13% 55%; /* Slightly darker green */
+    --popover-foreground: 94 20% 5%; /* Very Dark Greenish Black */
+    --primary: 94 10% 95%; /* Light color for primary elements on green background */
     --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --secondary: 94 15% 25%; /* Medium Dark Greenish Gray */
-    --secondary-foreground: 94 10% 90%; /* Very Light Greenish Gray */
-    --muted: 94 15% 25%; /* Medium Dark Greenish Gray */
-    --muted-foreground: 94 10% 60%; /* Medium Desaturated Greenish Gray */
-    --accent: 100 20% 50%; /* Slightly different Green, darker */
-    --accent-foreground: 94 15% 5%; /* Near Black Greenish Gray */
-    --destructive: 0 70% 50%; /* Slightly adjusted red */
+    --secondary: 94 13% 75%; /* Lighter Green */
+    --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --muted: 94 13% 70%; /* Medium Green */
+    --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
+    --accent: 0 0% 98%; /* Near White for accent */
+    --accent-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --destructive: 0 70% 50%; /* Adjusted red */
     --destructive-foreground: 0 0% 98%;
-    --border: 94 15% 30%; /* Darker Greenish Gray border */
-    --input: 94 15% 30%; /* Darker Greenish Gray input */
-    --ring: 94 13% 60%; /* Main Green Ring */
+    --border: 94 13% 50%; /* Medium Dark Green */
+    --input: 94 13% 50%; /* Medium Dark Green */
+    --ring: 94 10% 95%; /* Light Ring */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    /* Swapped Dark Sidebar */
-    --sidebar-background: 94 15% 5%; /* Near Black Greenish Gray */
-    --sidebar-foreground: 94 10% 85%; /* Light Greenish Gray */
-    --sidebar-primary: 94 10% 85%; /* Light Greenish Gray */
-    --sidebar-primary-foreground: 94 15% 5%; /* Near Black Greenish Gray */
-    --sidebar-accent: 94 15% 25%; /* Medium Dark Greenish Gray */
-    --sidebar-accent-foreground: 94 10% 90%; /* Very Light Greenish Gray */
-    --sidebar-border: 94 15% 30%; /* Darker Greenish Gray border */
-    --sidebar-ring: 94 10% 85%; /* Light Greenish Gray */
-
-    /* Radius remains consistent */
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    /* Swapped Light Theme colors (originally in :root) */
-    --background: 94 13% 60%; /* #9CAF88 */
-    --foreground: 94 20% 10%; /* Dark Greenish Black */
-    --card: 0 0% 100%; /* White for header */
-    --card-foreground: 94 20% 10%; /* Dark Greenish Black for header text */
-    --popover: 94 13% 55%; /* Slightly darker green */
-    --popover-foreground: 94 20% 5%; /* Very Dark Greenish Black */
-    --primary: 94 30% 40%; /* Darker Green */
-    --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
-    --secondary: 94 13% 75%; /* Lighter Green */
-    --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --muted: 94 13% 70%; /* Medium Green */
-    --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
-    --accent: 100 20% 55%; /* Slightly different Green */
-    --accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
-    --destructive: 0 84.2% 60.2%; /* Default Destructive Red */
-    --destructive-foreground: 0 0% 98%; /* Near White */
-    --border: 94 13% 50%; /* Medium Dark Green */
-    --input: 94 13% 50%; /* Medium Dark Green */
-    --ring: 94 30% 40%; /* Darker Green - same as primary */
-    --chart-1: 12 76% 61%; /* Keeping chart colors distinct */
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-
-    /* Swapped Light Sidebar */
+    /* Dark Sidebar (Dark Green) */
     --sidebar-background: 94 30% 35%; /* Dark Green */
     --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
     --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
@@ -85,8 +84,7 @@ body {
     --sidebar-border: 94 30% 25%; /* Darker Green border */
     --sidebar-ring: 94 10% 95%; /* Very Light Greenish White */
 
-    /* Radius remains consistent */
-     /* --radius: 0.5rem; */ /* Already defined in :root */
+    /* --radius: 0.5rem; */ /* Already defined in :root */
   }
 }
 
