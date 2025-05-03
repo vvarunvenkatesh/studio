@@ -1,5 +1,4 @@
 
-
 'use client'; // Make this a client component for interaction
 
 import * as React from 'react';
@@ -7,7 +6,7 @@ import type { Ticket } from '@/services/ticket-marketplace';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon } from 'lucide-react'; // Added specific icons
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download } from 'lucide-react'; // Added specific icons, Download
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -15,7 +14,7 @@ import { cn } from '@/lib/utils'; // Import cn
 
 interface TicketCardProps {
   ticket: Ticket;
-  onPurchaseSuccess?: (ticketId: string) => void; // Optional callback for successful purchase
+  onPurchaseSuccess?: (ticketId: string, purchasedTicket: Ticket) => void; // Update callback to include ticket data
   className?: string; // Add className prop
 }
 
@@ -31,10 +30,19 @@ const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
 export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardProps) { // Accept className prop
   const { toast } = useToast();
   const [isPurchasing, setIsPurchasing] = React.useState(false);
-  const [isSold, setIsSold] = React.useState(ticket.status === 'sold'); // Local state to track if sold
+  // Use state to hold the full ticket data, including the data URI if purchased
+  const [currentTicket, setCurrentTicket] = React.useState<Ticket>(ticket);
+  const [isSold, setIsSold] = React.useState(ticket.status === 'sold');
 
-  const formattedDate = format(new Date(ticket.date), 'PPP'); // Format date nicely
-  const CategorySpecificIcon = categoryIconMap[ticket.type] || TicketIcon; // Get specific icon or default
+  // Update local state if the initial ticket prop changes (e.g., parent re-renders with new data)
+  React.useEffect(() => {
+      setCurrentTicket(ticket);
+      setIsSold(ticket.status === 'sold');
+  }, [ticket]);
+
+
+  const formattedDate = format(new Date(currentTicket.date), 'PPP'); // Format date nicely
+  const CategorySpecificIcon = categoryIconMap[currentTicket.type] || TicketIcon; // Get specific icon or default
 
 
   const handlePurchase = async () => {
@@ -42,15 +50,16 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
 
     setIsPurchasing(true);
     try {
-      const result = await purchaseTicket(ticket.id);
-      if (result.success) {
+      const result = await purchaseTicket(currentTicket.id);
+      if (result.success && result.ticket) {
         toast({
           title: 'Purchase Successful!',
-          description: `You have successfully bought the ${ticket.type} ticket (ID: ${ticket.id}).`,
+          description: `You have successfully bought the ${result.ticket.type} ticket (ID: ${result.ticket.id}).`,
         });
         setIsSold(true); // Update local state to reflect sold status
+        setCurrentTicket(result.ticket); // Update ticket data with potentially new status and URI
         if (onPurchaseSuccess) {
-          onPurchaseSuccess(ticket.id); // Notify parent component if needed
+          onPurchaseSuccess(result.ticket.id, result.ticket); // Notify parent component with full ticket data
         }
       } else {
         toast({
@@ -58,8 +67,10 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
           description: result.message || 'Could not purchase the ticket. It might be already sold.',
           variant: 'destructive',
         });
-        if (result.message?.includes('already sold')) {
+        // If purchase failed because it was already sold, update local state
+        if (result.message?.includes('already sold') && result.ticket) {
            setIsSold(true);
+           setCurrentTicket(result.ticket);
         }
       }
     } catch (error) {
@@ -74,45 +85,67 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
     }
   };
 
+   // Function to handle downloading the original ticket
+   const handleDownload = () => {
+     if (currentTicket.originalTicketDataUri) {
+       const link = document.createElement('a');
+       link.href = currentTicket.originalTicketDataUri;
+       // Extract filename or provide a default
+       const filename = `ticket_${currentTicket.type}_${currentTicket.id}.${currentTicket.originalTicketDataUri.split(';')[0].split('/')[1] || 'file'}`;
+       link.download = filename;
+       document.body.appendChild(link);
+       link.click();
+       document.body.removeChild(link);
+       toast({
+         title: 'Download Started',
+         description: `Downloading ${filename}...`
+       })
+     } else {
+        toast({
+          title: 'Download Failed',
+          description: 'No original ticket file available for download.',
+          variant: 'destructive'
+        })
+     }
+   };
+
+
   return (
     <Card className={cn(
         "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200",
-        isSold ? 'opacity-60 bg-muted/50' : 'bg-card', // Use bg-card for non-sold
-        className // Apply passed className (e.g., ml-2.5)
+        isSold ? 'opacity-60 bg-muted/50' : 'bg-card',
+        className
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between mb-1">
            <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2">
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
-             <span className="truncate">{ticket.type} Ticket</span>
+             <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0">ID: {ticket.id}</Badge>
+           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0">ID: {currentTicket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
-             {ticket.description}
+             {currentTicket.description}
          </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1.5 text-sm pt-2">
-         {/* Route for Train/Bus */}
-         {(ticket.type === 'train' || ticket.type === 'bus') && ticket.fromCity && ticket.toCity && (
+         {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.fromCity && currentTicket.toCity && (
              <div className="flex items-center font-medium">
-                <span className="truncate">{ticket.fromCity}</span>
+                <span className="truncate">{currentTicket.fromCity}</span>
                 <ArrowRight className="mx-1 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="truncate">{ticket.toCity}</span>
+                <span className="truncate">{currentTicket.toCity}</span>
              </div>
          )}
-         {/* Location for Event/Movie/Sports */}
-          {(ticket.type === 'event' || ticket.type === 'movie' || ticket.type === 'sports') && ticket.location && ( // Added 'sports'
+          {(currentTicket.type === 'event' || currentTicket.type === 'movie' || currentTicket.type === 'sports') && currentTicket.location && (
              <div className="flex items-center">
                 <MapPin className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="truncate">{ticket.location}</span>
+                <span className="truncate">{currentTicket.location}</span>
              </div>
          )}
-          {/* Optional Location Detail for Train/Bus */}
-         {(ticket.type === 'train' || ticket.type === 'bus') && ticket.location && (!ticket.fromCity || !ticket.toCity) && (
+         {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.location && (!currentTicket.fromCity || !currentTicket.toCity) && (
              <div className="flex items-center text-xs text-muted-foreground">
                 <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{ticket.location}</span>
+                <span className="truncate">{currentTicket.location}</span>
              </div>
           )}
 
@@ -122,22 +155,38 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
          </div>
          <div className="flex items-center">
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span>{ticket.time}</span>
+            <span>{currentTicket.time}</span>
          </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4 mt-auto">
          <div className="flex items-center font-semibold text-lg text-primary">
              <DollarSign className="mr-1 h-5 w-5" />
-             {ticket.price.toFixed(2)}
+             {currentTicket.price.toFixed(2)}
          </div>
          {isSold ? (
-            <Badge variant="destructive">Sold</Badge>
+             // If sold and it's a train ticket with a file, show Download button
+             currentTicket.type === 'train' && currentTicket.originalTicketDataUri ? (
+                <Button
+                    size="sm"
+                    variant="secondary" // Or another appropriate variant
+                    onClick={handleDownload}
+                    aria-label="Download original ticket"
+                    className="gap-2"
+                >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                </Button>
+             ) : (
+                // Otherwise, show Sold badge
+                <Badge variant="destructive">Sold</Badge>
+             )
          ) : (
+            // If not sold, show Buy button
             <Button
               size="sm"
               onClick={handlePurchase}
               disabled={isPurchasing}
-              aria-label={`Buy ${ticket.type} ticket for $${ticket.price.toFixed(2)}`}
+              aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
               className="gap-2"
             >
               {isPurchasing ? (
@@ -152,4 +201,3 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
     </Card>
   );
 }
-

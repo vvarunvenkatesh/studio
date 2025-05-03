@@ -27,7 +27,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Sparkles, Loader2, Clock } from 'lucide-react';
+import { CalendarIcon, Sparkles, Loader2, Clock, Upload, FileCheck } from 'lucide-react'; // Added Upload, FileCheck
 import { format, startOfToday } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { checkTicketDescription } from '@/ai/flows/check-ticket-description';
@@ -36,7 +36,7 @@ import { useRouter } from 'next/navigation';
 
 // Define the validation schema using Zod
 const formSchema = z.object({
-  type: z.enum(['train', 'event', 'movie', 'bus', 'sports'], { required_error: 'Ticket type is required.' }), // Added 'sports'
+  type: z.enum(['train', 'event', 'movie', 'bus', 'sports'], { required_error: 'Ticket type is required.' }),
   description: z
     .string()
     .min(10, { message: 'Description must be at least 10 characters.' })
@@ -52,15 +52,16 @@ const formSchema = z.object({
   location: z.string().optional(), // Optional for train/bus
   fromCity: z.string().optional(), // Optional for event/movie/sports
   toCity: z.string().optional(), // Optional for event/movie/sports
+  originalTicketDataUri: z.string().optional(), // Optional field for the ticket file data URI
 }).refine(data => {
   // Conditional validation: location is required for event/movie/sports
-  if ((data.type === 'event' || data.type === 'movie' || data.type === 'sports') && !data.location) { // Added 'sports'
+  if ((data.type === 'event' || data.type === 'movie' || data.type === 'sports') && !data.location) {
     return false;
   }
   return true;
 }, {
-  message: 'Location / Venue is required for Event, Movie, or Sports tickets.', // Updated message
-  path: ['location'], // Specify the path of the error
+  message: 'Location / Venue is required for Event, Movie, or Sports tickets.',
+  path: ['location'],
 }).refine(data => {
    // Conditional validation: fromCity and toCity are required for train/bus
   if ((data.type === 'train' || data.type === 'bus') && (!data.fromCity || !data.toCity)) {
@@ -69,14 +70,14 @@ const formSchema = z.object({
   return true;
 }, {
    message: 'Departure and Destination cities are required for Train or Bus tickets.',
-   path: ['fromCity'], // Can point to either, or create separate refinements
+   path: ['fromCity'],
 });
 
 
 type FormData = z.infer<typeof formSchema>;
 
 interface PostTicketFormProps {
-  onTypeChange?: (type: FormData['type'] | undefined) => void; // Callback for type change
+  onTypeChange?: (type: FormData['type'] | undefined) => void;
 }
 
 export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
@@ -84,11 +85,13 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCheckingGrammar, setIsCheckingGrammar] = React.useState(false);
+  const [selectedFileName, setSelectedFileName] = React.useState<string | null>(null); // State for selected file name
+  const fileInputRef = React.useRef<HTMLInputElement>(null); // Ref for file input
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: undefined, // Start with no type selected
+      type: undefined,
       description: '',
       price: undefined,
       date: undefined,
@@ -96,20 +99,26 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
       location: '',
       fromCity: '',
       toCity: '',
+      originalTicketDataUri: undefined, // Default value for the new field
     },
   });
 
-  const ticketType = form.watch('type'); // Watch the ticket type field
+  const ticketType = form.watch('type');
 
-  // Call the onTypeChange callback when ticketType changes
   React.useEffect(() => {
     if (onTypeChange) {
       onTypeChange(ticketType);
     }
-  }, [ticketType, onTypeChange]);
+    // Reset file input when type changes away from 'train'
+    if (ticketType !== 'train') {
+       form.setValue('originalTicketDataUri', undefined);
+       setSelectedFileName(null);
+       if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+       }
+    }
+  }, [ticketType, onTypeChange, form]);
 
-
-  // Handle AI Grammar Check
   const handleGrammarCheck = async () => {
     const description = form.getValues('description');
     if (!description || description.length < 10) {
@@ -150,8 +159,59 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     }
   };
 
+   // Handle file selection and conversion to data URI
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) { // Example size limit: 5MB
+            toast({
+                title: 'File Too Large',
+                description: 'Please select a file smaller than 5MB.',
+                variant: 'destructive',
+            });
+             setSelectedFileName(null);
+             form.setValue('originalTicketDataUri', undefined);
+             if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+             }
+            return;
+        }
 
-  // Handle Form Submission
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            form.setValue('originalTicketDataUri', reader.result as string, { shouldValidate: true });
+            setSelectedFileName(file.name);
+             toast({
+               title: 'File Selected',
+               description: `Selected: ${file.name}`,
+             });
+        };
+        reader.onerror = () => {
+            console.error('Error reading file');
+            toast({
+                title: 'Error Reading File',
+                description: 'Could not read the selected file. Please try again.',
+                variant: 'destructive',
+            });
+             setSelectedFileName(null);
+             form.setValue('originalTicketDataUri', undefined);
+             if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+             }
+        };
+        reader.readAsDataURL(file); // Convert file to data URI
+    } else {
+        setSelectedFileName(null);
+        form.setValue('originalTicketDataUri', undefined);
+    }
+  };
+
+  // Trigger hidden file input
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+
   async function onSubmit(values: FormData) {
     setIsSubmitting(true);
     try {
@@ -161,9 +221,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
         price: values.price,
         date: format(values.date, 'yyyy-MM-dd'),
         time: values.time,
-        location: values.location || '', // Ensure location is string even if undefined initially
-        fromCity: values.fromCity || '', // Ensure optional fields are strings
+        location: values.location || '',
+        fromCity: values.fromCity || '',
         toCity: values.toCity || '',
+        originalTicketDataUri: values.originalTicketDataUri, // Include the data URI
       };
 
       const createdTicket = await postTicket(ticketData);
@@ -174,6 +235,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
         duration: 5000,
       });
       form.reset();
+      setSelectedFileName(null); // Reset file name display
+       if (fileInputRef.current) {
+          fileInputRef.current.value = ''; // Reset file input visually
+       }
 
       setTimeout(() => {
          router.push('/');
@@ -193,13 +258,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
 
   return (
     <Form {...form}>
-       {/* Apply conditional styling to the form element itself */}
-       {/* Removed mx-auto, relying on parent container in page.tsx for centering */}
        <form
          onSubmit={form.handleSubmit(onSubmit)}
          className={cn(
-           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10", // Removed mx-auto
-           // Apply card styles only if not movie type, otherwise make transparent for bg image
+           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10",
            ticketType === 'movie' ? 'bg-transparent text-white' : 'bg-card',
          )}
         >
@@ -210,7 +272,6 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           name="type"
           render={({ field }) => (
             <FormItem>
-              {/* Label color adjusted for movie type */}
                <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Ticket Type *</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
@@ -218,13 +279,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                     <SelectValue placeholder="Select ticket type" />
                   </SelectTrigger>
                 </FormControl>
-                {/* Popover content styling remains default */}
                 <SelectContent>
                   <SelectItem value="train">Train</SelectItem>
                   <SelectItem value="bus">Bus</SelectItem>
                   <SelectItem value="event">Event</SelectItem>
                   <SelectItem value="movie">Movie</SelectItem>
-                  <SelectItem value="sports">Sports</SelectItem> {/* Added Sports */}
+                  <SelectItem value="sports">Sports</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
@@ -245,7 +305,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                     placeholder="Add details like seat number, section, special features, route specifics..."
                     className={cn(
                        "min-h-[100px] resize-none",
-                       ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground for non-movie
+                       ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
                      )}
                     {...field}
                   />
@@ -278,6 +338,56 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           )}
         />
 
+       {/* Optional File Upload for Train Tickets */}
+        {ticketType === 'train' && (
+           <FormField
+              control={form.control}
+              name="originalTicketDataUri"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Original Train Ticket (Optional)</FormLabel>
+                  <FormControl>
+                    {/* Use a div wrapper for layout */}
+                    <div className="flex items-center gap-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleUploadClick}
+                             className={cn(
+                                'gap-2',
+                                ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white hover:bg-background/80 hover:text-white' : ''
+                             )}
+                         >
+                           {selectedFileName ? <FileCheck className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
+                           {selectedFileName ? "Change File" : "Upload File"}
+                         </Button>
+                         <Input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden" // Hide the actual input
+                            accept="image/*,.pdf,.doc,.docx" // Specify acceptable file types
+                            onChange={handleFileChange}
+                        />
+                         {selectedFileName && (
+                           <span className={cn(
+                              "text-sm text-muted-foreground truncate max-w-[200px]", // Added truncate and max-width
+                              ticketType === 'movie' ? 'text-white/80' : ''
+                           )}>
+                             {selectedFileName}
+                           </span>
+                         )}
+                    </div>
+                  </FormControl>
+                   <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>
+                     Upload a picture or scan of the original ticket (max 5MB).
+                   </FormDescription>
+                  <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+                </FormItem>
+              )}
+           />
+        )}
+
+
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Price */}
           <FormField
@@ -292,7 +402,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                       step="0.01"
                       placeholder="e.g., 25.50"
                       className={cn(
-                          ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground for non-movie
+                          ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
                       )}
                       {...field}
                       value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : String(field.value)}
@@ -335,7 +445,6 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  {/* Calendar popover content styling remains default */}
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
@@ -364,7 +473,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                       type="time"
                       placeholder="e.g., 14:30"
                       className={cn(
-                          ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground for non-movie
+                          ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
                       )}
                        {...field}
                      />
@@ -391,10 +500,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                 <FormItem>
                    <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>From (City) *</FormLabel>
                   <FormControl>
-                    <Input
+                     <Input
                        placeholder="e.g., New York"
                        className={cn(
-                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground
+                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
                        )}
                        {...field} />
                   </FormControl>
@@ -410,10 +519,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                 <FormItem>
                    <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>To (City) *</FormLabel>
                   <FormControl>
-                    <Input
+                     <Input
                        placeholder="e.g., Boston"
                        className={cn(
-                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground
+                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
                        )}
                        {...field} />
                   </FormControl>
@@ -424,7 +533,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           </div>
         ) : null}
 
-         {ticketType === 'event' || ticketType === 'movie' || ticketType === 'sports' ? ( // Added 'sports'
+         {ticketType === 'event' || ticketType === 'movie' || ticketType === 'sports' ? (
             <FormField
               control={form.control}
               name="location"
@@ -432,14 +541,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                 <FormItem>
                    <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Location / Venue *</FormLabel>
                   <FormControl>
-                    <div> {/* Wrap Input in a div to ensure single child for FormControl Slot */}
-                        <Input
-                          placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium"
-                           className={cn(
-                               ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground
-                           )}
-                           {...field} /> {/* Updated placeholder */}
-                    </div>
+                     <Input
+                       placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium"
+                        className={cn(
+                            ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
+                        )}
+                        {...field} />
                   </FormControl>
                    <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>Be specific about the place.</FormDescription>
                   <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
@@ -457,14 +564,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                  <FormItem>
                     <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Platform / Gate / Terminal (Optional)</FormLabel>
                    <FormControl>
-                    <div> {/* Wrap Input in a div to ensure single child for FormControl Slot */}
-                       <Input
-                         placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3"
-                          className={cn(
-                              ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground
-                          )}
-                          {...field} />
-                    </div>
+                      <Input
+                        placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3"
+                         className={cn(
+                             ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
+                         )}
+                         {...field} />
                    </FormControl>
                    <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>Add specific departure point details if known.</FormDescription>
                    <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
@@ -479,7 +584,6 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             type="submit"
             className={cn(
               "w-full gap-2",
-              // Conditional button styling for movie type
               ticketType === 'movie' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : ''
             )}
             disabled={isSubmitting || isCheckingGrammar}>

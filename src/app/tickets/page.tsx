@@ -12,9 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, X, TicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon } from 'lucide-react'; // Added TicketCategoryIcon
-import type { Ticket as TicketType } from '@/services/ticket-marketplace'; // Use type alias
-import { cn } from '@/lib/utils'; // Import cn utility
+import { Search, X, TicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon } from 'lucide-react';
+import type { Ticket as TicketType } from '@/services/ticket-marketplace';
+import { cn } from '@/lib/utils';
 
 
 // Mapping for category icons and display names
@@ -23,7 +23,7 @@ const categoryMap: Record<TicketType['type'], { icon: React.ElementType; name: s
     train: { icon: Train, name: 'Train' },
     movie: { icon: Film, name: 'Movie' },
     event: { icon: CalendarIconLucide, name: 'Event' },
-    sports: { icon: TicketCategoryIcon, name: 'Sports' }, // Added sports
+    sports: { icon: TicketCategoryIcon, name: 'Sports' },
 };
 
 export default function TicketsPage() {
@@ -33,7 +33,6 @@ export default function TicketsPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // State for filter inputs, initialized from URL params or 'all'
   const initialCategory = searchParams.get('category') as TicketType['type'] | null;
   const [categoryFilter, setCategoryFilter] = React.useState<TicketType['type'] | 'all'>(initialCategory || 'all');
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
@@ -56,27 +55,24 @@ export default function TicketsPage() {
         if (currentTo) title += ` to ${currentTo}`;
         return title;
     }
-    return 'Available Tickets'; // Changed 'All Available Tickets' to just 'Available Tickets'
+    return 'Available Tickets';
   }, [currentCategory, currentFrom, currentTo]);
 
 
-  // Fetch tickets based on current URL search params
   React.useEffect(() => {
     const fetchTickets = async () => {
       setIsLoading(true);
       setError(null);
       try {
         const filters: { category?: Ticket['type']; fromCity?: string; toCity?: string } = {};
-        const category = searchParams.get('category') as Ticket['type'] | null; // Get category from URL
+        const category = searchParams.get('category') as Ticket['type'] | null;
         const fromCity = searchParams.get('from');
         const toCity = searchParams.get('to');
 
-        // Use 'all' as default if no category in URL, ensure not empty string
         setCategoryFilter(category || 'all');
         setFromCityFilter(fromCity || '');
         setToCityFilter(toCity || '');
 
-        // Only apply category filter if it's not 'all'
         if (category && category !== 'all') filters.category = category;
         if (fromCity) filters.fromCity = fromCity;
         if (toCity) filters.toCity = toCity;
@@ -93,23 +89,25 @@ export default function TicketsPage() {
     };
 
     fetchTickets();
-  }, [searchParams]); // Re-run effect when searchParams change
+  }, [searchParams]);
 
-  // Callback function to remove purchased ticket from the list
-  const handlePurchaseSuccess = (purchasedTicketId: string) => {
-    setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== purchasedTicketId));
+  // Callback function to handle purchased ticket state update
+  const handlePurchaseSuccess = (purchasedTicketId: string, purchasedTicket: Ticket) => {
+      // Update the specific ticket in the local state to reflect 'sold' status and potentially the data URI
+      setTickets(prevTickets =>
+          prevTickets.map(ticket =>
+              ticket.id === purchasedTicketId ? { ...ticket, status: 'sold', originalTicketDataUri: purchasedTicket.originalTicketDataUri } : ticket
+          )
+      );
+     // Optionally, you could store the purchased ticket info in local storage or context for the user's "My Orders" page
+     console.log("Ticket purchased:", purchasedTicket);
   };
 
-  // Handle filter changes and update URL
+
   const handleFilterChange = () => {
       const query = new URLSearchParams();
-      // Only add category to URL if it's not 'all' and it exists from the initial URL
       if (currentCategory && currentCategory !== 'all') {
         query.set('category', currentCategory);
-      } else if (categoryFilter && categoryFilter !== 'all') {
-          // If a category was selected in the filter but wasn't in the URL initially
-          // (This case is now less likely as the filter is removed, but keeping logic for robustness)
-          // query.set('category', categoryFilter); // This line is effectively commented out due to filter removal
       }
 
       if (fromCityFilter) query.set('from', fromCityFilter);
@@ -117,15 +115,11 @@ export default function TicketsPage() {
       router.push(`/tickets?${query.toString()}`);
   };
 
-  // Clear all filters and update URL
   const clearFilters = () => {
-      // Set local state to defaults
-      // Keep category filter state based on URL param if it exists, otherwise 'all'
       setCategoryFilter(initialCategory || 'all');
       setFromCityFilter('');
       setToCityFilter('');
 
-      // Navigate, keeping the category if it was in the initial URL
       const query = new URLSearchParams();
        if (initialCategory && initialCategory !== 'all') {
          query.set('category', initialCategory);
@@ -135,8 +129,8 @@ export default function TicketsPage() {
 
 
   const renderSkeletons = () => (
-    Array.from({ length: 8 }).map((_, index) => ( // Show more skeletons
-      <div key={index} className="flex flex-col space-y-3 ml-2.5"> {/* Added ml-2.5 */}
+    Array.from({ length: 8 }).map((_, index) => (
+      <div key={index} className="flex flex-col space-y-3 ml-2.5">
         <Skeleton className="h-[125px] w-full rounded-xl" />
         <div className="space-y-2">
           <Skeleton className="h-4 w-3/4" />
@@ -151,23 +145,18 @@ export default function TicketsPage() {
     ))
   );
 
-  // Check if any filter is active (category is not 'all', or cities are set)
    const hasActiveFilters = (categoryFilter && categoryFilter !== 'all') || fromCityFilter || toCityFilter;
 
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
-       {/* Remove explicit bottom padding pb-20/pb-8 */}
       <main className="flex-1 container py-8">
-        {/* Align title to the center */}
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
-         {/* Filter Section - Centered with max-w and mx-auto */}
          <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-4xl mx-auto">
            <div className="flex flex-col md:flex-row gap-4 items-end">
 
-                {/* From City Input */}
                 <div className="w-full md:w-auto flex-grow">
                     <label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From</label>
                     <Input
@@ -176,11 +165,10 @@ export default function TicketsPage() {
                         placeholder="Departure City"
                         value={fromCityFilter}
                         onChange={(e) => setFromCityFilter(e.target.value)}
-                        className="bg-background text-foreground" // Added text-foreground
+                        className="bg-background text-foreground"
                     />
                 </div>
 
-                {/* To City Input */}
                  <div className="w-full md:w-auto flex-grow">
                     <label htmlFor="toCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">To</label>
                     <Input
@@ -189,17 +177,14 @@ export default function TicketsPage() {
                         placeholder="Destination City"
                         value={toCityFilter}
                         onChange={(e) => setToCityFilter(e.target.value)}
-                        className="bg-background text-foreground" // Added text-foreground
+                        className="bg-background text-foreground"
                     />
                  </div>
 
-                {/* Apply Filter Button */}
                 <Button onClick={handleFilterChange} className="w-full md:w-auto gap-2">
                   <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
 
-                {/* Clear Filters Button */}
-                {/* Show clear button if 'from' or 'to' filters are active */}
                 {(fromCityFilter || toCityFilter) && (
                     <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground gap-2">
                         <X className="mr-2 h-4 w-4" /> Clear
@@ -220,7 +205,6 @@ export default function TicketsPage() {
              {renderSkeletons()}
            </div>
         ) : tickets.length > 0 ? (
-           // Apply ml-2.5 (approx 10px margin-left) if any specific category filter is active
           <div className={cn(
               "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             )}>
@@ -229,7 +213,7 @@ export default function TicketsPage() {
                 key={ticket.id}
                 ticket={ticket}
                 onPurchaseSuccess={handlePurchaseSuccess}
-                className="ml-2.5" // Apply margin directly to each card
+                className="ml-2.5"
               />
             ))}
           </div>
@@ -237,13 +221,11 @@ export default function TicketsPage() {
           <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8">
             <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">No Tickets Found</h2>
-             {/* Adjust message based on whether 'from' or 'to' filters are active */}
             {(fromCityFilter || toCityFilter) ? (
                  <p>No tickets match your current filters. Try broadening your search!</p>
             ) : (
                  <p>It looks like no tickets are listed currently for {currentCategory && categoryMap[currentCategory] ? categoryMap[currentCategory].name.toLowerCase() : 'this category'}. Check back later!</p>
             )}
-            {/* Show clear filters button only if 'from' or 'to' filters are active */}
             {(fromCityFilter || toCityFilter) && (
                 <Button variant="link" onClick={clearFilters}>
                     Clear Filters
@@ -252,7 +234,6 @@ export default function TicketsPage() {
           </div>
         ) : null}
       </main>
-       {/* Footer removed */}
     </div>
   );
 }

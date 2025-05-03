@@ -42,6 +42,10 @@ export interface Ticket {
    * Status of the ticket (e.g., available, sold).
    */
   status?: 'available' | 'sold'; // Optional status field
+  /**
+   * Optional data URI of the uploaded original ticket image/file.
+   */
+  originalTicketDataUri?: string;
 }
 
 // In-memory store for tickets (replace with actual API/DB calls)
@@ -57,6 +61,7 @@ let tickets: Ticket[] = [
     fromCity: 'New York',
     toCity: 'Boston',
     status: 'available',
+    originalTicketDataUri: undefined, // Example: No file uploaded initially
   },
   {
     id: '2',
@@ -156,10 +161,11 @@ export async function getAvailableTickets(filters?: {
  * Asynchronously posts a new ticket for sale.
  * Adds the ticket to the in-memory store.
  *
- * @param ticketData The data for the ticket to be posted. Must include type, description, price, date, time, and location/fromCity/toCity as appropriate.
+ * @param ticketData The data for the ticket to be posted. Must include type, description, price, date, time, and location/fromCity/toCity as appropriate. Can include optional originalTicketDataUri.
  * @returns A promise that resolves to the created Ticket object.
  */
-export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status'>): Promise<Ticket> {
+// Update postTicket to accept the new optional field
+export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status'> & { originalTicketDataUri?: string }): Promise<Ticket> {
    // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -167,6 +173,7 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status'>): Pro
     ...ticketData,
     id: Math.random().toString(36).substring(2, 15), // Generate a simple random ID
     status: 'available', // New tickets are available by default
+    // originalTicketDataUri is already included via ...ticketData
   };
 
    // Ensure specific fields are present based on type (optional backend validation)
@@ -191,9 +198,10 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status'>): Pro
  * Marks the ticket status as 'sold' in the in-memory store.
  *
  * @param ticketId The ID of the ticket to purchase.
- * @returns A promise that resolves to an object indicating success or failure.
+ * @returns A promise that resolves to an object indicating success or failure, and includes the ticket data if successful.
  */
-export async function purchaseTicket(ticketId: string): Promise<{ success: boolean; message: string }> {
+ // Return the ticket data on successful purchase
+export async function purchaseTicket(ticketId: string): Promise<{ success: boolean; message: string; ticket?: Ticket }> {
   // Simulate API call delay (e.g., payment processing)
   await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -204,7 +212,8 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
   }
 
   if (tickets[ticketIndex].status === 'sold') {
-    return { success: false, message: `Ticket with ID ${ticketId} is already sold.` };
+    // Return ticket data even if already sold, so frontend can potentially still show download link if needed
+    return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: tickets[ticketIndex] };
   }
 
   // Mark the ticket as sold
@@ -212,5 +221,6 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
   console.log(`Ticket ${ticketId} purchased successfully.`);
   console.log('Updated Tickets:', tickets);
 
-  return { success: true, message: `Ticket ${ticketId} purchased successfully!` };
+  // Return the full ticket object on success
+  return { success: true, message: `Ticket ${ticketId} purchased successfully!`, ticket: tickets[ticketIndex] };
 }
