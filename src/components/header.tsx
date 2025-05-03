@@ -35,15 +35,16 @@ export function Header() {
         </div>
 
 
-        {/* Centered Title - Adjusted font sizes and alignment */}
-         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        {/* Centered Title and Slogan */}
+         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
              <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline gap-1">
                   {/* Updated Brand Name with colored letters */}
                  <span className="text-3xl font-bold">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
-                 {/* Removed Tagline */}
              </Link>
+             {/* Slogan */}
+             <span className="text-xs text-muted-foreground mt-[-4px]">Ticket Reselling Platform</span>
          </div>
 
 
@@ -62,3 +63,4 @@ export function Header() {
     </header>
   );
 }
+
