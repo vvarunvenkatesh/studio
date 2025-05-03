@@ -56,7 +56,7 @@ export default function TicketsPage() {
         if (currentTo) title += ` to ${currentTo}`;
         return title;
     }
-    return 'All Available Tickets';
+    return 'Available Tickets'; // Changed 'All Available Tickets' to just 'Available Tickets'
   }, [currentCategory, currentFrom, currentTo]);
 
 
@@ -229,9 +229,10 @@ export default function TicketsPage() {
              {renderSkeletons()}
            </div>
         ) : tickets.length > 0 ? (
+           // Apply ml-2.5 (approx 10px margin-left) if any specific category filter is active
           <div className={cn(
               "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6",
-              categoryFilter === 'bus' && "ml-2.5" // Add margin-left if category is 'bus'
+              categoryFilter && categoryFilter !== 'all' && "ml-2.5"
             )}>
             {tickets.map((ticket) => (
               <TicketCard
@@ -267,3 +268,4 @@ export default function TicketsPage() {
     </div>
   );
 }
+
