@@ -131,7 +131,7 @@ export default function PostTicketPage() {
                        <div key={ticket.id} className="relative group/listing">
                             <TicketCard ticket={ticket} className="ml-2.5" />
                             {/* Delete Button Overlay - Adjusted position */}
-                            <div className="absolute top-3 right-3 z-10"> {/* Changed top-2 right-2 to top-3 right-3 */}
+                            <div className="absolute top-3 right-4 z-10"> {/* Changed right-3 to right-4 */}
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button
@@ -186,3 +186,4 @@ export default function PostTicketPage() {
     </div>
   );
 }
+
