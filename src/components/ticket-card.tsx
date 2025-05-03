@@ -1,4 +1,5 @@
 
+
 'use client'; // Make this a client component for interaction
 
 import * as React from 'react';
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils'; // Import cn
 interface TicketCardProps {
   ticket: Ticket;
   onPurchaseSuccess?: (ticketId: string) => void; // Optional callback for successful purchase
+  className?: string; // Add className prop
 }
 
 // Mapping for category icons
@@ -26,7 +28,7 @@ const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
     sports: TicketCategoryIcon, // Added sports icon
 };
 
-export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
+export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardProps) { // Accept className prop
   const { toast } = useToast();
   const [isPurchasing, setIsPurchasing] = React.useState(false);
   const [isSold, setIsSold] = React.useState(ticket.status === 'sold'); // Local state to track if sold
@@ -76,7 +78,7 @@ export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
     <Card className={cn(
         "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200",
         isSold ? 'opacity-60 bg-muted/50' : 'bg-card', // Use bg-card for non-sold
-        // ticket.type === 'bus' && 'ml-2.5' // Add margin-left only for bus tickets (approx 10px) - Removed based on subsequent requests to center align cards
+        className // Apply passed className (e.g., ml-2.5)
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between mb-1">
@@ -150,3 +152,4 @@ export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
     </Card>
   );
 }
+

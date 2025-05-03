@@ -103,8 +103,15 @@ export default function TicketsPage() {
   // Handle filter changes and update URL
   const handleFilterChange = () => {
       const query = new URLSearchParams();
-      // Only add category to URL if it's not 'all'
-      if (categoryFilter && categoryFilter !== 'all') query.set('category', categoryFilter);
+      // Only add category to URL if it's not 'all' and it exists from the initial URL
+      if (currentCategory && currentCategory !== 'all') {
+        query.set('category', currentCategory);
+      } else if (categoryFilter && categoryFilter !== 'all') {
+          // If a category was selected in the filter but wasn't in the URL initially
+          // (This case is now less likely as the filter is removed, but keeping logic for robustness)
+          // query.set('category', categoryFilter); // This line is effectively commented out due to filter removal
+      }
+
       if (fromCityFilter) query.set('from', fromCityFilter);
       if (toCityFilter) query.set('to', toCityFilter);
       router.push(`/tickets?${query.toString()}`);
@@ -113,17 +120,23 @@ export default function TicketsPage() {
   // Clear all filters and update URL
   const clearFilters = () => {
       // Set local state to defaults
-      setCategoryFilter('all');
+      // Keep category filter state based on URL param if it exists, otherwise 'all'
+      setCategoryFilter(initialCategory || 'all');
       setFromCityFilter('');
       setToCityFilter('');
-      // Navigate to base tickets page
-      router.push('/tickets');
+
+      // Navigate, keeping the category if it was in the initial URL
+      const query = new URLSearchParams();
+       if (initialCategory && initialCategory !== 'all') {
+         query.set('category', initialCategory);
+       }
+      router.push(`/tickets?${query.toString()}`);
   };
 
 
   const renderSkeletons = () => (
     Array.from({ length: 8 }).map((_, index) => ( // Show more skeletons
-      <div key={index} className="flex flex-col space-y-3">
+      <div key={index} className="flex flex-col space-y-3 ml-2.5"> {/* Added ml-2.5 */}
         <Skeleton className="h-[125px] w-full rounded-xl" />
         <div className="space-y-2">
           <Skeleton className="h-4 w-3/4" />
@@ -139,10 +152,7 @@ export default function TicketsPage() {
   );
 
   // Check if any filter is active (category is not 'all', or cities are set)
-  const hasActiveFilters = (categoryFilter && categoryFilter !== 'all') || fromCityFilter || toCityFilter;
-
-  // Ensure value passed to Select is never an empty string, map "" to "all"
-  const selectValue = categoryFilter === "" ? "all" : (categoryFilter || 'all');
+   const hasActiveFilters = (categoryFilter && categoryFilter !== 'all') || fromCityFilter || toCityFilter;
 
 
   return (
@@ -155,26 +165,6 @@ export default function TicketsPage() {
          {/* Filter Section */}
          <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed">
            <div className="flex flex-col md:flex-row gap-4 items-end">
-                {/* Category Select */}
-                <div className="w-full md:w-auto flex-grow md:flex-grow-0 md:min-w-[150px]">
-                    <label htmlFor="categoryFilter" className="block text-sm font-medium text-muted-foreground mb-1">Category</label>
-                    {/* Use derived selectValue which guarantees it's not "" */}
-                    <Select value={selectValue} onValueChange={(value) => setCategoryFilter(value as TicketType['type'] | 'all')}>
-                        <SelectTrigger id="categoryFilter">
-                            {/* Placeholder text appears when value is 'all' */}
-                            <SelectValue placeholder="Any Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {/* Use 'all' as the value for the 'Any Category' option */}
-                            <SelectItem value="all">Any Category</SelectItem>
-                            <SelectItem value="bus">Bus</SelectItem>
-                            <SelectItem value="train">Train</SelectItem>
-                            <SelectItem value="movie">Movie</SelectItem>
-                            <SelectItem value="event">Event</SelectItem>
-                            <SelectItem value="sports">Sports</SelectItem> {/* Added Sports */}
-                        </SelectContent>
-                    </Select>
-                </div>
 
                 {/* From City Input */}
                 <div className="w-full md:w-auto flex-grow">
@@ -208,8 +198,8 @@ export default function TicketsPage() {
                 </Button>
 
                 {/* Clear Filters Button */}
-                {/* Show clear button if any filter is active */}
-                {hasActiveFilters && (
+                {/* Show clear button if 'from' or 'to' filters are active */}
+                {(fromCityFilter || toCityFilter) && (
                     <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground gap-2">
                         <X className="mr-2 h-4 w-4" /> Clear
                     </Button>
@@ -231,14 +221,15 @@ export default function TicketsPage() {
         ) : tickets.length > 0 ? (
            // Apply ml-2.5 (approx 10px margin-left) if any specific category filter is active
           <div className={cn(
-              "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6",
-              categoryFilter && categoryFilter !== 'all' && "ml-2.5"
+              "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              // "ml-2.5" // Removed conditional margin as it's applied directly in TicketCard now
             )}>
             {tickets.map((ticket) => (
               <TicketCard
                 key={ticket.id}
                 ticket={ticket}
                 onPurchaseSuccess={handlePurchaseSuccess}
+                className="ml-2.5" // Apply margin directly to each card
               />
             ))}
           </div>
@@ -246,13 +237,14 @@ export default function TicketsPage() {
           <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8">
             <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">No Tickets Found</h2>
-            {hasActiveFilters ? (
+             {/* Adjust message based on whether 'from' or 'to' filters are active */}
+            {(fromCityFilter || toCityFilter) ? (
                  <p>No tickets match your current filters. Try broadening your search!</p>
             ) : (
-                 <p>It looks like no tickets are listed currently. Check back later!</p>
+                 <p>It looks like no tickets are listed currently for {currentCategory && categoryMap[currentCategory] ? categoryMap[currentCategory].name.toLowerCase() : 'this category'}. Check back later!</p>
             )}
-            {/* Show clear filters button only if filters are active */}
-            {hasActiveFilters && (
+            {/* Show clear filters button only if 'from' or 'to' filters are active */}
+            {(fromCityFilter || toCityFilter) && (
                 <Button variant="link" onClick={clearFilters}>
                     Clear Filters
                 </Button>
