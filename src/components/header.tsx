@@ -11,24 +11,21 @@ export function Header() {
   return (
     // Keep header background white (bg-card)
     <header className="sticky top-0 z-40 w-full border-b bg-card">
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative"> {/* Added relative positioning */}
+      <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
 
         {/* Left side: Conditional Profile Icon or Login Button */}
         {/* Adjusted margin for desktop */}
         <div className="flex items-center md:ml-2">
           {isLoggedIn ? (
              <Link href="/profile" passHref>
-                {/* <Avatar className="h-9 w-9 cursor-pointer">
-                    <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" />
-                    <AvatarFallback>U</AvatarFallback>
-                </Avatar> */}
                  <Button variant="ghost" size="icon" className="h-9 w-9">
                     <User className="h-5 w-5"/> {/* Use User icon */}
                     <span className="sr-only">Profile</span>
                  </Button>
             </Link>
           ) : (
-            <Button asChild variant="ghost" size="sm">
+            // Apply accent hover effect directly
+            <Button asChild variant="ghost" size="sm" className="hover:bg-accent hover:text-accent-foreground">
                <Link href="/login" className="gap-2">
                    <LogIn className="h-4 w-4" />
                    <span className="hidden sm:inline">Login</span>
@@ -51,9 +48,9 @@ export function Header() {
 
 
         {/* Right side: Post Ticket Button */}
-        {/* Adjusted margin for desktop */}
+        {/* Adjusted margin for desktop. Applied accent background and foreground. */}
         <nav className="flex items-center md:mr-2">
-          <Button asChild variant="default" size="sm">
+          <Button asChild variant="default" size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Link href="/post-ticket" className="gap-2">
               <PlusCircle className="h-4 w-4" />
               <span className="hidden sm:inline">Post Ticket</span>
