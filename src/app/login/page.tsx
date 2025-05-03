@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -32,10 +33,6 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Redirecting you to the homepage...',
       });
-      // Simulate setting login state
-      if (typeof window !== 'undefined') {
-         localStorage.setItem('isLoggedIn', 'true');
-      }
       // Redirect to homepage after successful login simulation
       router.push('/');
     } else {
@@ -67,9 +64,9 @@ export default function LoginPage() {
            {/* CardTitle now contains the brand name and slogan */}
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Reverted Brand Name styling */}
+                 {/* Consistent LastMiniT styling */}
                  <span className="text-3xl font-bold">
-                    LastMiniT
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
              </Link>
              {/* Slogan */}
