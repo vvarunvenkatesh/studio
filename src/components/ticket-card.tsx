@@ -213,11 +213,11 @@ export function TicketCard({
 
   // Helper to render the "Pending" badge or similar indicator
   const renderPendingIndicator = () => (
-    // Apply specific background and text color using inline style for #FFC812
+    // Apply specific background and text color using inline style for #FFCE54
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500" // Use black text for contrast, border optional
-      style={{ backgroundColor: '#FFC812' }}
+      style={{ backgroundColor: '#FFCE54' }}
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -333,4 +333,5 @@ export function TicketCard({
     </Card>
   );
 }
+
 
