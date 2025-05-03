@@ -91,14 +91,11 @@ export function Header({ className }: HeaderProps) { // Destructure className
                  </Link>
                </div>
             ) : (
-                 // Login/Signup Button with Outline style, added border and theme-based light green hover
-                 <Button asChild variant="outline" size="sm" className="bg-background hover:bg-accent hover:text-accent-foreground gap-2 text-foreground border">
+                 // Login/Signup Button: Use accent color as background, adjusted hover. Kept border.
+                 <Button asChild variant="default" size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 border gap-2">
                      {/* Ensure Link is the direct child for asChild */}
                      <Link href="/login">
-                         {/* Wrap multiple elements inside Link with a single element or fragment */}
-                         <>
-                             <span>Login/Signup</span>
-                         </>
+                        Login/Signup
                      </Link>
                  </Button>
             )}
@@ -125,14 +122,10 @@ export function Header({ className }: HeaderProps) { // Destructure className
         <nav className="flex items-center md:mr-4">
            {/* Post Ticket button with specified color #FF2459 */}
           <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
-            {/* Ensure Link is the direct child for asChild */}
             <Link href="/post-ticket">
-              {/* Wrap multiple children inside Link with a single fragment */}
-              <>
-                <PlusCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Post Ticket</span>
-                <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
-              </>
+              <PlusCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Post Ticket</span>
+              <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
             </Link>
           </Button>
         </nav>
