@@ -84,7 +84,7 @@ export default function SignupPage() {
               {/* Slogan */}
               <span className="text-xs text-foreground mt-[-4px] opacity-80">Ticket Reselling Platform</span>
           </CardTitle>
-          <CardDescription>Create your account</CardDescription> {/* Updated description */}
+          <CardDescription className="text-foreground">Create your account</CardDescription> {/* Updated description */}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
@@ -99,7 +99,7 @@ export default function SignupPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isSigningUp}
-                className="bg-background/80"
+                className="bg-background/80 text-foreground" // Added text-foreground
               />
             </div>
             <div className="space-y-2">
@@ -113,7 +113,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isSigningUp}
-                className="bg-background/80"
+                className="bg-background/80 text-foreground" // Added text-foreground
               />
             </div>
             <div className="space-y-2">
@@ -126,7 +126,7 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isSigningUp}
-                className="bg-background/80"
+                className="bg-background/80 text-foreground" // Added text-foreground
               />
             </div>
              <div className="space-y-2">
@@ -139,7 +139,7 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={isSigningUp}
-                className="bg-background/80"
+                className="bg-background/80 text-foreground" // Added text-foreground
               />
             </div>
             <Button type="submit" className="w-full gap-2" disabled={isSigningUp}>
@@ -154,7 +154,7 @@ export default function SignupPage() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="text-center text-sm">
+        <CardFooter className="text-center text-sm text-foreground">
           Already have an account?{' '}
           <Link
             href="/login" // Link back to login page

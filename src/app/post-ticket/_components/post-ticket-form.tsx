@@ -245,7 +245,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                     placeholder="Add details like seat number, section, special features, route specifics..."
                     className={cn(
                        "min-h-[100px] resize-none",
-                       ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''
+                       ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground for non-movie
                      )}
                     {...field}
                   />
@@ -291,7 +291,9 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                       type="number"
                       step="0.01"
                       placeholder="e.g., 25.50"
-                      className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                      className={cn(
+                          ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground for non-movie
+                      )}
                       {...field}
                       value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : String(field.value)}
                       onChange={(e) => {
@@ -361,7 +363,9 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                     <Input
                       type="time"
                       placeholder="e.g., 14:30"
-                      className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                      className={cn(
+                          ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground for non-movie
+                      )}
                        {...field}
                      />
                     <Clock className={cn(
@@ -389,7 +393,9 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                   <FormControl>
                     <Input
                        placeholder="e.g., New York"
-                       className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                       className={cn(
+                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground
+                       )}
                        {...field} />
                   </FormControl>
                   <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
@@ -406,7 +412,9 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                   <FormControl>
                     <Input
                        placeholder="e.g., Boston"
-                       className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                       className={cn(
+                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground
+                       )}
                        {...field} />
                   </FormControl>
                   <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
@@ -427,7 +435,9 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                     <div> {/* Wrap Input in a div to ensure single child for FormControl Slot */}
                         <Input
                           placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium"
-                           className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                           className={cn(
+                               ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground
+                           )}
                            {...field} /> {/* Updated placeholder */}
                     </div>
                   </FormControl>
@@ -450,7 +460,9 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                     <div> {/* Wrap Input in a div to ensure single child for FormControl Slot */}
                        <Input
                          placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3"
-                          className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                          className={cn(
+                              ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground' // Added text-foreground
+                          )}
                           {...field} />
                     </div>
                    </FormControl>

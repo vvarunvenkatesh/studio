@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -147,7 +148,7 @@ export default function TicketsPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1 container py-8">
-        <h1 className="text-3xl font-bold mb-6 text-foreground">{pageTitle}</h1>
+        <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
          {/* Filter Section */}
          <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed">
@@ -182,7 +183,7 @@ export default function TicketsPage() {
                         placeholder="Departure City"
                         value={fromCityFilter}
                         onChange={(e) => setFromCityFilter(e.target.value)}
-                        className="bg-background"
+                        className="bg-background text-foreground" // Added text-foreground
                     />
                 </div>
 
@@ -195,7 +196,7 @@ export default function TicketsPage() {
                         placeholder="Destination City"
                         value={toCityFilter}
                         onChange={(e) => setToCityFilter(e.target.value)}
-                        className="bg-background"
+                        className="bg-background text-foreground" // Added text-foreground
                     />
                  </div>
 

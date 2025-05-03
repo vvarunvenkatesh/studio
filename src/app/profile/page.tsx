@@ -154,18 +154,18 @@ export default function ProfileBasicInfoPage() {
           <div className="space-y-1">
             <Label htmlFor="name">Name</Label>
             {/* In a real app, make these editable with a form */}
-            <Input id="name" value={userData.name} readOnly className="bg-muted/50"/>
+            <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground"/> {/* Added text-foreground */}
           </div>
           <div className="space-y-1">
             <Label htmlFor="email">Email Address</Label>
-            <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50"/>
+            <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground"/> {/* Added text-foreground */}
           </div>
         </div>
          {/* Changed grid to single column for better centering appearance */}
         <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
                 <Label htmlFor="contact">Contact Number</Label>
-                <Input id="contact" value={userData.contact} readOnly className="bg-muted/50"/>
+                <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground"/> {/* Added text-foreground */}
             </div>
             <div className="space-y-1">
                 <Label>Gender</Label>

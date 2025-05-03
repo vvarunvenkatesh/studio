@@ -165,7 +165,7 @@ function SearchForm() {
                 placeholder="From City"
                 value={fromCity}
                 onChange={(e) => setFromCity(e.target.value)}
-                className="bg-background"
+                className="bg-background text-foreground" // Added text-foreground
             />
         </div>
          <div className="flex-1 w-full sm:w-auto">
@@ -176,7 +176,7 @@ function SearchForm() {
                 placeholder="To City"
                 value={toCity}
                 onChange={(e) => setToCity(e.target.value)}
-                className="bg-background"
+                className="bg-background text-foreground" // Added text-foreground
             />
          </div>
         <Button type="submit" className="w-full sm:w-auto gap-2">

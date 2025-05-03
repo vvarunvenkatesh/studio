@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
                Ticket Reselling Platform
              </span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-foreground">
             {linkSent ? 'Check your email' : 'Enter your email to reset your password'}
           </CardDescription>
         </CardHeader>
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSendResetLink} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-foreground">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSending}
-                  className="bg-background/80"
+                  className="bg-background/80 text-foreground" // Added text-foreground
                 />
               </div>
               <Button type="submit" className="w-full gap-2" disabled={isSending}>
@@ -112,7 +112,7 @@ export default function ForgotPasswordPage() {
             </form>
           )}
         </CardContent>
-        <CardFooter className="text-center text-sm">
+        <CardFooter className="text-center text-sm text-foreground">
           Remembered your password?{' '}
           <Link
             href="/login" // Link back to login page
