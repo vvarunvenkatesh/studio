@@ -8,7 +8,48 @@ body {
 
 @layer base {
   :root {
-    /* Light Theme based on #9CAF88 */
+    /* Swapped Dark mode colors (originally in .dark) */
+    --background: 94 15% 10%; /* Very Dark Greenish Gray */
+    --foreground: 94 10% 85%; /* Light Greenish Gray */
+    --card: 94 15% 15%; /* Slightly Lighter Dark Greenish Gray */
+    --card-foreground: 94 10% 85%; /* Light Greenish Gray */
+    --popover: 94 15% 5%; /* Near Black Greenish Gray */
+    --popover-foreground: 94 10% 85%; /* Light Greenish Gray */
+    --primary: 94 13% 60%; /* Main Green color from original light mode */
+    --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --secondary: 94 15% 25%; /* Medium Dark Greenish Gray */
+    --secondary-foreground: 94 10% 90%; /* Very Light Greenish Gray */
+    --muted: 94 15% 25%; /* Medium Dark Greenish Gray */
+    --muted-foreground: 94 10% 60%; /* Medium Desaturated Greenish Gray */
+    --accent: 100 20% 50%; /* Slightly different Green, darker */
+    --accent-foreground: 94 15% 5%; /* Near Black Greenish Gray */
+    --destructive: 0 70% 50%; /* Slightly adjusted red */
+    --destructive-foreground: 0 0% 98%;
+    --border: 94 15% 30%; /* Darker Greenish Gray border */
+    --input: 94 15% 30%; /* Darker Greenish Gray input */
+    --ring: 94 13% 60%; /* Main Green Ring */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* Swapped Dark Sidebar */
+    --sidebar-background: 94 15% 5%; /* Near Black Greenish Gray */
+    --sidebar-foreground: 94 10% 85%; /* Light Greenish Gray */
+    --sidebar-primary: 94 10% 85%; /* Light Greenish Gray */
+    --sidebar-primary-foreground: 94 15% 5%; /* Near Black Greenish Gray */
+    --sidebar-accent: 94 15% 25%; /* Medium Dark Greenish Gray */
+    --sidebar-accent-foreground: 94 10% 90%; /* Very Light Greenish Gray */
+    --sidebar-border: 94 15% 30%; /* Darker Greenish Gray border */
+    --sidebar-ring: 94 10% 85%; /* Light Greenish Gray */
+
+    /* Radius remains consistent */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Swapped Light Theme colors (originally in :root) */
     --background: 94 13% 60%; /* #9CAF88 */
     --foreground: 94 20% 10%; /* Dark Greenish Black */
     --card: 0 0% 100%; /* White for header */
@@ -33,9 +74,8 @@ body {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
 
-    /* Sidebar colors adjusted for green theme */
+    /* Swapped Light Sidebar */
     --sidebar-background: 94 30% 35%; /* Dark Green */
     --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
     --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
@@ -44,44 +84,9 @@ body {
     --sidebar-accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
     --sidebar-border: 94 30% 25%; /* Darker Green border */
     --sidebar-ring: 94 10% 95%; /* Very Light Greenish White */
-  }
 
-  .dark {
-    /* Dark mode adjusted for contrast with the green theme */
-    --background: 94 15% 10%; /* Very Dark Greenish Gray */
-    --foreground: 94 10% 85%; /* Light Greenish Gray */
-    --card: 94 15% 15%; /* Slightly Lighter Dark Greenish Gray */
-    --card-foreground: 94 10% 85%; /* Light Greenish Gray */
-    --popover: 94 15% 5%; /* Near Black Greenish Gray */
-    --popover-foreground: 94 10% 85%; /* Light Greenish Gray */
-    --primary: 94 13% 60%; /* Main Green color from light mode */
-    --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --secondary: 94 15% 25%; /* Medium Dark Greenish Gray */
-    --secondary-foreground: 94 10% 90%; /* Very Light Greenish Gray */
-    --muted: 94 15% 25%; /* Medium Dark Greenish Gray */
-    --muted-foreground: 94 10% 60%; /* Medium Desaturated Greenish Gray */
-    --accent: 100 20% 50%; /* Slightly different Green, darker */
-    --accent-foreground: 94 15% 5%; /* Near Black Greenish Gray */
-    --destructive: 0 70% 50%; /* Slightly adjusted red */
-    --destructive-foreground: 0 0% 98%;
-    --border: 94 15% 30%; /* Darker Greenish Gray border */
-    --input: 94 15% 30%; /* Darker Greenish Gray input */
-    --ring: 94 13% 60%; /* Main Green Ring */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-
-    /* Dark Sidebar */
-    --sidebar-background: 94 15% 5%; /* Near Black Greenish Gray */
-    --sidebar-foreground: 94 10% 85%; /* Light Greenish Gray */
-    --sidebar-primary: 94 10% 85%; /* Light Greenish Gray */
-    --sidebar-primary-foreground: 94 15% 5%; /* Near Black Greenish Gray */
-    --sidebar-accent: 94 15% 25%; /* Medium Dark Greenish Gray */
-    --sidebar-accent-foreground: 94 10% 90%; /* Very Light Greenish Gray */
-    --sidebar-border: 94 15% 30%; /* Darker Greenish Gray border */
-    --sidebar-ring: 94 10% 85%; /* Light Greenish Gray */
+    /* Radius remains consistent */
+     /* --radius: 0.5rem; */ /* Already defined in :root */
   }
 }
 
