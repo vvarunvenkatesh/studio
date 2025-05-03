@@ -226,9 +226,12 @@ export function TicketCard({
 
 
   // Hide card completely if it's sold and in browse mode
-  if (isSold && variant === 'browse') {
+  // Also hide if it's not sold but the seller is viewing in browse mode (they should manage it elsewhere)
+  // if ((isSold && variant === 'browse') || (!isSold && isSeller && variant === 'browse')) {
+  // Now only hide if sold and in browse mode
+   if (isSold && variant === 'browse') {
       return null;
-  }
+   }
 
 
   return (
@@ -306,9 +309,9 @@ export function TicketCard({
              )
          ) : isSeller ? (
              // 2. If not sold AND user is the seller:
-             // Show Cancel button if on manage page or if cancel handler exists
-             // Otherwise (e.g., on browse page where seller shouldn't manage) show Pending
-             (variant === 'manage' || onCancelListing) ? renderCancelButton() : renderPendingIndicator()
+             // - If 'manage' variant, show Cancel button.
+             // - If 'browse' variant, show Pending indicator.
+             variant === 'manage' ? renderCancelButton() : renderPendingIndicator()
          ) : (
              // 3. If not sold AND user is NOT the seller: Show "Buy Ticket" button
              <Button
@@ -330,3 +333,4 @@ export function TicketCard({
     </Card>
   );
 }
+
