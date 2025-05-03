@@ -16,7 +16,8 @@ export default function ProfileLayout({
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1 container py-8">
-        <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+        {/* Added pl-2 to move the heading slightly right */}
+        <h1 className="text-3xl font-bold mb-6 pl-2">My Profile</h1>
         <Tabs defaultValue="basic-info" className="w-full">
            {/* Using Links inside TabsTrigger for navigation, requires client-side handling or more complex setup */}
            {/* Simple approach: Use Links as triggers, rely on Next.js routing */}
