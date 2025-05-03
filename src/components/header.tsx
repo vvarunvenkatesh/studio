@@ -102,13 +102,9 @@ export function Header({ className }: HeaderProps) { // Destructure className
         {/* Left side: Post Ticket Button */}
         <div className="flex items-center">
             <Button asChild size="sm" className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
-                <Link href="/post-ticket">
-                  {/* Wrap multiple children in a single span */}
-                  <span>
-                     <span className="hidden sm:inline">Post Ticket</span>
-                     <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
-                  </span>
-                </Link>
+              <Link href="/post-ticket">
+                Post Ticket
+              </Link>
             </Button>
         </div>
 
@@ -132,7 +128,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
          <div className="flex items-center gap-3 md:gap-4">
            {/* Location Selector */}
             <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
                     <MapPin className="h-4 w-4 flex-shrink-0" />
                     <SelectValue placeholder="Select Location" />
                 </SelectTrigger>
@@ -161,11 +157,10 @@ export function Header({ className }: HeaderProps) { // Destructure className
                      asChild
                      variant="outline"
                      size="sm"
-                      className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground" // Use accent colors for hover
+                     className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent" // Use accent colors for hover, update border on hover too
                  >
                    <Link href="/login">
-                       {/* Wrap text in a span */}
-                       <span>Login/Signup</span>
+                       Login/Signup
                    </Link>
                  </Button>
             )}
