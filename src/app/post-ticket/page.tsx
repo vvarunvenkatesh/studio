@@ -10,7 +10,7 @@ import { TicketCard } from '@/components/ticket-card'; // Import TicketCard
 import { Ticket as TicketIcon, Loader2 } from 'lucide-react'; // Import TicketIcon, Loader2
 import { deleteTicket } from '@/services/ticket-marketplace'; // Import deleteTicket service
 import { useToast } from '@/hooks/use-toast'; // Import useToast
-// AlertDialog components are needed for confirmation within TicketCard, but not directly triggered here anymore.
+// AlertDialog components are needed for confirmation within TicketCard
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button'; // Import Button
 
@@ -33,9 +33,9 @@ export default function PostTicketPage() {
         try {
             const stored = localStorage.getItem('userPostedTickets');
             const tickets: Ticket[] = stored ? JSON.parse(stored) : [];
-            // Filter only available tickets (or show all user posted regardless of status?)
-            // Let's show all for now, the card will show "Sold" status
-            setPostedTickets(tickets.reverse()); // Show newest first
+            // Filter only tickets with status 'available'
+            const availableTickets = tickets.filter(ticket => ticket.status === 'available');
+            setPostedTickets(availableTickets.reverse()); // Show newest first
         } catch (e) {
             console.error("Failed to load user's posted tickets:", e);
             setPostedTickets([]);
@@ -134,7 +134,7 @@ export default function PostTicketPage() {
                        <TicketCard
                             key={ticket.id}
                             ticket={ticket}
-                            variant="manage" // Specify the manage variant (important for styling/logic if needed)
+                            variant="manage" // Specify the manage variant
                             // User is always the seller on this page
                             isSeller={true}
                             // Pass the cancel handler function
