@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -58,7 +57,7 @@ function AdvertisementSlider() {
   }, [goToNext]); // Rerun effect if goToNext changes (it shouldn't, but good practice)
 
   return (
-    // Increased height classes, added w-full. Removed margins/padding.
+    // Increased height classes, removed margins/padding. Full width.
     <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg group"> {/* Added group class for hover state on arrows */}
       {advertisements.map((ad, index) => (
         <Image
@@ -220,16 +219,16 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-background">
        <Header />
 
-       {/* Moved AdvertisementSlider outside the main container, remove py */}
+       {/* AdvertisementSlider is full width, remove py */}
        <AdvertisementSlider />
 
-      {/* Added container class back to main for content alignment */}
+      {/* Added container class back to main for content alignment and padding */}
       <main className="flex-1 container py-6 md:py-10">
 
          {/* Added top margin to separate content from slider */}
          {/* Removed max-w-5xl and mx-auto from this parent div */}
          <div className="mt-8 md:mt-12">
-             <SearchForm />
+             <SearchForm /> {/* Centered via max-w-4xl mx-auto inside */}
 
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
              {/* Added max-w-4xl and mx-auto to center the grid */}
@@ -242,9 +241,10 @@ export default function Home() {
              </div>
 
               {/* Bottom Advertisements Section - Centered */}
+              {/* Container for the Featured Offers section including title and grid */}
               <div className="max-w-5xl mx-auto">
                  <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
-                 {/* Kept max-w-5xl and mx-auto here to center the ad grid */}
+                 {/* Grid for the ad cards - this will be centered by the parent div */}
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     <BottomAdCard
                         src="https://picsum.photos/400/300?random=10"
@@ -284,4 +284,3 @@ export default function Home() {
     </div>
   );
 }
-
