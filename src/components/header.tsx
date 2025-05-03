@@ -78,7 +78,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
         {/* Left side: Login/Signup or Profile Button */}
          {/* Added margin for desktop */}
-         <div className="flex items-center md:ml-4">
+         <div className="flex items-center md:ml-4"> {/* Increased ml for desktop */}
            {isLoggedIn ? (
                <div className="flex items-center gap-3"> {/* Removed ml-4 */}
                  <Link href="/profile">
@@ -97,9 +97,10 @@ export function Header({ className }: HeaderProps) { // Destructure className
                      asChild
                      variant="outline"
                      size="sm"
-                     className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground gap-2" // Apply requested styles
+                     className="border-foreground bg-background text-foreground hover:bg-[#FF2459] hover:text-white gap-2" // Apply requested styles
                  >
                    <Link href="/login">
+                     {/* Wrap children in a div as Button with asChild expects a single element */}
                      <div>Login/Signup</div>
                    </Link>
                  </Button>
@@ -124,11 +125,12 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
         {/* Right side: Post Ticket Button */}
          {/* Added margin for desktop */}
-        <nav className="flex items-center md:mr-0"> {/* Adjusted mr */}
+        <nav className="flex items-center md:mr-4"> {/* Adjusted mr */}
            {/* Post Ticket button with specified color #FF2459 */}
            {/* Added mr-4 to create gap */}
-          <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors mr-4">
+          <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
             <Link href="/post-ticket">
+                {/* Wrap children in a div as Button with asChild expects a single element */}
                 <div className="flex items-center gap-2"> {/* Ensure icon and text are together */}
                   <PlusCircle className="h-4 w-4" />
                   <span className="hidden sm:inline">Post Ticket</span>
