@@ -6,7 +6,8 @@ import type { Ticket } from '@/services/ticket-marketplace';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download } from 'lucide-react'; // Added specific icons, Download
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -14,7 +15,10 @@ import { cn } from '@/lib/utils'; // Import cn
 
 interface TicketCardProps {
   ticket: Ticket;
+  variant?: 'browse' | 'manage'; // Add variant prop, default to 'browse'
   onPurchaseSuccess?: (ticketId: string, purchasedTicket: Ticket) => void; // Update callback to include ticket data
+  onCancelListing?: (ticketId: string) => Promise<void> | void; // Add callback for cancelling listing
+  isCancelling?: boolean; // Add state for cancellation loading
   className?: string; // Add className prop
 }
 
@@ -27,7 +31,14 @@ const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
     sports: TicketCategoryIcon, // Added sports icon
 };
 
-export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardProps) { // Accept className prop
+export function TicketCard({
+    ticket,
+    variant = 'browse', // Default to browse variant
+    onPurchaseSuccess,
+    onCancelListing,
+    isCancelling,
+    className
+}: TicketCardProps) {
   const { toast } = useToast();
   const [isPurchasing, setIsPurchasing] = React.useState(false);
   // Use state to hold the full ticket data, including the data URI if purchased
@@ -161,7 +172,8 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
   return (
     <Card className={cn(
         "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200",
-        isSold ? 'opacity-60 bg-muted/50' : 'bg-card',
+        // Adjust opacity/styling based on variant and status
+        (variant === 'browse' && isSold) ? 'opacity-60 bg-muted/50' : 'bg-card',
         className // Apply the className prop here
     )}>
       <CardHeader className="pb-2">
@@ -212,40 +224,88 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
              <DollarSign className="mr-1 h-5 w-5" />
              {currentTicket.price.toFixed(2)}
          </div>
-         {isSold ? (
-             // If sold and original ticket data exists, show Download button
-             currentTicket.originalTicketDataUri ? (
-                <Button
-                    size="sm"
-                    onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
-                    aria-label="Download original ticket"
-                    className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90" // Apply primary button styling
-                >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                </Button>
+
+         {/* Conditional Rendering based on variant and status */}
+         {variant === 'browse' && (
+             isSold ? (
+                 <Badge variant="destructive">Sold</Badge>
              ) : (
-                // If sold but no file exists, show Sold badge
-                <Badge variant="destructive">Sold</Badge>
+                <Button
+                  size="sm"
+                  onClick={handlePurchase}
+                  disabled={isPurchasing}
+                  aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
+                  className="gap-2"
+                >
+                  {isPurchasing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                  )}
+                  {isPurchasing ? 'Processing...' : 'Buy Ticket'}
+                </Button>
              )
-         ) : (
-            // If not sold, show Buy button
-            <Button
-              size="sm"
-              onClick={handlePurchase}
-              disabled={isPurchasing}
-              aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
-              className="gap-2"
-            >
-              {isPurchasing ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <ShoppingCart className="mr-2 h-4 w-4" />
-              )}
-              {isPurchasing ? 'Processing...' : 'Buy Ticket'}
-            </Button>
          )}
+
+         {variant === 'manage' && (
+             isSold ? (
+                // If sold and has downloadable file, show download
+                 currentTicket.originalTicketDataUri ? (
+                     <Button
+                         size="sm"
+                         onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
+                         aria-label="Download original ticket"
+                         className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                     >
+                         <Download className="mr-2 h-4 w-4" />
+                         Download
+                     </Button>
+                 ) : (
+                     <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
+                 )
+             ) : (
+                 // If not sold, show Cancel Listing button
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                            size="sm"
+                            variant="destructive"
+                            disabled={isCancelling}
+                            aria-label="Cancel ticket listing"
+                            className="gap-2"
+                        >
+                            {isCancelling ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <XCircle className="mr-2 h-4 w-4" />
+                            )}
+                            {isCancelling ? 'Cancelling...' : 'Cancel Listing'}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently remove your ticket listing from the marketplace.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isCancelling}>Keep Listing</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={() => onCancelListing?.(currentTicket.id)}
+                                disabled={isCancelling}
+                                className="bg-destructive hover:bg-destructive/90"
+                            >
+                                {isCancelling ? 'Cancelling...' : 'Confirm Cancellation'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+             )
+         )}
+
       </CardFooter>
     </Card>
   );
 }
+

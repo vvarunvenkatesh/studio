@@ -7,10 +7,11 @@ import { PostTicketForm } from './_components/post-ticket-form';
 import { cn } from '@/lib/utils'; // Import cn utility
 import type { Ticket } from '@/services/ticket-marketplace';
 import { TicketCard } from '@/components/ticket-card'; // Import TicketCard
-import { Ticket as TicketIcon, Trash2, Loader2 } from 'lucide-react'; // Import TicketIcon, Trash2, Loader2
+import { Ticket as TicketIcon, Loader2 } from 'lucide-react'; // Import TicketIcon, Loader2
 import { deleteTicket } from '@/services/ticket-marketplace'; // Import deleteTicket service
 import { useToast } from '@/hooks/use-toast'; // Import useToast
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
+// AlertDialog components are no longer directly needed here for delete, but kept for potential future use
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button'; // Import Button
 
 export default function PostTicketPage() {
@@ -32,8 +33,9 @@ export default function PostTicketPage() {
         try {
             const stored = localStorage.getItem('userPostedTickets');
             const tickets: Ticket[] = stored ? JSON.parse(stored) : [];
-            // Filter only available tickets
-            setPostedTickets(tickets.filter((t) => t.status === 'available').reverse()); // Show newest first
+            // Filter only available tickets (or show all user posted regardless of status?)
+            // Let's show all for now, the card will show "Sold" status
+            setPostedTickets(tickets.reverse()); // Show newest first
         } catch (e) {
             console.error("Failed to load user's posted tickets:", e);
             setPostedTickets([]);
@@ -63,30 +65,30 @@ export default function PostTicketPage() {
     };
   }, [loadPostedTickets]); // Depend on memoized load function
 
-  // Handle deleting a ticket
+  // Handle deleting/cancelling a ticket listing
   const handleDeleteTicket = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
         const result = await deleteTicket(ticketId);
         if (result.success) {
             toast({
-                title: 'Listing Deleted',
+                title: 'Listing Cancelled',
                 description: 'Your ticket listing has been removed.',
             });
             // Optimistically update the UI or rely on storage event listener
              loadPostedTickets(); // Force reload after successful deletion
         } else {
             toast({
-                title: 'Deletion Failed',
-                description: result.message || 'Could not delete the ticket listing.',
+                title: 'Cancellation Failed',
+                description: result.message || 'Could not cancel the ticket listing.',
                 variant: 'destructive',
             });
         }
     } catch (error) {
-        console.error('Error deleting ticket:', error);
+        console.error('Error cancelling ticket listing:', error);
         toast({
             title: 'Error',
-            description: 'An error occurred while deleting the ticket.',
+            description: 'An error occurred while cancelling the listing.',
             variant: 'destructive',
         });
     } finally {
@@ -128,47 +130,15 @@ export default function PostTicketPage() {
              ) : postedTickets.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {postedTickets.map((ticket) => (
-                       <div key={ticket.id} className="relative group/listing">
-                            <TicketCard ticket={ticket} className="ml-2.5" />
-                            {/* Delete Button Overlay - Adjusted position */}
-                            <div className="absolute top-3 right-4 z-10"> {/* Changed right-3 to right-4 */}
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button
-                                            variant="destructive"
-                                            size="icon"
-                                            className="h-8 w-8 opacity-80 hover:opacity-100 transition-opacity"
-                                            disabled={isDeleting === ticket.id}
-                                            aria-label="Delete listing"
-                                        >
-                                            {isDeleting === ticket.id ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="h-4 w-4" />
-                                            )}
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete your ticket listing from the marketplace.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel disabled={isDeleting === ticket.id}>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={() => handleDeleteTicket(ticket.id)}
-                                            disabled={isDeleting === ticket.id}
-                                            className="bg-destructive hover:bg-destructive/90"
-                                        >
-                                             {isDeleting === ticket.id ? 'Deleting...' : 'Delete'}
-                                        </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                       </div>
+                        // Removed the outer div with relative group/listing and the delete overlay
+                       <TicketCard
+                            key={ticket.id}
+                            ticket={ticket}
+                            variant="manage" // Specify the manage variant
+                            onCancelListing={handleDeleteTicket} // Pass the cancel handler
+                            isCancelling={isDeleting === ticket.id} // Pass the loading state
+                            className="ml-2.5"
+                        />
                     ))}
                  </div>
              ) : (
