@@ -194,10 +194,11 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   return (
     <Form {...form}>
        {/* Apply conditional styling to the form element itself */}
+       {/* Removed mx-auto, relying on parent container in page.tsx for centering */}
        <form
          onSubmit={form.handleSubmit(onSubmit)}
          className={cn(
-           "space-y-6 max-w-2xl mx-auto p-6 md:p-8 rounded-lg shadow relative z-10", // Added z-index
+           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10", // Removed mx-auto
            // Apply card styles only if not movie type, otherwise make transparent for bg image
            ticketType === 'movie' ? 'bg-transparent text-white' : 'bg-card',
          )}
