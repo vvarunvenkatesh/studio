@@ -158,8 +158,8 @@ export default function TicketsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      {/* Add pb-20 (or appropriate value based on BottomNavigation height) to prevent overlap */}
-      <main className="flex-1 container py-8 pb-20 md:pb-8">
+       {/* Remove explicit bottom padding pb-20/pb-8 */}
+      <main className="flex-1 container py-8">
         {/* Align title to the center */}
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
@@ -252,13 +252,7 @@ export default function TicketsPage() {
           </div>
         ) : null}
       </main>
-       {/* Removed footer as BottomNavigation exists */}
-       {/* <footer className="py-4 border-t bg-background mt-10">
-         <div className="container text-center text-sm text-muted-foreground">
-           © {new Date().getFullYear()} LastminIT tickets. All rights reserved.
-         </div>
-       </footer> */}
+       {/* Footer removed */}
     </div>
   );
 }
-

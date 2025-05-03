@@ -103,7 +103,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
 
         {isMobile ? (
-          // Mobile View: Title on Left, Profile/Login on Right
+          // Mobile View: Title on Left, remove profile/login
           <>
             {/* Brand Title (aligned left) */}
             {/* Adjusted title size slightly for mobile */}
@@ -118,33 +118,13 @@ export function Header({ className }: HeaderProps) { // Destructure className
                  </span>
             </div>
 
-            {/* Right side: Profile or Login/Signup ONLY */}
+            {/* Right side: EMPTY in mobile header now */}
             <div className="flex items-center">
-                {isLoggedIn ? (
-                   <Link href="/profile" className="ml-1"> {/* Removed md:ml-2 as this is mobile only */}
-                     <Avatar className="h-8 w-8 cursor-pointer">
-                       <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
-                       <AvatarFallback>
-                         <User className="h-4 w-4 text-muted-foreground" />
-                       </AvatarFallback>
-                     </Avatar>
-                   </Link>
-                ) : (
-                     <Button
-                         asChild
-                         variant="outline"
-                         size="sm"
-                         className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent"
-                     >
-                       <Link href="/login">
-                           Login/Signup
-                       </Link>
-                     </Button>
-                )}
+                 {/* Content removed */}
             </div>
           </>
         ) : (
-          // Desktop View: Original layout with Post Ticket, Centered Title, Location, Profile/Login
+          // Desktop View: Original layout with Post Ticket, Centered Title, Location, remove profile/login
           <>
             {/* Left side: Post Ticket Button */}
             <div className="flex items-center">
@@ -167,7 +147,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
                 </span>
             </div>
 
-            {/* Right side: Location, Profile/Login */}
+            {/* Right side: Location ONLY */}
             <div className="flex items-center gap-3 md:gap-4">
                {/* Location Selector */}
                 <Select value={selectedLocation} onValueChange={handleLocationChange}>
@@ -184,28 +164,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
                     </SelectContent>
                 </Select>
 
-               {/* Profile or Login/Signup */}
-               {isLoggedIn ? (
-                   <Link href="/profile" className="ml-1 md:ml-2">
-                     <Avatar className="h-8 w-8 cursor-pointer">
-                       <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
-                       <AvatarFallback>
-                         <User className="h-4 w-4 text-muted-foreground" />
-                       </AvatarFallback>
-                     </Avatar>
-                   </Link>
-                ) : (
-                     <Button
-                         asChild
-                         variant="outline"
-                         size="sm"
-                         className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent"
-                     >
-                       <Link href="/login">
-                           Login/Signup
-                       </Link>
-                     </Button>
-                )}
+               {/* Profile or Login/Signup section removed */}
             </div>
           </>
         )}

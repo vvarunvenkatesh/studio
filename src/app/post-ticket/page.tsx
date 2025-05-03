@@ -23,8 +23,8 @@ export default function PostTicketPage() {
     )}>
       {/* Header background should remain consistent, maybe slightly transparent for movie poster */}
        <Header className={ticketType === 'movie' ? 'bg-card/80 backdrop-blur-sm' : ''} />
-      {/* Add pb-20 (or appropriate value based on BottomNavigation height) to prevent overlap */}
-      <main className="flex-1 container py-8 md:py-12 relative z-10 pb-20 md:pb-12"> {/* Ensure content is above pseudo-element */}
+      {/* Remove explicit bottom padding pb-20/pb-12 */}
+      <main className="flex-1 container py-8 md:py-12 relative z-10"> {/* Ensure content is above pseudo-element */}
         <div className="max-w-3xl mx-auto">
            {/* Adjust title color if movie type */}
             <h1 className={cn(
@@ -34,15 +34,7 @@ export default function PostTicketPage() {
            <PostTicketForm onTypeChange={handleTypeChange} /> {/* Pass the callback */}
         </div>
       </main>
-       {/* Removed footer as BottomNavigation exists */}
-       {/* <footer className={cn(
-          "py-4 border-t mt-auto relative z-10", // Ensure footer is above pseudo-element
-          ticketType === 'movie' ? 'bg-black/50 text-white/80 border-white/20' : 'bg-background'
-        )}>
-        <div className="container text-center text-sm">
-          © {new Date().getFullYear()} LastminIT tickets. All rights reserved.
-        </div>
-      </footer> */}
+       {/* Footer removed */}
     </div>
   );
 }

@@ -229,8 +229,8 @@ export default function Home() {
        <AdvertisementSlider />
 
       {/* Added container class back to main for content alignment and padding */}
-      {/* Add pb-20 (or appropriate value based on BottomNavigation height) to prevent overlap */}
-      <main className="flex-1 container py-6 md:py-10 pb-20 md:pb-10">
+       {/* Remove explicit bottom padding pb-20/pb-10 */}
+      <main className="flex-1 container py-6 md:py-10">
 
          {/* Added top margin to separate content from slider */}
          {/* Removed max-w-5xl and mx-auto from this parent div */}
@@ -283,13 +283,7 @@ export default function Home() {
 
       </main>
 
-       {/* Removed footer, as BottomNavigation replaces it on mobile and it's less common on desktop */}
-       {/* <footer className="py-4 border-t bg-muted/30 mt-auto">
-         <div className="container text-center text-sm text-muted-foreground">
-           © {new Date().getFullYear()} LastminIT tickets. All rights reserved.
-         </div>
-       </footer> */}
+       {/* Footer removed */}
     </div>
   );
 }
-

@@ -16,7 +16,7 @@ interface NavItemProps {
 
 function NavItem({ href, icon: Icon, label }: NavItemProps) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname === href || (href === '/profile' && pathname.startsWith('/profile')); // Make profile active for sub-routes
 
   return (
     <Link href={href} className="flex flex-col items-center justify-center flex-1 group" passHref>
@@ -48,7 +48,7 @@ export function BottomNavigation() {
         {/* <NavItem href="/search" icon={Search} label="Search" />  Optional Search */}
         <NavItem href="/tickets" icon={Search} label="Browse Tickets" /> {/* Using Search icon for Browse */}
         <NavItem href="/post-ticket" icon={PlusSquare} label="Post Ticket" />
-        <NavItem href="/profile" icon={User} label="Profile" />
+        <NavItem href="/profile" icon={User} label="Profile" /> {/* Added Profile NavItem */}
       </div>
     </nav>
   );

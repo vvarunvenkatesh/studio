@@ -24,8 +24,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* Apply the font class and suppress hydration warning for browser extension compatibility */}
-      <body className={`${inter.variable} font-sans antialiased flex flex-col min-h-screen`} suppressHydrationWarning={true}> {/* Use font-sans utility, flex structure */}
+      {/* Apply the font class, suppress hydration warning, add flex structure and padding-bottom */}
+      <body
+         className={`${inter.variable} font-sans antialiased flex flex-col min-h-screen pb-16 md:pb-0`} // Add pb-16 for bottom nav height, remove for md+
+         suppressHydrationWarning={true}
+       >
          {/* Wrap children in a div that grows to push footer down */}
          <div className="flex-grow">
            {children}
@@ -36,4 +39,3 @@ export default function RootLayout({
     </html>
   );
 }
-
