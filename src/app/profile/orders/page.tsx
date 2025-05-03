@@ -5,11 +5,12 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, DollarSign, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon } from 'lucide-react';
+import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, DollarSign, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2 } from 'lucide-react'; // Added Trash2
 import type { Ticket } from '@/services/ticket-marketplace';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog components
 
 
 // Mapping for category icons
@@ -24,9 +25,10 @@ const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
 // Simplified Order Item Component
 interface OrderItemProps {
   order: Ticket;
+  onDelete: (orderId: string) => void; // Add onDelete prop
 }
 
-function OrderItem({ order }: OrderItemProps) {
+function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
   const { toast } = useToast();
   const CategorySpecificIcon = categoryIconMap[order.type] || TicketCategoryIcon;
   const formattedDate = format(new Date(order.date), 'PPP');
@@ -121,7 +123,7 @@ function OrderItem({ order }: OrderItemProps) {
           </div>
        </div>
 
-       {/* Price and Download */}
+       {/* Price, Download, and Delete */}
        <div className="flex sm:flex-col items-end sm:items-center justify-between sm:justify-start mt-2 sm:mt-0 sm:ml-4 gap-2">
           <div className="flex items-center font-semibold text-lg text-primary">
              <DollarSign className="mr-1 h-5 w-5" />
@@ -140,12 +142,39 @@ function OrderItem({ order }: OrderItemProps) {
            ) : (
              <Badge variant="outline" className="mt-0 sm:mt-2 text-xs text-muted-foreground">No File</Badge> // Indicate no file
            )}
+            {/* Delete Button */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    aria-label="Delete order"
+                    className="gap-2 mt-0 sm:mt-2"
+                   >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the order history for this ticket from your browser.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDelete(order.id)}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
        </div>
     </Card>
   );
 }
 
 export default function ProfileOrdersPage() {
+  const { toast } = useToast(); // Get toast function
   const [orders, setOrders] = React.useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
@@ -190,6 +219,43 @@ export default function ProfileOrdersPage() {
     }
   }, []);
 
+  // Function to handle deleting an order
+  const handleDeleteOrder = (orderId: string) => {
+    if (typeof window !== 'undefined') {
+      try {
+        // Filter out the order to delete
+        const updatedOrders = orders.filter(order => order.id !== orderId);
+        setOrders(updatedOrders); // Update state
+
+        // Update localStorage (store in original order before reversing for display)
+        localStorage.setItem('userOrders', JSON.stringify(updatedOrders.reverse()));
+
+        // Dispatch storage event to notify other tabs/windows if necessary
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'userOrders',
+          newValue: JSON.stringify(updatedOrders.reverse()),
+          storageArea: localStorage,
+        }));
+
+        toast({
+          title: 'Order Deleted',
+          description: 'The order history has been removed from this browser.',
+        });
+
+      } catch (e) {
+        console.error("Failed to delete order from localStorage:", e);
+        toast({
+          title: 'Deletion Failed',
+          description: 'Could not remove the order history.',
+          variant: 'destructive',
+        });
+        // Optionally revert state if localStorage update fails
+        // This would require storing the original orders before trying to update
+      }
+    }
+  };
+
+
   return (
     <Card className="w-full bg-background">
       <CardHeader>
@@ -208,7 +274,7 @@ export default function ProfileOrdersPage() {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <OrderItem key={order.id} order={order} />
+              <OrderItem key={order.id} order={order} onDelete={handleDeleteOrder} /> // Pass handleDeleteOrder
             ))}
           </div>
         )}
@@ -219,4 +285,3 @@ export default function ProfileOrdersPage() {
     </Card>
   );
 }
-
