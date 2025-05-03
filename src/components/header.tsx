@@ -103,12 +103,12 @@ export function Header({ className }: HeaderProps) { // Destructure className
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
 
         {isMobile ? (
-          // Mobile View: Simple layout, Title on Left, Profile/Login on Right
+          // Mobile View: Title on Left, Profile/Login on Right
           <>
             {/* Brand Title (aligned left) */}
+            {/* Adjusted title size slightly for mobile */}
             <div className="flex flex-col items-start">
                 <Link href="/" className="whitespace-nowrap flex items-baseline justify-start gap-1">
-                    {/* Smaller title for mobile? Optional */}
                     <span className="text-2xl font-bold text-foreground">
                         <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                     </span>
@@ -121,7 +121,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
             {/* Right side: Profile or Login/Signup ONLY */}
             <div className="flex items-center">
                 {isLoggedIn ? (
-                   <Link href="/profile">
+                   <Link href="/profile" className="ml-1"> {/* Removed md:ml-2 as this is mobile only */}
                      <Avatar className="h-8 w-8 cursor-pointer">
                        <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
                        <AvatarFallback>
@@ -186,7 +186,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
                {/* Profile or Login/Signup */}
                {isLoggedIn ? (
-                   <Link href="/profile" className="ml-1"> {/* Reduced left margin */}
+                   <Link href="/profile" className="ml-1 md:ml-2">
                      <Avatar className="h-8 w-8 cursor-pointer">
                        <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
                        <AvatarFallback>

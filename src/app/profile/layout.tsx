@@ -15,7 +15,8 @@ export default function ProfileLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      <main className="flex-1 container py-8">
+      {/* Add pb-20 (or appropriate value based on BottomNavigation height) to prevent overlap */}
+      <main className="flex-1 container py-8 pb-20 md:pb-8">
         {/* Added pl-2 to move the heading slightly right */}
         <h1 className="text-3xl font-bold mb-6 pl-2">My Profile</h1>
         <Tabs defaultValue="basic-info" className="w-full">
@@ -37,11 +38,12 @@ export default function ProfileLayout({
 
         </Tabs>
       </main>
-       <footer className="py-4 border-t bg-muted/30 mt-auto">
+       {/* Removed footer as BottomNavigation exists */}
+       {/* <footer className="py-4 border-t bg-muted/30 mt-auto">
          <div className="container text-center text-sm text-muted-foreground">
            © {new Date().getFullYear()} LastminIT tickets. All rights reserved.
          </div>
-       </footer>
+       </footer> */}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google'; // Using Inter font as Geist is not default
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { BottomNavigation } from '@/components/bottom-navigation'; // Import BottomNavigation
 
 // Setup Inter font
 const inter = Inter({
@@ -24,9 +25,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       {/* Apply the font class and suppress hydration warning for browser extension compatibility */}
-      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning={true}> {/* Use font-sans utility */}
-        {children}
-        <Toaster />
+      <body className={`${inter.variable} font-sans antialiased flex flex-col min-h-screen`} suppressHydrationWarning={true}> {/* Use font-sans utility, flex structure */}
+         {/* Wrap children in a div that grows to push footer down */}
+         <div className="flex-grow">
+           {children}
+         </div>
+         <Toaster />
+         <BottomNavigation /> {/* Add BottomNavigation here */}
       </body>
     </html>
   );
