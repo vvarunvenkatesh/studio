@@ -162,8 +162,8 @@ export default function TicketsPage() {
         {/* Align title to the center */}
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
-         {/* Filter Section */}
-         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed">
+         {/* Filter Section - Centered with max-w and mx-auto */}
+         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-4xl mx-auto">
            <div className="flex flex-col md:flex-row gap-4 items-end">
 
                 {/* From City Input */}
@@ -222,7 +222,6 @@ export default function TicketsPage() {
            // Apply ml-2.5 (approx 10px margin-left) if any specific category filter is active
           <div className={cn(
               "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              // "ml-2.5" // Removed conditional margin as it's applied directly in TicketCard now
             )}>
             {tickets.map((ticket) => (
               <TicketCard
@@ -260,4 +259,5 @@ export default function TicketsPage() {
     </div>
   );
 }
+
 
