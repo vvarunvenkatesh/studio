@@ -1,4 +1,3 @@
-
 'use client'; // Make this a client component for interaction
 
 import * as React from 'react';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel, Hourglass for Pending
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -35,8 +34,8 @@ export function TicketCard({
     ticket,
     variant = 'browse', // Default to browse variant
     onPurchaseSuccess,
-    onCancelListing,
-    isCancelling,
+    onCancelListing, // Kept for potential future use or different variants
+    isCancelling,    // Kept for potential future use or different variants
     className
 }: TicketCardProps) {
   const { toast } = useToast();
@@ -171,7 +170,7 @@ export function TicketCard({
 
   return (
     <Card className={cn(
-        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200",
+        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full", // Added h-full
         // Adjust opacity/styling based on variant and status
         (variant === 'browse' && isSold) ? 'opacity-60 bg-muted/50' : 'bg-card',
         className // Apply the className prop here
@@ -183,13 +182,13 @@ export function TicketCard({
              <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
            {/* Added mr-2 to prevent overlap with potential delete button in parent */}
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0 mr-2">ID: {currentTicket.id}</Badge>
+           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0">ID: {currentTicket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
              {currentTicket.description}
          </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-1.5 text-sm pt-2">
+      <CardContent className="grid gap-1.5 text-sm pt-2 flex-grow"> {/* Added flex-grow */}
          {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.fromCity && currentTicket.toCity && (
              <div className="flex items-center font-medium">
                 <span className="truncate">{currentTicket.fromCity}</span>
@@ -264,43 +263,11 @@ export function TicketCard({
                      <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
                  )
              ) : (
-                 // If not sold, show Cancel Listing button
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button
-                            size="sm"
-                            variant="destructive"
-                            disabled={isCancelling}
-                            aria-label="Cancel ticket listing"
-                            className="gap-2"
-                        >
-                            {isCancelling ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <XCircle className="mr-2 h-4 w-4" />
-                            )}
-                            {isCancelling ? 'Cancelling...' : 'Cancel Listing'}
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently remove your ticket listing from the marketplace.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isCancelling}>Keep Listing</AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={() => onCancelListing?.(currentTicket.id)}
-                                disabled={isCancelling}
-                                className="bg-destructive hover:bg-destructive/90"
-                            >
-                                {isCancelling ? 'Cancelling...' : 'Confirm Cancellation'}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                 // If not sold (i.e., 'available') and variant is 'manage', show "Pending"
+                 <Badge variant="outline" className="flex items-center gap-1.5 text-muted-foreground">
+                    <Hourglass className="h-3.5 w-3.5" />
+                    Pending
+                 </Badge>
              )
          )}
 
@@ -308,4 +275,3 @@ export function TicketCard({
     </Card>
   );
 }
-
