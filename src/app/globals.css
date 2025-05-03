@@ -8,21 +8,21 @@ body {
 
 @layer base {
   :root {
-    /* Light Theme (Default) */
+    /* Light Theme */
     --background: 0 0% 100%; /* White */
     --foreground: 94 20% 10%; /* Dark Greenish Black */
-    --card: 94 13% 60%; /* #9CAF88 Green */
-    --card-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --card: 0 0% 100%; /* White - For Header and other cards */
+    --card-foreground: 94 20% 10%; /* Dark Greenish Black */
     --popover: 0 0% 100%; /* White */
     --popover-foreground: 94 20% 10%; /* Dark Greenish Black */
     --primary: 94 30% 40%; /* Darker Green */
     --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
     --secondary: 94 13% 75%; /* Lighter Green */
     --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --muted: 0 0% 96%; /* Very Light Gray (almost white) */
+    --muted: 94 13% 90%; /* Light greenish gray for subtle backgrounds */
     --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
-    --accent: 100 20% 55%; /* Slightly different Green */
-    --accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
+    --accent: 94 13% 60%; /* #9CAF88 Green */
+    --accent-foreground: 94 10% 95%; /* Very Light Greenish White */
     --destructive: 0 84.2% 60.2%; /* Default Destructive Red */
     --destructive-foreground: 0 0% 98%; /* Near White */
     --border: 94 13% 80%; /* Light Greenish Gray border */
@@ -34,7 +34,7 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    /* Light Sidebar (Matches Card) */
+    /* Sidebar variables (adjust if needed, keeping header white) */
     --sidebar-background: 94 13% 60%; /* #9CAF88 Green */
     --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
     --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
@@ -51,16 +51,16 @@ body {
     /* Dark Theme */
     --background: 94 13% 60%; /* #9CAF88 Green */
     --foreground: 94 10% 95%; /* Very Light Greenish White */
-    --card: 0 0% 100%; /* White for header/cards */
-    --card-foreground: 94 20% 10%; /* Dark Greenish Black for card text */
+    --card: 0 0% 100%; /* White - For Header and other cards */
+    --card-foreground: 94 20% 10%; /* Dark Greenish Black */
     --popover: 94 13% 55%; /* Slightly darker green */
     --popover-foreground: 94 20% 5%; /* Very Dark Greenish Black */
     --primary: 94 10% 95%; /* Light color for primary elements on green background */
     --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
     --secondary: 94 13% 75%; /* Lighter Green */
     --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --muted: 94 13% 70%; /* Medium Green */
-    --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
+    --muted: 94 13% 70%; /* Medium Green for subtle backgrounds */
+    --muted-foreground: 94 10% 95%; /* Very Light Greenish White */
     --accent: 0 0% 98%; /* Near White for accent */
     --accent-foreground: 94 20% 10%; /* Dark Greenish Black */
     --destructive: 0 70% 50%; /* Adjusted red */
@@ -74,7 +74,7 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    /* Dark Sidebar (Dark Green) */
+    /* Sidebar variables (adjust if needed, keeping header white) */
     --sidebar-background: 94 30% 35%; /* Dark Green */
     --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
     --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
