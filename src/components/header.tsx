@@ -4,11 +4,12 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { User, MapPin } from 'lucide-react'; // User icon for fallback, MapPin for location
+import { User, MapPin, Menu } from 'lucide-react'; // User icon for fallback, MapPin for location, Menu for mobile menu
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select
 import { cn } from '@/lib/utils'; // Import cn utility
 import { useIsMobile } from '@/hooks/use-mobile'; // Import the hook
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // Import Sheet for mobile menu
 
 interface HeaderProps {
   className?: string; // Add className prop
@@ -26,6 +27,8 @@ export function Header({ className }: HeaderProps) { // Destructure className
   const [selectedLocation, setSelectedLocation] = React.useState<string>('');
   // Hook to detect mobile view
   const isMobile = useIsMobile();
+  // State for mobile menu open/close
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
 
   // Check localStorage on component mount (client-side only)
@@ -107,6 +110,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
             {/* Mobile View */}
             {/* Brand Title (aligned left) - Removed Link wrapper */}
             <div className="flex flex-col items-start">
+                {/* Corrected title display for mobile */}
                 <span className="text-2xl font-bold text-foreground whitespace-nowrap flex items-baseline justify-start gap-1">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                 </span>
@@ -119,8 +123,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
             <div className="flex items-center gap-2">
                  {/* Location Selector (Mobile) */}
                 <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                    {/* Removed gap-1 from here */}
-                    <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0">
+                    <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
                         <MapPin className="h-4 w-4 flex-shrink-0" />
                         <SelectValue placeholder="Select Location" />
                     </SelectTrigger>
@@ -164,8 +167,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
             <div className="flex items-center gap-3 md:gap-4">
                {/* Location Selector */}
                 <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                    {/* Removed gap-1 from here */}
-                    <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0">
+                    <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
                         <MapPin className="h-4 w-4 flex-shrink-0" />
                         <SelectValue placeholder="Select Location" />
                     </SelectTrigger>
@@ -209,3 +211,4 @@ export function Header({ className }: HeaderProps) { // Destructure className
     </header>
   );
 }
+
