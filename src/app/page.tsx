@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight, Ticket } from 'lucide-react'; // Renamed alias to avoid conflict, Added Chevron icons
+import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight } from 'lucide-react'; // Added TicketCategoryIcon alias
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header'; // Import the Header component
@@ -58,6 +59,7 @@ function AdvertisementSlider() {
 
   return (
     // Increased height classes, removed margins/padding. Full width.
+    // Removed py-6, ensuring it attaches to the header
     <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg group"> {/* Added group class for hover state on arrows */}
       {advertisements.map((ad, index) => (
         <Image
