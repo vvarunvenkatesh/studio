@@ -103,16 +103,13 @@ export function Header({ className }: HeaderProps) { // Destructure className
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
 
         {isMobile ? (
-          // Mobile View: Title on Left, remove profile/login
           <>
-            {/* Brand Title (aligned left) */}
-            {/* Adjusted title size slightly for mobile */}
+            {/* Mobile View: Title on Left, remove profile/login */}
+             {/* Brand Title (aligned left) - Removed Link wrapper */}
             <div className="flex flex-col items-start">
-                <Link href="/" className="whitespace-nowrap flex items-baseline justify-start gap-1">
-                    <span className="text-2xl font-bold text-foreground">
-                        <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
-                    </span>
-                </Link>
+                <span className="text-2xl font-bold text-foreground whitespace-nowrap flex items-baseline justify-start gap-1">
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                </span>
                  <span className="text-xs text-foreground mt-[-4px] opacity-80">
                    Ticket Reselling Platform
                  </span>
