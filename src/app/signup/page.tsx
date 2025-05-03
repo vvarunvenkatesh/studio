@@ -77,7 +77,7 @@ export default function SignupPage() {
                  <span className="text-3xl font-bold">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
-                 <span className="text-lg font-medium text-muted-foreground ml-1">&quot;Ticket Reselling platform&quot;</span>
+                 {/* Removed Tagline */}
              </Link>
           </CardTitle>
           <CardDescription>Create your account to start selling</CardDescription>

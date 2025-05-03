@@ -67,8 +67,7 @@ export default function LoginPage() {
                  <span className="text-3xl font-bold">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
-                 {/* Updated Tagline with quotes and adjusted styling */}
-                 <span className="text-lg font-medium text-muted-foreground ml-1">&quot;Ticket Reselling platform&quot;</span>
+                 {/* Removed Tagline */}
              </Link>
           </CardTitle>
           <CardDescription>Enter your credentials to access your account</CardDescription>
@@ -134,4 +133,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
