@@ -70,12 +70,12 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
 
   return (
-    // Apply className prop here, keep default styles
-    <header className={cn("sticky top-0 z-40 w-full border-b bg-card", className)}>
+    // Apply className prop here, changed background to bg-background
+    <header className={cn("sticky top-0 z-40 w-full border-b bg-background", className)}>
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
 
         {/* Left side: Login/Signup or Profile Button */}
-        <div className="flex items-center md:ml-4"> {/* Added margin for desktop */}
+         <div className="flex items-center md:ml-4"> {/* Added margin for desktop */}
            {isLoggedIn ? (
                <div className="flex items-center gap-3">
                  <Link href="/profile">
@@ -90,11 +90,12 @@ export function Header({ className }: HeaderProps) { // Destructure className
                </div>
             ) : (
                  // Login/Signup Button with Outline style and gradient hover
-                <Button asChild variant="outline" size="sm" className="bg-background hover:bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:text-primary-foreground gap-2 text-foreground border">
-                    <Link href="/login">
-                        <span>Login/Signup</span>
-                    </Link>
-                </Button>
+                 <Button asChild variant="outline" size="sm" className="bg-background hover:bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:text-primary-foreground gap-2 text-foreground border">
+                     {/* Link should be the direct child for asChild */}
+                     <Link href="/login">
+                         <span>Login/Signup</span>
+                     </Link>
+                 </Button>
             )}
         </div>
 
@@ -116,8 +117,9 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
         {/* Right side: Post Ticket Button */}
         <nav className="flex items-center md:mr-4"> {/* Added margin for desktop */}
-           {/* Post Ticket button with specified color */}
-          <Button asChild size="sm" className="gap-2 text-white bg-[#16A085] hover:bg-[#148c73] transition-colors">
+           {/* Post Ticket button with specified color #FF2459 */}
+          <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
+            {/* Link should be the direct child for asChild */}
             <Link href="/post-ticket">
               <PlusCircle className="h-4 w-4" />
               <span className="hidden sm:inline">Post Ticket</span>
@@ -129,3 +131,4 @@ export function Header({ className }: HeaderProps) { // Destructure className
     </header>
   );
 }
+
