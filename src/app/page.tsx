@@ -179,7 +179,7 @@ export default function Home() {
             <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
             <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
             <CategoryIcon icon={CalendarIconLucide} label="Event Tickets" href="/tickets?category=event" />
-            <CategoryIcon icon={TicketCategoryIcon} label="All Tickets" href="/tickets" />
+            <CategoryIcon icon={TicketCategoryIcon} label="Spots tickets" href="/tickets" /> {/* Updated Label */}
          </div>
 
           {/* Bottom Advertisements Section */}
@@ -213,7 +213,7 @@ export default function Home() {
 
       </main>
 
-       <footer className="py-4 border-t bg-background mt-auto">
+       <footer className="py-4 border-t bg-muted/30 mt-auto"> {/* Adjusted footer bg */}
          <div className="container text-center text-sm text-muted-foreground">
            © {new Date().getFullYear()} LastminIT tickets. All rights reserved.
          </div>
