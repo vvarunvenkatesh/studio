@@ -116,8 +116,8 @@ export default function ProfileBasicInfoPage() {
 
 
   return (
-    // Constrain width and center the card within the Tabs content area
-    <Card className="w-full max-w-2xl mx-auto">
+    // Removed mx-auto to align card left within the Tabs content area
+    <Card className="w-full max-w-2xl">
       <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
          <div className="relative group">
             <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
