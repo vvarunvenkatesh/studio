@@ -8,76 +8,76 @@ body {
 
 @layer base {
   :root {
-    --background: 50 63% 51%; /* #d1b834 - Mustard Yellow */
-    --foreground: 50 15% 15%; /* Dark Brown/Black */
-    --card: 50 63% 56%; /* Slightly Lighter Yellow */
-    --card-foreground: 50 15% 15%; /* Dark Brown/Black */
-    --popover: 50 63% 46%; /* Slightly Darker Yellow */
-    --popover-foreground: 50 15% 95%; /* Near White */
-    --primary: 50 15% 15%; /* Dark Brown/Black */
-    --primary-foreground: 50 60% 90%; /* Light Yellow/Cream */
-    --secondary: 50 63% 65%; /* Lighter Yellow */
-    --secondary-foreground: 50 15% 15%; /* Dark Brown/Black */
-    --muted: 50 63% 46%; /* Slightly Darker Yellow */
-    --muted-foreground: 50 30% 70%; /* Desaturated Yellow/Gray */
-    --accent: 50 63% 65%; /* Lighter Yellow */
-    --accent-foreground: 50 15% 10%; /* Very Dark Brown/Black */
+    --background: 25 100% 70%; /* #FFA364 - Peach/Orange */
+    --foreground: 25 50% 10%; /* Dark Brown */
+    --card: 25 100% 75%; /* Lighter Peach */
+    --card-foreground: 25 50% 10%; /* Dark Brown */
+    --popover: 25 100% 65%; /* Slightly Darker Peach */
+    --popover-foreground: 25 50% 5%; /* Very Dark Brown */
+    --primary: 25 80% 40%; /* Darker Orange/Brown */
+    --primary-foreground: 25 100% 95%; /* Very Light Peach/Off-white */
+    --secondary: 25 100% 85%; /* Very Light Peach */
+    --secondary-foreground: 25 50% 10%; /* Dark Brown */
+    --muted: 25 100% 60%; /* Medium Peach */
+    --muted-foreground: 25 30% 40%; /* Desaturated Brown */
+    --accent: 20 100% 65%; /* Slightly different Orange */
+    --accent-foreground: 25 50% 5%; /* Very Dark Brown */
     --destructive: 0 84.2% 60.2%; /* Default Destructive Red */
     --destructive-foreground: 0 0% 98%; /* Near White */
-    --border: 50 63% 40%; /* Medium Dark Yellow */
-    --input: 50 63% 40%; /* Medium Dark Yellow */
-    --ring: 50 15% 15%; /* Dark Brown/Black */
+    --border: 25 100% 55%; /* Medium Dark Peach */
+    --input: 25 100% 55%; /* Medium Dark Peach */
+    --ring: 25 80% 40%; /* Darker Orange/Brown - same as primary */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    /* Sidebar colors adjusted for consistency */
-    --sidebar-background: 50 63% 46%; /* Slightly Darker Yellow */
-    --sidebar-foreground: 50 15% 95%; /* Near White */
-    --sidebar-primary: 50 15% 95%; /* Near White */
-    --sidebar-primary-foreground: 50 15% 15%; /* Dark Brown/Black */
-    --sidebar-accent: 50 63% 65%; /* Lighter Yellow */
-    --sidebar-accent-foreground: 50 15% 10%; /* Very Dark Brown/Black */
-    --sidebar-border: 50 63% 35%; /* Darker Yellow border */
-    --sidebar-ring: 50 15% 95%; /* Near White */
+    /* Sidebar colors adjusted */
+    --sidebar-background: 25 80% 35%; /* Dark Orange/Brown */
+    --sidebar-foreground: 25 100% 95%; /* Very Light Peach/Off-white */
+    --sidebar-primary: 25 100% 95%; /* Very Light Peach/Off-white */
+    --sidebar-primary-foreground: 25 50% 10%; /* Dark Brown */
+    --sidebar-accent: 25 100% 75%; /* Lighter Peach */
+    --sidebar-accent-foreground: 25 50% 5%; /* Very Dark Brown */
+    --sidebar-border: 25 80% 25%; /* Darker Orange/Brown border */
+    --sidebar-ring: 25 100% 95%; /* Very Light Peach/Off-white */
   }
   .dark {
-    /* Dark mode adjusted for contrast with the yellow theme */
-    --background: 50 20% 15%; /* Dark Brownish Yellow */
-    --foreground: 50 20% 85%; /* Light beige/yellowish gray */
-    --card: 50 20% 20%; /* Slightly lighter dark Brownish Yellow */
-    --card-foreground: 50 20% 85%; /* Light beige/yellowish gray */
-    --popover: 50 20% 10%; /* Very dark Brownish Yellow */
-    --popover-foreground: 50 20% 85%; /* Light beige/yellowish gray */
-    --primary: 50 60% 70%; /* Visible yellow tone */
-    --primary-foreground: 50 20% 10%; /* Very dark Brownish Yellow */
-    --secondary: 50 20% 25%; /* Medium dark Brownish Yellow */
-    --secondary-foreground: 50 20% 90%; /* Off-white */
-    --muted: 50 20% 25%; /* Medium dark Brownish Yellow */
-    --muted-foreground: 50 15% 60%; /* Medium Gray-Yellow */
-    --accent: 50 60% 60%; /* Muted yellow accent */
-    --accent-foreground: 50 20% 5%; /* Very dark Brownish Yellow */
+    /* Dark mode adjusted for contrast with the orange/peach theme */
+    --background: 25 30% 10%; /* Very Dark Brown/Orange */
+    --foreground: 25 100% 85%; /* Light Peach/Orange */
+    --card: 25 30% 15%; /* Slightly Lighter Dark Brown/Orange */
+    --card-foreground: 25 100% 85%; /* Light Peach/Orange */
+    --popover: 25 30% 5%; /* Near Black Brown/Orange */
+    --popover-foreground: 25 100% 85%; /* Light Peach/Orange */
+    --primary: 25 100% 70%; /* Main Peach/Orange color from light mode */
+    --primary-foreground: 25 50% 10%; /* Dark Brown */
+    --secondary: 25 30% 25%; /* Medium Dark Brown/Orange */
+    --secondary-foreground: 25 100% 90%; /* Very Light Peach/Orange */
+    --muted: 25 30% 25%; /* Medium Dark Brown/Orange */
+    --muted-foreground: 25 50% 60%; /* Medium Desaturated Peach/Orange */
+    --accent: 20 100% 60%; /* Slightly different Orange, darker */
+    --accent-foreground: 25 30% 5%; /* Near Black Brown/Orange */
     --destructive: 0 70% 50%; /* Slightly adjusted red */
     --destructive-foreground: 0 0% 98%;
-    --border: 50 20% 30%; /* Darker Brownish Yellow border */
-    --input: 50 20% 30%; /* Darker Brownish Yellow input */
-    --ring: 50 60% 70%; /* Visible yellow tone ring */
+    --border: 25 30% 30%; /* Darker Brown/Orange border */
+    --input: 25 30% 30%; /* Darker Brown/Orange input */
+    --ring: 25 100% 70%; /* Main Peach/Orange Ring */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
     /* Dark Sidebar */
-    --sidebar-background: 50 20% 10%; /* Very dark Brownish Yellow */
-    --sidebar-foreground: 50 20% 85%; /* Light beige/yellowish gray */
-    --sidebar-primary: 50 20% 85%; /* Light beige/yellowish gray */
-    --sidebar-primary-foreground: 50 20% 5%; /* Very dark Brownish Yellow */
-    --sidebar-accent: 50 20% 25%; /* Medium dark Brownish Yellow */
-    --sidebar-accent-foreground: 50 20% 90%; /* Off-white */
-    --sidebar-border: 50 20% 30%; /* Darker Brownish Yellow border */
-    --sidebar-ring: 50 20% 85%; /* Light beige/yellowish gray */
+    --sidebar-background: 25 30% 5%; /* Near Black Brown/Orange */
+    --sidebar-foreground: 25 100% 85%; /* Light Peach/Orange */
+    --sidebar-primary: 25 100% 85%; /* Light Peach/Orange */
+    --sidebar-primary-foreground: 25 30% 5%; /* Near Black Brown/Orange */
+    --sidebar-accent: 25 30% 25%; /* Medium Dark Brown/Orange */
+    --sidebar-accent-foreground: 25 100% 90%; /* Very Light Peach/Orange */
+    --sidebar-border: 25 30% 30%; /* Darker Brown/Orange border */
+    --sidebar-ring: 25 100% 85%; /* Light Peach/Orange */
   }
 }
 
