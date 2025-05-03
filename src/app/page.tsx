@@ -81,36 +81,38 @@ function AdvertisementSlider() {
        </div>
 
        {/* Navigation Arrows */}
-       {/* Previous Button */}
+       {/* Previous Button - Removed background and rounded-full */}
         <Button
             variant="ghost"
             size="icon"
             onClick={goToPrevious}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 text-white hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 w-8 md:h-10 md:w-10"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 md:h-10 md:w-10"
             aria-label="Previous slide"
         >
             <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
         </Button>
-        {/* Next Button */}
+        {/* Next Button - Removed background and rounded-full */}
         <Button
             variant="ghost"
             size="icon"
             onClick={goToNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 text-white hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 w-8 md:h-10 md:w-10"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 md:h-10 md:w-10"
             aria-label="Next slide"
         >
             <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
         </Button>
 
-        {/* Pagination Bubbles */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex space-x-2 p-2">
+        {/* Pagination Bubbles - Updated styling */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2 p-2">
             {advertisements.map((_, index) => (
                 <button
                     key={index}
                     onClick={() => goToSlide(index)}
                     className={cn(
-                        "h-2 w-2 rounded-full transition-colors duration-300",
-                        index === currentAd ? 'bg-white' : 'bg-white/50 hover:bg-white/75'
+                        "rounded-full transition-all duration-300 ease-in-out", // Common styles
+                        index === currentAd
+                            ? 'h-2.5 w-2.5 bg-white' // Active bubble - slightly larger
+                            : 'h-2 w-2 bg-white/50 hover:bg-white/75' // Inactive bubble - smaller
                     )}
                     aria-label={`Go to slide ${index + 1}`}
                 />
