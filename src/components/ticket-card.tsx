@@ -88,18 +88,44 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
    // Function to handle downloading the original ticket
    const handleDownload = () => {
      if (currentTicket.originalTicketDataUri) {
-       const link = document.createElement('a');
-       link.href = currentTicket.originalTicketDataUri;
-       // Extract filename or provide a default
-       const filename = `ticket_${currentTicket.type}_${currentTicket.id}.${currentTicket.originalTicketDataUri.split(';')[0].split('/')[1] || 'file'}`;
-       link.download = filename;
-       document.body.appendChild(link);
-       link.click();
-       document.body.removeChild(link);
-       toast({
-         title: 'Download Started',
-         description: `Downloading ${filename}...`
-       })
+       try {
+          const link = document.createElement('a');
+          link.href = currentTicket.originalTicketDataUri;
+
+          // Attempt to extract file extension from MIME type in data URI
+          let fileExtension = 'file';
+          const mimeMatch = currentTicket.originalTicketDataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
+          if (mimeMatch && mimeMatch[1]) {
+            const mimeType = mimeMatch[1];
+            // Basic mapping, can be expanded
+            const extensionMap: Record<string, string> = {
+              'image/jpeg': 'jpg',
+              'image/png': 'png',
+              'image/gif': 'gif',
+              'application/pdf': 'pdf',
+              'application/msword': 'doc',
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+            };
+            fileExtension = extensionMap[mimeType] || fileExtension;
+          }
+
+          const filename = `ticket_${currentTicket.type}_${currentTicket.id}.${fileExtension}`;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast({
+            title: 'Download Started',
+            description: `Downloading ${filename}...`
+          })
+        } catch (error) {
+            console.error("Error preparing download:", error);
+             toast({
+               title: 'Download Failed',
+               description: 'Could not prepare the file for download.',
+               variant: 'destructive'
+             })
+        }
      } else {
         toast({
           title: 'Download Failed',
@@ -164,8 +190,8 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
              {currentTicket.price.toFixed(2)}
          </div>
          {isSold ? (
-             // If sold and it's a train ticket with a file, show Download button
-             currentTicket.type === 'train' && currentTicket.originalTicketDataUri ? (
+             // If sold and original ticket data exists, show Download button
+             currentTicket.originalTicketDataUri ? (
                 <Button
                     size="sm"
                     variant="secondary" // Or another appropriate variant
@@ -177,7 +203,7 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
                     Download
                 </Button>
              ) : (
-                // Otherwise, show Sold badge
+                // If sold but no file exists, show Sold badge
                 <Badge variant="destructive">Sold</Badge>
              )
          ) : (
