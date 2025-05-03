@@ -26,7 +26,8 @@ export default function RootLayout({
     <html lang="en">
       {/* Apply the font class, suppress hydration warning, add flex structure and padding-bottom */}
       <body
-         className={`${inter.variable} font-sans antialiased flex flex-col min-h-screen pb-16 md:pb-0`} // Add pb-16 for bottom nav height, remove for md+
+         // Apply pb-16 always for bottom nav height, as md:pb-0 might not trigger correctly for all devices/views
+         className={`${inter.variable} font-sans antialiased flex flex-col min-h-screen pb-16`}
          suppressHydrationWarning={true}
        >
          {/* Wrap children in a div that grows to push footer down */}

@@ -98,7 +98,7 @@ export default function PostTicketPage() {
   return (
     // Use cn to conditionally apply the movie poster background
     <div className={cn(
-      "flex min-h-screen flex-col",
+      "flex min-h-screen flex-col pb-16 md:pb-0", // Added padding bottom for bottom nav
       ticketType === 'movie' ? 'bg-movie-poster' : 'bg-background' // Changed default to background
     )}>
       {/* Header background should remain consistent, maybe slightly transparent for movie poster */}
@@ -130,8 +130,8 @@ export default function PostTicketPage() {
                     {postedTickets.map((ticket) => (
                        <div key={ticket.id} className="relative group/listing">
                             <TicketCard ticket={ticket} className="ml-2.5" />
-                            {/* Delete Button Overlay */}
-                            <div className="absolute top-2 right-2 z-10">
+                            {/* Delete Button Overlay - Adjusted position */}
+                            <div className="absolute top-3 right-3 z-10"> {/* Changed top-2 right-2 to top-3 right-3 */}
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button
