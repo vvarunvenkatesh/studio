@@ -198,7 +198,7 @@ export function TicketCard({
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>Keep Listing</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onCancelListing?.(currentTicket.id)} className={buttonVariants({ variant: "destructive" })}>
+                <AlertDialogAction onClick={() => onCancelListing?.(currentTicket.id)} className={cn(buttonVariants({ variant: "destructive" }))}>
                     Cancel Listing
                 </AlertDialogAction>
             </AlertDialogFooter>
