@@ -227,3 +227,4 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
     </Card>
   );
 }
+
