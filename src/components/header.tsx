@@ -7,7 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; //
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background">
+    // Changed bg-background to bg-card to use a slightly different shade for the header
+    <header className="sticky top-0 z-40 w-full border-b bg-card">
       <div className="container flex h-16 items-center justify-between">
          {/* Profile Icon or Placeholder */}
          <Avatar className="h-9 w-9 cursor-pointer">
@@ -15,8 +16,8 @@ export function Header() {
             <AvatarFallback>U</AvatarFallback>
          </Avatar>
 
-        {/* Centered Title - This is now handled on the Home page specifically */}
-         <Link href="/" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-foreground whitespace-nowrap">
+        {/* Centered Title */}
+         <Link href="/" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-card-foreground whitespace-nowrap">
              LastminIT<span className="text-primary">tickets</span>
          </Link>
 
