@@ -40,11 +40,10 @@ export function Header() {
         {/* Centered Title and Slogan */}
          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
              <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center">
-                  {/* Updated Brand Name with colored letters */}
+                 {/* Reverted Brand Name styling */}
                  <span className="text-3xl font-bold">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-amber-700">T</span>
+                    LastMiniT
                  </span>
-                 {/* Slogan moved below */}
              </Link>
              {/* Slogan */}
              {/* Changed text color to text-foreground and added opacity */}

@@ -64,8 +64,9 @@ export default function ForgotPasswordPage() {
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center gap-1">
+                 {/* Reverted Brand Name styling */}
                  <span className="text-3xl font-bold">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-amber-700">T</span>
+                    LastMiniT
                  </span>
              </Link>
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
