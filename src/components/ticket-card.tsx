@@ -4,7 +4,7 @@ import * as React from 'react';
 import type { Ticket } from '@/services/ticket-marketplace';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
 import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel
 import { format } from 'date-fns';
@@ -227,7 +227,20 @@ export function TicketCard({
          {/* Conditional Rendering based on variant and status */}
          {variant === 'browse' && (
              isSold ? (
-                 <Badge variant="destructive">Sold</Badge>
+                 // If sold and has downloadable file, show download
+                 currentTicket.originalTicketDataUri ? (
+                     <Button
+                         size="sm"
+                         onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
+                         aria-label="Download original ticket"
+                         className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                     >
+                         <Download className="mr-2 h-4 w-4" />
+                         Download
+                     </Button>
+                 ) : (
+                     <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
+                 )
              ) : (
                 <Button
                   size="sm"
