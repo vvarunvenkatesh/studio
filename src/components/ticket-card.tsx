@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel, Hourglass for Pending
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -34,8 +34,8 @@ export function TicketCard({
     ticket,
     variant = 'browse', // Default to browse variant
     onPurchaseSuccess,
-    onCancelListing, // Kept for potential future use or different variants
-    isCancelling,    // Kept for potential future use or different variants
+    onCancelListing, // Pass the cancel handler
+    isCancelling,    // Pass the loading state
     className
 }: TicketCardProps) {
   const { toast } = useToast();
@@ -263,11 +263,39 @@ export function TicketCard({
                      <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
                  )
              ) : (
-                 // If not sold (i.e., 'available') and variant is 'manage', show "Pending"
-                 <Badge variant="outline" className="flex items-center gap-1.5 text-muted-foreground">
-                    <Hourglass className="h-3.5 w-3.5" />
-                    Pending
-                 </Badge>
+                 // If not sold (i.e., 'available') and variant is 'manage', show "Cancel Listing" button
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={isCancelling}
+                          aria-label="Cancel ticket listing"
+                          className="gap-2"
+                        >
+                          {isCancelling ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <XCircle className="mr-2 h-4 w-4" />
+                          )}
+                          {isCancelling ? 'Cancelling...' : 'Cancel Listing'}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently remove your ticket listing from the marketplace. This action cannot be undone.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Keep Listing</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onCancelListing?.(currentTicket.id)} className={buttonVariants({ variant: "destructive" })}>
+                            Cancel Listing
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                 </AlertDialog>
              )
          )}
 
