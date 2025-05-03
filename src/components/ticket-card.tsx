@@ -10,6 +10,7 @@ import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
+import { cn } from '@/lib/utils'; // Import cn
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -72,7 +73,11 @@ export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
   };
 
   return (
-    <Card className={`flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 ${isSold ? 'opacity-60 bg-muted/50' : 'bg-card'}`}> {/* Use bg-card for non-sold */}
+    <Card className={cn(
+        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200",
+        isSold ? 'opacity-60 bg-muted/50' : 'bg-card', // Use bg-card for non-sold
+        // ticket.type === 'bus' && 'ml-2.5' // Add margin-left only for bus tickets (approx 10px) - Removed based on subsequent requests to center align cards
+    )}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between mb-1">
            <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2">
