@@ -24,8 +24,9 @@ export function Header() {
 
         {/* Navigation/Actions on the right */}
         <nav>
-          <Button asChild className="gap-2"> {/* Added gap-2 */}
-            <Link href="/post-ticket">
+          {/* Apply gap-2 directly to the Link component, as Button uses asChild */}
+          <Button asChild>
+            <Link href="/post-ticket" className="gap-2"> {/* Moved gap-2 here */}
               <PlusCircle className="mr-2 h-4 w-4" /> Post Ticket
             </Link>
           </Button>
