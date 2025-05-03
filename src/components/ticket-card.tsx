@@ -170,7 +170,8 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
              <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0">ID: {currentTicket.id}</Badge>
+           {/* Added mr-2 to prevent overlap with potential delete button in parent */}
+           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0 mr-2">ID: {currentTicket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
              {currentTicket.description}
@@ -216,10 +217,9 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
              currentTicket.originalTicketDataUri ? (
                 <Button
                     size="sm"
-                    // Removed variant="secondary" to use default primary color
                     onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
                     aria-label="Download original ticket"
-                    className="gap-2"
+                    className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90" // Apply primary button styling
                 >
                     <Download className="mr-2 h-4 w-4" />
                     Download
@@ -249,4 +249,3 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
     </Card>
   );
 }
-
