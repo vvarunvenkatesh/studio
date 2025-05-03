@@ -8,76 +8,80 @@ body {
 
 @layer base {
   :root {
-    --background: 25 100% 70%; /* #FFA364 - Peach/Orange */
-    --foreground: 25 50% 10%; /* Dark Brown */
-    --card: 25 100% 75%; /* Lighter Peach */
-    --card-foreground: 25 50% 10%; /* Dark Brown */
-    --popover: 25 100% 65%; /* Slightly Darker Peach */
-    --popover-foreground: 25 50% 5%; /* Very Dark Brown */
-    --primary: 25 80% 40%; /* Darker Orange/Brown */
-    --primary-foreground: 25 100% 95%; /* Very Light Peach/Off-white */
-    --secondary: 25 100% 85%; /* Very Light Peach */
-    --secondary-foreground: 25 50% 10%; /* Dark Brown */
-    --muted: 25 100% 60%; /* Medium Peach */
-    --muted-foreground: 25 30% 40%; /* Desaturated Brown */
-    --accent: 20 100% 65%; /* Slightly different Orange */
-    --accent-foreground: 25 50% 5%; /* Very Dark Brown */
+    /* Light Theme based on #9CAF88 */
+    --background: 94 13% 60%; /* #9CAF88 */
+    --foreground: 94 20% 10%; /* Dark Greenish Black */
+    --card: 0 0% 100%; /* White for header */
+    --card-foreground: 94 20% 10%; /* Dark Greenish Black for header text */
+    --popover: 94 13% 55%; /* Slightly darker green */
+    --popover-foreground: 94 20% 5%; /* Very Dark Greenish Black */
+    --primary: 94 30% 40%; /* Darker Green */
+    --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --secondary: 94 13% 75%; /* Lighter Green */
+    --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --muted: 94 13% 70%; /* Medium Green */
+    --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
+    --accent: 100 20% 55%; /* Slightly different Green */
+    --accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
     --destructive: 0 84.2% 60.2%; /* Default Destructive Red */
     --destructive-foreground: 0 0% 98%; /* Near White */
-    --border: 25 100% 55%; /* Medium Dark Peach */
-    --input: 25 100% 55%; /* Medium Dark Peach */
-    --ring: 25 80% 40%; /* Darker Orange/Brown - same as primary */
-    --chart-1: 12 76% 61%;
+    --border: 94 13% 50%; /* Medium Dark Green */
+    --input: 94 13% 50%; /* Medium Dark Green */
+    --ring: 94 30% 40%; /* Darker Green - same as primary */
+    --chart-1: 12 76% 61%; /* Keeping chart colors distinct */
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    /* Sidebar colors adjusted */
-    --sidebar-background: 25 80% 35%; /* Dark Orange/Brown */
-    --sidebar-foreground: 25 100% 95%; /* Very Light Peach/Off-white */
-    --sidebar-primary: 25 100% 95%; /* Very Light Peach/Off-white */
-    --sidebar-primary-foreground: 25 50% 10%; /* Dark Brown */
-    --sidebar-accent: 25 100% 75%; /* Lighter Peach */
-    --sidebar-accent-foreground: 25 50% 5%; /* Very Dark Brown */
-    --sidebar-border: 25 80% 25%; /* Darker Orange/Brown border */
-    --sidebar-ring: 25 100% 95%; /* Very Light Peach/Off-white */
+
+    /* Sidebar colors adjusted for green theme */
+    --sidebar-background: 94 30% 35%; /* Dark Green */
+    --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
+    --sidebar-primary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --sidebar-accent: 94 13% 75%; /* Lighter Green */
+    --sidebar-accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
+    --sidebar-border: 94 30% 25%; /* Darker Green border */
+    --sidebar-ring: 94 10% 95%; /* Very Light Greenish White */
   }
+
   .dark {
-    /* Dark mode adjusted for contrast with the orange/peach theme */
-    --background: 25 30% 10%; /* Very Dark Brown/Orange */
-    --foreground: 25 100% 85%; /* Light Peach/Orange */
-    --card: 25 30% 15%; /* Slightly Lighter Dark Brown/Orange */
-    --card-foreground: 25 100% 85%; /* Light Peach/Orange */
-    --popover: 25 30% 5%; /* Near Black Brown/Orange */
-    --popover-foreground: 25 100% 85%; /* Light Peach/Orange */
-    --primary: 25 100% 70%; /* Main Peach/Orange color from light mode */
-    --primary-foreground: 25 50% 10%; /* Dark Brown */
-    --secondary: 25 30% 25%; /* Medium Dark Brown/Orange */
-    --secondary-foreground: 25 100% 90%; /* Very Light Peach/Orange */
-    --muted: 25 30% 25%; /* Medium Dark Brown/Orange */
-    --muted-foreground: 25 50% 60%; /* Medium Desaturated Peach/Orange */
-    --accent: 20 100% 60%; /* Slightly different Orange, darker */
-    --accent-foreground: 25 30% 5%; /* Near Black Brown/Orange */
+    /* Dark mode adjusted for contrast with the green theme */
+    --background: 94 15% 10%; /* Very Dark Greenish Gray */
+    --foreground: 94 10% 85%; /* Light Greenish Gray */
+    --card: 94 15% 15%; /* Slightly Lighter Dark Greenish Gray */
+    --card-foreground: 94 10% 85%; /* Light Greenish Gray */
+    --popover: 94 15% 5%; /* Near Black Greenish Gray */
+    --popover-foreground: 94 10% 85%; /* Light Greenish Gray */
+    --primary: 94 13% 60%; /* Main Green color from light mode */
+    --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --secondary: 94 15% 25%; /* Medium Dark Greenish Gray */
+    --secondary-foreground: 94 10% 90%; /* Very Light Greenish Gray */
+    --muted: 94 15% 25%; /* Medium Dark Greenish Gray */
+    --muted-foreground: 94 10% 60%; /* Medium Desaturated Greenish Gray */
+    --accent: 100 20% 50%; /* Slightly different Green, darker */
+    --accent-foreground: 94 15% 5%; /* Near Black Greenish Gray */
     --destructive: 0 70% 50%; /* Slightly adjusted red */
     --destructive-foreground: 0 0% 98%;
-    --border: 25 30% 30%; /* Darker Brown/Orange border */
-    --input: 25 30% 30%; /* Darker Brown/Orange input */
-    --ring: 25 100% 70%; /* Main Peach/Orange Ring */
+    --border: 94 15% 30%; /* Darker Greenish Gray border */
+    --input: 94 15% 30%; /* Darker Greenish Gray input */
+    --ring: 94 13% 60%; /* Main Green Ring */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
     /* Dark Sidebar */
-    --sidebar-background: 25 30% 5%; /* Near Black Brown/Orange */
-    --sidebar-foreground: 25 100% 85%; /* Light Peach/Orange */
-    --sidebar-primary: 25 100% 85%; /* Light Peach/Orange */
-    --sidebar-primary-foreground: 25 30% 5%; /* Near Black Brown/Orange */
-    --sidebar-accent: 25 30% 25%; /* Medium Dark Brown/Orange */
-    --sidebar-accent-foreground: 25 100% 90%; /* Very Light Peach/Orange */
-    --sidebar-border: 25 30% 30%; /* Darker Brown/Orange border */
-    --sidebar-ring: 25 100% 85%; /* Light Peach/Orange */
+    --sidebar-background: 94 15% 5%; /* Near Black Greenish Gray */
+    --sidebar-foreground: 94 10% 85%; /* Light Greenish Gray */
+    --sidebar-primary: 94 10% 85%; /* Light Greenish Gray */
+    --sidebar-primary-foreground: 94 15% 5%; /* Near Black Greenish Gray */
+    --sidebar-accent: 94 15% 25%; /* Medium Dark Greenish Gray */
+    --sidebar-accent-foreground: 94 10% 90%; /* Very Light Greenish Gray */
+    --sidebar-border: 94 15% 30%; /* Darker Greenish Gray border */
+    --sidebar-ring: 94 10% 85%; /* Light Greenish Gray */
   }
 }
 
