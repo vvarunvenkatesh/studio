@@ -32,6 +32,10 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Redirecting you to the homepage...',
       });
+      // Simulate setting login state
+      if (typeof window !== 'undefined') {
+         localStorage.setItem('isLoggedIn', 'true');
+      }
       // Redirect to homepage after successful login simulation
       router.push('/');
     } else {
@@ -136,3 +140,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
