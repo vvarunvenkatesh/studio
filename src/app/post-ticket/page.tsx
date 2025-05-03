@@ -66,6 +66,7 @@ export default function PostTicketPage() {
   }, [loadPostedTickets]); // Depend on memoized load function
 
   // Handle deleting/cancelling a ticket listing
+  // This function is passed down to the TicketCard component
   const handleDeleteTicket = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
@@ -133,10 +134,13 @@ export default function PostTicketPage() {
                        <TicketCard
                             key={ticket.id}
                             ticket={ticket}
-                            variant="manage" // Specify the manage variant
-                            onCancelListing={handleDeleteTicket} // Pass the cancel handler
-                            isCancelling={isDeleting === ticket.id} // Pass the loading state
-                            isSeller={true} // User is always the seller on this page
+                            variant="manage" // Specify the manage variant (important for styling/logic if needed)
+                            // User is always the seller on this page
+                            isSeller={true}
+                            // Pass the cancel handler function
+                            onCancelListing={handleDeleteTicket}
+                            // Pass the loading state for this specific ticket
+                            isCancelling={isDeleting === ticket.id}
                             className="ml-2.5"
                         />
                     ))}

@@ -171,6 +171,7 @@ export function TicketCard({
    };
 
   // Helper to render the Cancel Listing button/dialog
+  // This button should be displayed if `isSeller` is true and `!isSold`.
   const renderCancelButton = () => (
     <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -198,6 +199,7 @@ export function TicketCard({
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>Keep Listing</AlertDialogCancel>
+                {/* The onClick here calls the onCancelListing function passed from the parent */}
                 <AlertDialogAction onClick={() => onCancelListing?.(currentTicket.id)} className={cn(buttonVariants({ variant: "destructive" }))}>
                     Cancel Listing
                 </AlertDialogAction>
@@ -220,7 +222,8 @@ export function TicketCard({
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
              <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0">ID: {currentTicket.id}</Badge>
+           {/* Added margin-right to badge to avoid overlap with potential Cancel button in manage variant */}
+           <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", variant === 'manage' ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
              {currentTicket.description}
@@ -262,9 +265,9 @@ export function TicketCard({
              {currentTicket.price.toFixed(2)}
          </div>
 
-         {/* Conditional Rendering based on status and seller */}
+         {/* Footer Action Logic: Download, Sold, Cancel, or Buy */}
          {isSold ? (
-             // If sold and has downloadable file, show download
+             // 1. If sold: Show Download if available, else "Sold" badge
              currentTicket.originalTicketDataUri ? (
                  <Button
                      size="sm"
@@ -276,29 +279,30 @@ export function TicketCard({
                      Download
                  </Button>
              ) : (
-                 <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
+                 <Badge variant="destructive">Sold</Badge>
              )
          ) : isSeller ? (
-             // If not sold, and user is the seller, show Cancel Listing
+             // 2. If not sold AND user is the seller: Show "Cancel Listing" button
              renderCancelButton()
          ) : (
-            // If not sold and not the seller, show "Buy Ticket"
-            <Button
-                size="sm"
-                onClick={handlePurchase}
-                disabled={isPurchasing}
-                aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
-                className="gap-2"
-            >
-                {isPurchasing ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                )}
-                {isPurchasing ? 'Processing...' : 'Buy Ticket'}
-            </Button>
+             // 3. If not sold AND user is NOT the seller: Show "Buy Ticket" button
+             <Button
+                 size="sm"
+                 onClick={handlePurchase}
+                 disabled={isPurchasing}
+                 aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
+                 className="gap-2"
+             >
+                 {isPurchasing ? (
+                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                 ) : (
+                     <ShoppingCart className="mr-2 h-4 w-4" />
+                 )}
+                 {isPurchasing ? 'Processing...' : 'Buy Ticket'}
+             </Button>
          )}
       </CardFooter>
     </Card>
   );
 }
+

@@ -34,7 +34,7 @@ export default function TicketsPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null); // Track deleting state
 
-  // Remove category filter state as it's now managed by the URL only
+  // Filter state remains for the input fields
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
   const [toCityFilter, setToCityFilter] = React.useState(searchParams.get('to') || '');
 
@@ -42,8 +42,22 @@ export default function TicketsPage() {
   const currentFrom = searchParams.get('from');
   const currentTo = searchParams.get('to');
 
-   // Simulate current user ID
-  const currentUserId = 'currentUser'; // Replace with actual user ID logic
+   // Simulate current user ID - Replace with actual authentication logic
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+
+   // Get user ID from localStorage (or your auth system)
+   React.useEffect(() => {
+       if (typeof window !== 'undefined') {
+           // Simple simulation: Assume 'currentUser' ID if logged in
+           const loggedInStatus = localStorage.getItem('isLoggedIn');
+           if (loggedInStatus === 'true') {
+               setCurrentUserId('currentUser'); // Replace with actual user ID retrieval
+           } else {
+               setCurrentUserId(null);
+           }
+       }
+   }, []);
+
 
   const pageTitle = React.useMemo(() => {
     if (currentCategory && categoryMap[currentCategory]) {
@@ -120,6 +134,7 @@ export default function TicketsPage() {
   };
 
   // Handle cancelling a ticket listing
+  // This function will be passed to the TicketCard
   const handleCancelListing = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
@@ -171,6 +186,7 @@ export default function TicketsPage() {
       const query = new URLSearchParams(searchParams);
       query.delete('from');
       query.delete('to');
+      query.delete('category'); // Also clear category if "Clear Filters" is pressed
       router.push(`/tickets?${query.toString()}`);
   };
 
@@ -201,7 +217,8 @@ export default function TicketsPage() {
       <main className="flex-1 container py-8">
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
-         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-4xl mx-auto"> {/* Centered filter card */}
+         {/* Centered filter card */}
+         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-4xl mx-auto">
            <div className="flex flex-col md:flex-row gap-4 items-end">
 
                 <div className="w-full md:w-auto flex-grow">
@@ -232,7 +249,7 @@ export default function TicketsPage() {
                   <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
 
-                {hasActiveFilters && ( // Only show clear if there are active from/to filters
+                {(hasActiveFilters || currentCategory) && ( // Show clear if from/to filters or category filter is active
                     <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground gap-2">
                         <X className="mr-2 h-4 w-4" /> Clear
                     </Button>
@@ -261,9 +278,12 @@ export default function TicketsPage() {
                 ticket={ticket}
                 variant="browse" // Always browse variant on this page
                 onPurchaseSuccess={handlePurchaseSuccess}
-                isSeller={ticket.sellerId === currentUserId} // Pass isSeller prop
-                onCancelListing={handleCancelListing} // Pass cancel handler
-                isCancelling={isDeleting === ticket.id} // Pass deleting state
+                // Determine if the current user is the seller for this ticket
+                isSeller={!!currentUserId && ticket.sellerId === currentUserId}
+                // Pass the cancel handler function
+                onCancelListing={handleCancelListing}
+                // Pass the cancelling state for this specific ticket
+                isCancelling={isDeleting === ticket.id}
                 className="ml-2.5" // Keep existing margin class
               />
             ))}
@@ -272,12 +292,12 @@ export default function TicketsPage() {
           <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8">
             <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">No Tickets Found</h2>
-            {hasActiveFilters ? ( // Check if from/to filters are active
+            {(hasActiveFilters || currentCategory) ? ( // Check if any filters are active
                  <p>No tickets match your current filters. Try broadening your search!</p>
             ) : (
-                 <p>It looks like no tickets are listed currently for {currentCategory && categoryMap[currentCategory] ? categoryMap[currentCategory].name.toLowerCase() : 'this category'}. Check back later!</p>
+                 <p>It looks like no tickets are listed currently. Check back later!</p>
             )}
-            {hasActiveFilters && ( // Only show clear if from/to filters are active
+            {(hasActiveFilters || currentCategory) && ( // Only show clear if filters are active
                 <Button variant="link" onClick={clearFilters}>
                     Clear Filters
                 </Button>
