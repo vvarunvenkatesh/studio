@@ -4,7 +4,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, User } from 'lucide-react'; // Removed LogIn, added User
+import { PlusCircle, User } from 'lucide-react'; // User icon for fallback
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
 
 export function Header() {
   // State to track login status
@@ -36,19 +37,24 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
 
         {/* Left side: Login/Signup or Profile Button */}
-        <div className="flex items-center md:ml-2">
+        {/* Increased margin for desktop */}
+        <div className="flex items-center md:ml-4">
            {isLoggedIn ? (
-               <>
-                 {/* Simple profile link */}
-                 <Button asChild variant="ghost" size="icon" className="rounded-full mr-2 md:mr-4">
-                     <Link href="/profile">
-                         <User className="h-5 w-5 text-foreground" />
-                         <span className="sr-only">Profile</span>
-                     </Link>
-                 </Button>
+               <div className="flex items-center gap-3"> {/* Added gap for spacing */}
+                 {/* Avatar instead of icon */}
+                 <Link href="/profile">
+                   <Avatar className="h-8 w-8 cursor-pointer">
+                     {/* Placeholder image - replace with actual user image URL */}
+                     <AvatarImage src="https://picsum.photos/40/40?random=profile" alt="User profile picture" data-ai-hint="user avatar" />
+                     {/* Fallback with initials or generic icon */}
+                     <AvatarFallback>
+                       <User className="h-4 w-4 text-muted-foreground" />
+                     </AvatarFallback>
+                   </Avatar>
+                 </Link>
                   {/* Logout Button */}
                   <Button onClick={handleLogout} variant="outline" size="sm">Logout</Button>
-               </>
+               </div>
             ) : (
                  // Login/Signup Button with Outline style and gradient hover
                 <Button asChild variant="outline" size="sm" className="bg-background hover:bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:text-primary-foreground gap-2 text-foreground border">
@@ -76,7 +82,8 @@ export function Header() {
 
 
         {/* Right side: Post Ticket Button */}
-        <nav className="flex items-center md:mr-2">
+        {/* Increased margin for desktop */}
+        <nav className="flex items-center md:mr-4">
            {/* Post Ticket button with gradient background */}
           <Button asChild size="sm" className="gap-2 text-white bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:opacity-90 transition-opacity">
             <Link href="/post-ticket">
@@ -90,4 +97,3 @@ export function Header() {
     </header>
   );
 }
-
