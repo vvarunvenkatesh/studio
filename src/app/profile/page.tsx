@@ -116,7 +116,8 @@ export default function ProfileBasicInfoPage() {
 
 
   return (
-    <Card className="w-full">
+    // Constrain width and center the card within the Tabs content area
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
          <div className="relative group">
             <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
@@ -148,7 +149,8 @@ export default function ProfileBasicInfoPage() {
          </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+         {/* Changed grid to single column for better centering appearance */}
+        <div className="grid grid-cols-1 gap-4">
           <div className="space-y-1">
             <Label htmlFor="name">Name</Label>
             {/* In a real app, make these editable with a form */}
@@ -159,7 +161,8 @@ export default function ProfileBasicInfoPage() {
             <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50"/>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+         {/* Changed grid to single column for better centering appearance */}
+        <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
                 <Label htmlFor="contact">Contact Number</Label>
                 <Input id="contact" value={userData.contact} readOnly className="bg-muted/50"/>
