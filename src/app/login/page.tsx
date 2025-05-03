@@ -69,7 +69,9 @@ export default function LoginPage() {
                  </span>
              </Link>
              {/* Slogan */}
-             <span className="text-xs text-muted-foreground mt-[-4px]">Ticket Reselling Platform</span>
+              <span className="text-xs text-foreground mt-[-4px] opacity-80">
+               Ticket Reselling Platform
+             </span>
           </CardTitle>
           <CardDescription>Enter your credentials to access your account</CardDescription>
         </CardHeader>
@@ -92,7 +94,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 <Link
-                  href="#" // Replace with actual forgot password link
+                  href="/forgot-password" // Updated link to forgot password page
                   className="text-sm text-primary hover:underline"
                   tabIndex={-1} // Optional: manage focus order
                 >
