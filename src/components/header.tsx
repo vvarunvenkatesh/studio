@@ -2,8 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Added Avatar
-
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function Header() {
   return (
@@ -11,7 +10,7 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-card">
       <div className="container flex h-16 items-center justify-between">
          {/* Profile Icon or Placeholder */}
-         <Avatar className="h-9 w-9 cursor-pointer mr-2"> {/* Added mr-2 */}
+         <Avatar className="h-9 w-9 cursor-pointer mr-3"> {/* Updated margin to mr-3 (approx 12px) */}
             <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" /> {/* Added data-ai-hint */}
             <AvatarFallback>U</AvatarFallback>
          </Avatar>
@@ -23,11 +22,10 @@ export function Header() {
 
 
         {/* Navigation/Actions on the right */}
-        <nav>
-          {/* Apply gap-2 directly to the Link component, as Button uses asChild */}
+        <nav> {/* This nav ensures the button is grouped on the right */}
           <Button asChild variant="default" size="sm">
-            <Link href="/post-ticket" className="gap-2"> {/* Moved gap-2 here */}
-              <PlusCircle className="mr-2 h-4 w-4" /> Post Ticket
+            <Link href="/post-ticket" className="gap-2">
+              <PlusCircle className="h-4 w-4" /> Post Ticket {/* Removed mr-2 from icon as gap-2 handles spacing */}
             </Link>
           </Button>
         </nav>
