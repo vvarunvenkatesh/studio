@@ -406,7 +406,7 @@ export function PostTicketForm() {
 
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full" disabled={isSubmitting || isCheckingGrammar}>
+        <Button type="submit" className="w-full gap-2" disabled={isSubmitting || isCheckingGrammar}> {/* Added gap-2 */}
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -30,8 +30,9 @@ export default function TicketsPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // State for filter inputs, initialized from URL params
-  const [categoryFilter, setCategoryFilter] = React.useState<TicketType['type'] | ''>(searchParams.get('category') as TicketType['type'] || '');
+  // State for filter inputs, initialized from URL params or 'all'
+  const initialCategory = searchParams.get('category') as TicketType['type'] | null;
+  const [categoryFilter, setCategoryFilter] = React.useState<TicketType['type'] | 'all'>(initialCategory || 'all');
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
   const [toCityFilter, setToCityFilter] = React.useState(searchParams.get('to') || '');
 
@@ -63,18 +64,20 @@ export default function TicketsPage() {
       setError(null);
       try {
         const filters: { category?: Ticket['type']; fromCity?: string; toCity?: string } = {};
-        const category = searchParams.get('category') as Ticket['type'];
+        const category = searchParams.get('category') as Ticket['type'] | null; // Get category from URL
         const fromCity = searchParams.get('from');
         const toCity = searchParams.get('to');
 
-        if (category) filters.category = category;
+        // Use 'all' as default if no category in URL, ensure not empty string
+        setCategoryFilter(category || 'all');
+        setFromCityFilter(fromCity || '');
+        setToCityFilter(toCity || '');
+
+        // Only apply category filter if it's not 'all'
+        if (category && category !== 'all') filters.category = category;
         if (fromCity) filters.fromCity = fromCity;
         if (toCity) filters.toCity = toCity;
 
-        // Update local filter state to match URL (needed if navigated directly)
-        setCategoryFilter(category || '');
-        setFromCityFilter(fromCity || '');
-        setToCityFilter(toCity || '');
 
         const fetchedTickets = await getAvailableTickets(filters);
         setTickets(fetchedTickets);
@@ -97,7 +100,8 @@ export default function TicketsPage() {
   // Handle filter changes and update URL
   const handleFilterChange = () => {
       const query = new URLSearchParams();
-      if (categoryFilter) query.set('category', categoryFilter);
+      // Only add category to URL if it's not 'all'
+      if (categoryFilter && categoryFilter !== 'all') query.set('category', categoryFilter);
       if (fromCityFilter) query.set('from', fromCityFilter);
       if (toCityFilter) query.set('to', toCityFilter);
       router.push(`/tickets?${query.toString()}`);
@@ -105,9 +109,11 @@ export default function TicketsPage() {
 
   // Clear all filters and update URL
   const clearFilters = () => {
-      setCategoryFilter('');
+      // Set local state to defaults
+      setCategoryFilter('all');
       setFromCityFilter('');
       setToCityFilter('');
+      // Navigate to base tickets page
       router.push('/tickets');
   };
 
@@ -129,7 +135,12 @@ export default function TicketsPage() {
     ))
   );
 
-  const hasActiveFilters = categoryFilter || fromCityFilter || toCityFilter;
+  // Check if any filter is active (category is not 'all', or cities are set)
+  const hasActiveFilters = (categoryFilter && categoryFilter !== 'all') || fromCityFilter || toCityFilter;
+
+  // Ensure value passed to Select is never an empty string, map "" to "all"
+  const selectValue = categoryFilter === "" ? "all" : (categoryFilter || 'all');
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -143,15 +154,15 @@ export default function TicketsPage() {
                 {/* Category Select */}
                 <div className="w-full md:w-auto flex-grow md:flex-grow-0 md:min-w-[150px]">
                     <label htmlFor="categoryFilter" className="block text-sm font-medium text-muted-foreground mb-1">Category</label>
-                    <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as TicketType['type'] | '')}>
+                    {/* Use derived selectValue which guarantees it's not "" */}
+                    <Select value={selectValue} onValueChange={(value) => setCategoryFilter(value as TicketType['type'] | 'all')}>
                         <SelectTrigger id="categoryFilter">
-                            {/* Placeholder is shown when value is '' */}
+                            {/* Placeholder text appears when value is 'all' */}
                             <SelectValue placeholder="Any Category" />
                         </SelectTrigger>
                         <SelectContent>
-                            {/* Removed: <SelectItem value="">Any Category</SelectItem> */}
-                            {/* Add an explicit option to clear the filter if needed, or rely on placeholder */}
-                             {/* <SelectItem value="all">Any Category</SelectItem> // Alternative: use 'all' */}
+                            {/* Use 'all' as the value for the 'Any Category' option */}
+                            <SelectItem value="all">Any Category</SelectItem>
                             <SelectItem value="bus">Bus</SelectItem>
                             <SelectItem value="train">Train</SelectItem>
                             <SelectItem value="movie">Movie</SelectItem>
@@ -187,13 +198,14 @@ export default function TicketsPage() {
                  </div>
 
                 {/* Apply Filter Button */}
-                <Button onClick={handleFilterChange} className="w-full md:w-auto">
+                <Button onClick={handleFilterChange} className="w-full md:w-auto gap-2"> {/* Added gap-2 */}
                   <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
 
                 {/* Clear Filters Button */}
+                {/* Show clear button if any filter is active */}
                 {hasActiveFilters && (
-                    <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground">
+                    <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground gap-2"> {/* Added gap-2 */}
                         <X className="mr-2 h-4 w-4" /> Clear
                     </Button>
                 )}
@@ -230,10 +242,12 @@ export default function TicketsPage() {
             ) : (
                  <p>It looks like no tickets are listed currently. Check back later!</p>
             )}
-
-            <Button variant="link" onClick={clearFilters} className={!hasActiveFilters ? 'hidden' : ''}>
-                Clear Filters
-            </Button>
+            {/* Show clear filters button only if filters are active */}
+            {hasActiveFilters && (
+                <Button variant="link" onClick={clearFilters}>
+                    Clear Filters
+                </Button>
+            )}
           </div>
         ) : null}
       </main>

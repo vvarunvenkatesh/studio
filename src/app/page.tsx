@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Header } from '@/components/header'; // Keep Header for consistent navigation
+// Removed unused Header import
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,9 +14,9 @@ import { useRouter } from 'next/navigation';
 
 // Simple Advertisement Slider Component (replace with a proper carousel library if needed)
 const advertisements = [
-  { id: 1, src: 'https://picsum.photos/1200/300?random=1', alt: 'concert', hint: 'concert crowd music' },
-  { id: 2, src: 'https://picsum.photos/1200/300?random=2', alt: 'train travel', hint: 'train window journey' },
-  { id: 3, src: 'https://picsum.photos/1200/300?random=3', alt: 'movie theatre', hint: 'movie theater screen' },
+  { id: 1, src: 'https://picsum.photos/1200/448?random=1', alt: 'concert', hint: 'concert crowd music' }, // Updated dimensions for new aspect ratio
+  { id: 2, src: 'https://picsum.photos/1200/448?random=2', alt: 'train travel', hint: 'train window journey' }, // Updated dimensions
+  { id: 3, src: 'https://picsum.photos/1200/448?random=3', alt: 'movie theatre', hint: 'movie theater screen' }, // Updated dimensions
 ];
 
 function AdvertisementSlider() {
@@ -30,7 +30,8 @@ function AdvertisementSlider() {
   }, []);
 
   return (
-    <div className="relative w-full h-48 md:h-64 lg:h-72 overflow-hidden rounded-lg shadow-lg mb-8 md:mb-12">
+    // Increased height classes: h-72 (small), md:h-96 (medium), lg:h-[28rem] (large - 448px)
+    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden rounded-lg shadow-lg mb-8 md:mb-12">
       {advertisements.map((ad, index) => (
         <Image
           key={ad.id}
@@ -44,7 +45,7 @@ function AdvertisementSlider() {
         />
       ))}
        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-       <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl font-semibold z-10">
+       <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-10"> {/* Increased font size slightly */}
           {/* Can add dynamic text based on currentAd if needed */}
           Find Last Minute Deals!
        </div>
@@ -81,13 +82,8 @@ function SearchForm() {
     const query = new URLSearchParams();
     if (fromCity) query.set('from', fromCity);
     if (toCity) query.set('to', toCity);
-    // Only navigate if there's a search query
-    if(query.toString()){
-        router.push(`/tickets?${query.toString()}`);
-    } else {
-        // Optionally navigate to the general tickets page if no search terms
-        router.push('/tickets');
-    }
+    // Always navigate, even if empty, to the tickets page, potentially clearing previous searches
+    router.push(`/tickets?${query.toString()}`);
   };
 
   return (
@@ -116,7 +112,7 @@ function SearchForm() {
                 className="bg-background"
             />
          </div>
-        <Button type="submit" className="w-full sm:w-auto">
+        <Button type="submit" className="w-full sm:w-auto gap-2"> {/* Added gap-2 */}
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
        </form>
@@ -128,24 +124,24 @@ function SearchForm() {
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Keep Header but adjust content */}
-       <header className="sticky top-0 z-40 w-full border-b bg-background">
+      {/* Restored original header structure */}
+       <header className="sticky top-0 z-40 w-full border-b bg-card">
          <div className="container flex h-16 items-center justify-between">
             {/* Profile Icon on the left */}
              <Avatar className="h-9 w-9 cursor-pointer">
-                <AvatarImage src="https://picsum.photos/100" alt="User Profile" data-ai-hint="profile avatar" />
+                <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" />
                 <AvatarFallback>U</AvatarFallback>
              </Avatar>
 
             {/* Title Centered */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                <Link href="/" className="text-2xl font-bold text-foreground whitespace-nowrap">
+                <Link href="/" className="text-2xl font-bold text-card-foreground whitespace-nowrap">
                   LastminIT<span className="text-primary">tickets</span>
                 </Link>
             </div>
 
            {/* Post Ticket Button on the right */}
-           <Button asChild variant="ghost" size="sm">
+           <Button asChild variant="default" size="sm">
              <Link href="/post-ticket">
                 Post Ticket
              </Link>
@@ -162,7 +158,7 @@ export default function Home() {
 
          {/* Category Icons */}
          <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
-         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6"> {/* Adjusted grid columns */}
             <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
             <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
             <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />

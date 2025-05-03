@@ -130,6 +130,7 @@ export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
               onClick={handlePurchase}
               disabled={isPurchasing}
               aria-label={`Buy ${ticket.type} ticket for $${ticket.price.toFixed(2)}`}
+              className="gap-2" // Added gap-2
             >
               {isPurchasing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
