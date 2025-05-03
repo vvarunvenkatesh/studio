@@ -10,15 +10,15 @@ body {
   :root {
     /* Light Theme */
     --background: 0 0% 100%; /* White */
-    --foreground: 94 20% 10%; /* Dark Greenish Black */
+    --foreground: 0 0% 9%; /* Near Black */
     --card: 94 33% 65%; /* #9CAF88 Green */
     --card-foreground: 94 10% 95%; /* Very Light Greenish White */
     --popover: 0 0% 100%; /* White */
-    --popover-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --popover-foreground: 0 0% 9%; /* Near Black */
     --primary: 94 30% 40%; /* Darker Green */
     --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
     --secondary: 94 13% 75%; /* Lighter Green */
-    --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --secondary-foreground: 0 0% 9%; /* Near Black */
     --muted: 94 13% 90%; /* Light greenish gray for subtle backgrounds */
     --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
     --accent: 120 70% 75%; /* Light fluorescent green for hover */
@@ -38,7 +38,7 @@ body {
     --sidebar-background: 94 13% 60%; /* #9CAF88 Green */
     --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
     --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
-    --sidebar-primary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --sidebar-primary-foreground: 0 0% 9%; /* Near Black */
     --sidebar-accent: 94 13% 75%; /* Lighter Green */
     --sidebar-accent-foreground: 94 20% 5%; /* Very Dark Greenish Black */
     --sidebar-border: 94 13% 50%; /* Medium Dark Green */
