@@ -23,11 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* Apply the font class to the body */}
-      <body className={`${inter.variable} font-sans antialiased`}> {/* Use font-sans utility */}
+      {/* Apply the font class and suppress hydration warning for browser extension compatibility */}
+      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning={true}> {/* Use font-sans utility */}
         {children}
         <Toaster />
       </body>
     </html>
   );
 }
+
