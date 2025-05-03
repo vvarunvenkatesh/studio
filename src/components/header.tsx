@@ -1,10 +1,9 @@
-
 'use client'; // Needed for useState and useEffect
 
 import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, User } from 'lucide-react'; // User icon for fallback
+import { User } from 'lucide-react'; // User icon for fallback
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
 import { cn } from '@/lib/utils'; // Import cn utility
 
@@ -131,8 +130,8 @@ export function Header({ className }: HeaderProps) { // Destructure className
           <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
             <Link href="/post-ticket">
                 {/* Wrap children in a div as Button with asChild expects a single element */}
-                <div className="flex items-center gap-2"> {/* Ensure icon and text are together */}
-                  <PlusCircle className="h-4 w-4" />
+                {/* Removed PlusCircle icon */}
+                <div className="flex items-center">
                   <span className="hidden sm:inline">Post Ticket</span>
                   <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
                 </div>
