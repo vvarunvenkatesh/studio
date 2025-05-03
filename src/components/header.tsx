@@ -13,8 +13,8 @@ interface HeaderProps {
   className?: string; // Add className prop
 }
 
-// Hardcoded locations for now
-const availableLocations = ['New York', 'Boston', 'Chicago', 'Los Angeles', 'Online'];
+// Updated locations to major Indian cities + Online
+const availableLocations = ['Hyderabad', 'Bangalore', 'Chennai', 'Mumbai', 'Delhi', 'Kolkata', 'Online'];
 
 export function Header({ className }: HeaderProps) { // Destructure className
   // State to track login status
@@ -94,15 +94,28 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
 
   return (
-    // Apply className prop here, changed background to bg-background
+    // Apply className prop here, background white
     <header className={cn("sticky top-0 z-40 w-full border-b bg-background", className)}>
        {/* Increased container padding for more space */}
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
+      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
 
-        {/* Left side: Brand Title */}
-         <div className="flex flex-col items-center">
+        {/* Left side: Post Ticket Button */}
+        <div className="flex items-center">
+            <Button asChild size="sm" className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
+                <Link href="/post-ticket">
+                  {/* Wrap multiple children in a single span */}
+                  <span>
+                     <span className="hidden sm:inline">Post Ticket</span>
+                     <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
+                  </span>
+                </Link>
+            </Button>
+        </div>
+
+        {/* Center: Brand Title */}
+         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Consistent LastMiniT styling - Updated text color */}
+                 {/* Consistent LastMiniT styling */}
                  <span className="text-3xl font-bold text-foreground">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
@@ -114,12 +127,12 @@ export function Header({ className }: HeaderProps) { // Destructure className
          </div>
 
 
-        {/* Right side: Location, Profile/Login, Post Ticket */}
-         {/* Adjusted ml for desktop, added gap */}
-         <div className="flex items-center gap-3 md:gap-4 md:mr-4"> {/* Use gap-3 on mobile, gap-4 on md */}
+        {/* Right side: Location, Profile/Login */}
+         {/* Adjusted gap */}
+         <div className="flex items-center gap-3 md:gap-4">
            {/* Location Selector */}
             <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
                     <MapPin className="h-4 w-4 flex-shrink-0" />
                     <SelectValue placeholder="Select Location" />
                 </SelectTrigger>
@@ -134,7 +147,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
            {/* Profile or Login/Signup */}
            {isLoggedIn ? (
-               <Link href="/profile" className="ml-1 md:ml-1"> {/* Adjusted margin left */}
+               <Link href="/profile" className="ml-1 md:ml-2"> {/* Adjusted margin left */}
                  <Avatar className="h-8 w-8 cursor-pointer">
                    <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
                    <AvatarFallback>
@@ -157,16 +170,6 @@ export function Header({ className }: HeaderProps) { // Destructure className
                  </Button>
             )}
 
-            {/* Post Ticket button with specified color #FF2459 */}
-            <Button asChild size="sm" className="ml-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
-            <Link href="/post-ticket">
-              {/* Wrap multiple children in a single span */}
-              <span>
-                 <span className="hidden sm:inline">Post Ticket</span>
-                 <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
-              </span>
-            </Link>
-          </Button>
         </div>
       </div>
     </header>
