@@ -122,14 +122,17 @@ export default function TicketsPage() {
   }, [loadTickets]); // Depend on the memoized loadTickets function
 
 
-  // Callback function to handle purchased ticket state update (removes ticket from browse view)
+  // Callback function to handle purchased ticket state update
+  // Updates the ticket status in the current list instead of removing it
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
-      // Remove the purchased ticket from the local state in the browse view
       setTickets(prevTickets =>
-          prevTickets.filter(ticket => ticket.id !== purchasedTicketId)
+          prevTickets.map(ticket =>
+              ticket.id === purchasedTicketId ? { ...ticket, status: 'sold' } : ticket
+          )
       );
-     console.log("Ticket purchased and removed from browse view:", purchasedTicketId);
+     console.log("Ticket purchased and status updated in browse view:", purchasedTicketId);
   };
+
 
   // Handle cancelling a ticket listing
   // This function will be passed to the TicketCard
@@ -174,6 +177,13 @@ export default function TicketsPage() {
       if (toCityFilter) query.set('to', toCityFilter);
       else query.delete('to');
 
+      // Keep category if it exists
+      const category = searchParams.get('category');
+      if (category) {
+         query.set('category', category);
+      }
+
+
       router.push(`/tickets?${query.toString()}`);
   };
 
@@ -184,7 +194,12 @@ export default function TicketsPage() {
       const query = new URLSearchParams(searchParams);
       query.delete('from');
       query.delete('to');
-      // Don't clear category here, let the user navigate via category icons
+      // Keep category filter when clearing From/To
+      const category = searchParams.get('category');
+      if (category) {
+         query.set('category', category);
+      }
+
       router.push(`/tickets?${query.toString()}`);
   };
 

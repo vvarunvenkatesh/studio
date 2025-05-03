@@ -225,10 +225,10 @@ export function TicketCard({
   );
 
 
-  // Hide card completely if it's sold and in browse mode
-  if (isSold && variant === 'browse') {
-      return null;
-  }
+  // Hide card completely if it's sold and in browse mode - THIS WAS REMOVED PREVIOUSLY TO SHOW SOLD TICKETS WITH DOWNLOAD
+  // if (isSold && variant === 'browse') {
+  //     return null;
+  // }
 
 
   return (
@@ -291,6 +291,7 @@ export function TicketCard({
          {/* Footer Action Logic: Download, Sold, Cancel, Pending, or Buy */}
          {isSold ? (
              // 1. If sold: Show Download if available, else "Sold" badge
+             // This logic is now applied even in 'browse' variant
              currentTicket.originalTicketDataUri ? (
                  <Button
                      size="sm"
@@ -330,5 +331,4 @@ export function TicketCard({
     </Card>
   );
 }
-
 
