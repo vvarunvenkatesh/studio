@@ -106,6 +106,10 @@ export function TicketCard({
         if (result.message?.includes('already sold') && result.ticket) {
            setIsSold(true);
            setCurrentTicket(result.ticket);
+           // Notify parent to potentially remove it from browse view
+           if (onPurchaseSuccess) {
+              onPurchaseSuccess(result.ticket.id);
+           }
         }
       }
     } catch (error) {
@@ -171,7 +175,6 @@ export function TicketCard({
    };
 
   // Helper to render the Cancel Listing button/dialog
-  // This button should be displayed if `isSeller` is true and `!isSold`.
   const renderCancelButton = () => (
     <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -208,21 +211,30 @@ export function TicketCard({
     </AlertDialog>
   );
 
-   // Helper to render the "Pending" badge or similar indicator
+  // Helper to render the "Pending" badge or similar indicator
   const renderPendingIndicator = () => (
-    // Reverted to default outline variant styling
-    <Badge variant="outline" className="text-xs text-muted-foreground gap-1.5">
+    // Apply specific background and text color using inline style for #FFC812
+    <Badge
+      variant="outline"
+      className="text-xs text-black gap-1.5 border-amber-500" // Use black text for contrast, border optional
+      style={{ backgroundColor: '#FFC812' }}
+    >
       <Hourglass className="h-3 w-3" />
       Pending Sale
     </Badge>
   );
 
 
+  // Hide card completely if it's sold and in browse mode
+  if (isSold && variant === 'browse') {
+      return null;
+  }
+
+
   return (
     <Card className={cn(
         "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full", // Added h-full
         // Adjust opacity/styling based on variant and status
-        (isSold && variant !== 'manage') ? 'hidden' : // Hide sold tickets in browse view
         (isSold && variant === 'manage') ? 'opacity-60 bg-muted/50' : // Show sold tickets dimmed in manage view
         'bg-card', // Default for available tickets
         className // Apply the className prop here
@@ -284,7 +296,7 @@ export function TicketCard({
                      size="sm"
                      onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
                      aria-label="Download original ticket"
-                     className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                     className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90" // Same style as Buy button
                  >
                      <Download className="mr-2 h-4 w-4" />
                      Download
@@ -294,7 +306,9 @@ export function TicketCard({
              )
          ) : isSeller ? (
              // 2. If not sold AND user is the seller:
-              (variant === 'manage' || variant === 'browse') ? renderCancelButton() : renderPendingIndicator() // Show cancel on manage/browse, pending otherwise
+             // Show Cancel button if on manage page or if cancel handler exists
+             // Otherwise (e.g., on browse page where seller shouldn't manage) show Pending
+             (variant === 'manage' || onCancelListing) ? renderCancelButton() : renderPendingIndicator()
          ) : (
              // 3. If not sold AND user is NOT the seller: Show "Buy Ticket" button
              <Button
@@ -302,7 +316,7 @@ export function TicketCard({
                  onClick={handlePurchase}
                  disabled={isPurchasing}
                  aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
-                 className="gap-2"
+                 className="gap-2" // Uses default button style
              >
                  {isPurchasing ? (
                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
