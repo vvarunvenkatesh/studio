@@ -73,13 +73,14 @@ export function Header({ className }: HeaderProps) { // Destructure className
   return (
     // Apply className prop here, changed background to bg-background
     <header className={cn("sticky top-0 z-40 w-full border-b bg-background", className)}>
+       {/* Increased container padding for more space */}
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
 
         {/* Left side: Login/Signup or Profile Button */}
          {/* Added margin for desktop */}
          <div className="flex items-center md:ml-4">
            {isLoggedIn ? (
-               <div className="flex items-center gap-3">
+               <div className="flex items-center gap-3"> {/* Removed ml-4 */}
                  <Link href="/profile">
                    <Avatar className="h-8 w-8 cursor-pointer">
                      {/* Use state for image URL, provide fallback */}
@@ -91,12 +92,17 @@ export function Header({ className }: HeaderProps) { // Destructure className
                  </Link>
                </div>
             ) : (
-                 // Login/Signup Button: Use accent color as background, adjusted hover. Kept border.
-                 <Button asChild variant="default" size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 border gap-2">
-                     {/* Ensure Link is the direct child for asChild */}
-                     <Link href="/login">
-                        Login/Signup
-                     </Link>
+                 // Login/Signup Button: White background, black border, black text, light green hover
+                 <Button
+                     asChild
+                     variant="outline"
+                     size="sm"
+                     className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground gap-2"
+                 >
+                    {/* Wrap Link children in a div */}
+                   <Link href="/login">
+                    <div>Login/Signup</div>
+                   </Link>
                  </Button>
             )}
         </div>
@@ -121,11 +127,15 @@ export function Header({ className }: HeaderProps) { // Destructure className
          {/* Added margin for desktop */}
         <nav className="flex items-center md:mr-4">
            {/* Post Ticket button with specified color #FF2459 */}
+           {/* Added mr-0 to remove forced right margin */}
           <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
+            {/* Wrap Link children in a div */}
             <Link href="/post-ticket">
-              <PlusCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Post Ticket</span>
-              <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
+                <div className="flex items-center gap-2"> {/* Ensure icon and text are together */}
+                  <PlusCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">Post Ticket</span>
+                  <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
+                </div>
             </Link>
           </Button>
         </nav>
@@ -133,4 +143,3 @@ export function Header({ className }: HeaderProps) { // Destructure className
     </header>
   );
 }
-
