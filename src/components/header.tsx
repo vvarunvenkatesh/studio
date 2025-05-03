@@ -104,7 +104,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
         {isMobile ? (
           <>
-            {/* Mobile View: Title on Left, Location & Profile/Login on Right */}
+            {/* Mobile View */}
             {/* Brand Title (aligned left) - Removed Link wrapper */}
             <div className="flex flex-col items-start">
                 <span className="text-2xl font-bold text-foreground whitespace-nowrap flex items-baseline justify-start gap-1">
@@ -119,7 +119,8 @@ export function Header({ className }: HeaderProps) { // Destructure className
             <div className="flex items-center gap-2">
                  {/* Location Selector (Mobile) */}
                 <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                    <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1"> {/* Reduced padding/size */}
+                    {/* Removed gap-1 from here */}
+                    <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0">
                         <MapPin className="h-4 w-4 flex-shrink-0" />
                         <SelectValue placeholder="Select Location" />
                     </SelectTrigger>
@@ -163,7 +164,8 @@ export function Header({ className }: HeaderProps) { // Destructure className
             <div className="flex items-center gap-3 md:gap-4">
                {/* Location Selector */}
                 <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                    <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                    {/* Removed gap-1 from here */}
+                    <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0">
                         <MapPin className="h-4 w-4 flex-shrink-0" />
                         <SelectValue placeholder="Select Location" />
                     </SelectTrigger>
@@ -178,6 +180,28 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
                {/* Profile or Login/Signup section removed for consistency with mobile removal */}
                {/* Content removed */}
+               {/* Show Profile Avatar or Login/Signup Button */}
+               {isLoggedIn ? (
+                  <Link href="/profile" className="ml-1 md:ml-2">
+                    <Avatar className="h-8 w-8 cursor-pointer">
+                       <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
+                       <AvatarFallback>
+                         <User className="h-4 w-4 text-muted-foreground" />
+                       </AvatarFallback>
+                    </Avatar>
+                  </Link>
+                ) : (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent"
+                  >
+                    <Link href="/login">
+                      Login/Signup
+                    </Link>
+                  </Button>
+                )}
             </div>
           </>
         )}
