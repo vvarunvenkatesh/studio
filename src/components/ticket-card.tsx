@@ -1,4 +1,5 @@
 
+
 'use client'; // Make this a client component for interaction
 
 import * as React from 'react';
@@ -325,4 +326,5 @@ export function TicketCard({
     </Card>
   );
 }
+
 
