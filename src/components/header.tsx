@@ -1,33 +1,56 @@
 
+'use client'; // Needed for useState and useEffect
 
+import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, LogIn, User } from 'lucide-react'; // Added LogIn and User icons
-// import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlusCircle, User } from 'lucide-react'; // Removed LogIn, added User
 
 export function Header() {
-  // Placeholder for authentication status - currently always shows Login/Signup
-  const isLoggedIn = false; // Set to true to show profile icon if needed later
+  // State to track login status
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+  // Check localStorage on component mount (client-side only)
+  React.useEffect(() => {
+    // Check if running in the browser before accessing localStorage
+    if (typeof window !== 'undefined') {
+      const loggedInStatus = localStorage.getItem('isLoggedIn');
+      setIsLoggedIn(loggedInStatus === 'true');
+    }
+  }, []);
+
+  // Function to handle logout (example)
+  const handleLogout = () => {
+     if (typeof window !== 'undefined') {
+        localStorage.removeItem('isLoggedIn');
+        setIsLoggedIn(false);
+        // Optionally redirect to home or login page
+        // window.location.href = '/';
+     }
+  };
+
 
   return (
     // Keep header background white (bg-card)
     <header className="sticky top-0 z-40 w-full border-b bg-card">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
 
-        {/* Left side: Login/Signup Button */}
-        {/* Apply styling similar to the provided image */}
+        {/* Left side: Login/Signup or Profile Button */}
         <div className="flex items-center md:ml-2">
            {isLoggedIn ? (
-                <Button asChild variant="ghost" size="icon" className="rounded-full mr-2 md:mr-4">
+               // Simple profile link for now, could be a dropdown later
+               <Button asChild variant="ghost" size="icon" className="rounded-full mr-2 md:mr-4">
                    <Link href="/profile">
                        <User className="h-5 w-5 text-foreground" />
                        <span className="sr-only">Profile</span>
                    </Link>
-                </Button>
+               </Button>
+               // Example Logout Button (Uncomment if needed)
+               // <Button onClick={handleLogout} variant="outline" size="sm">Logout</Button>
             ) : (
-                <Button asChild variant="outline" size="sm" className="bg-background hover:bg-accent hover:text-accent-foreground gap-2 text-foreground border">
+                <Button asChild variant="outline" size="sm" className="bg-background hover:bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:text-primary-foreground gap-2 text-foreground border">
                     <Link href="/login">
-                        <span className="">Login/Signup</span>
+                        <span>Login/Signup</span>
                     </Link>
                 </Button>
             )}
@@ -37,13 +60,12 @@ export function Header() {
         {/* Centered Title and Slogan */}
          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
              <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Reverted Brand Name styling */}
+                 {/* Consistent LastMiniT styling */}
                  <span className="text-3xl font-bold">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
              </Link>
              {/* Slogan */}
-             {/* Changed text color to text-foreground and added opacity */}
              <span className="text-xs text-foreground mt-[-4px] opacity-80">
                Ticket Reselling Platform
              </span>
@@ -51,9 +73,8 @@ export function Header() {
 
 
         {/* Right side: Post Ticket Button */}
-        {/* Adjusted margin for desktop. Applied destructive background and foreground text */}
         <nav className="flex items-center md:mr-2">
-           {/* Ensured Link is the direct child when using asChild */}
+          {/* Ensured Link is the direct child when using asChild */}
           <Button asChild size="sm" className="gap-2 text-white bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:opacity-90 transition-opacity">
             <Link href="/post-ticket">
               <PlusCircle className="h-4 w-4" />
@@ -66,5 +87,3 @@ export function Header() {
     </header>
   );
 }
-
-

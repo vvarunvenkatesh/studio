@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -29,12 +28,25 @@ export default function LoginPage() {
 
     // Basic validation (replace with actual auth logic)
     if (email && password) {
+      // Set login flag in localStorage on successful login simulation
+      try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('isLoggedIn', 'true');
+          }
+      } catch (error) {
+         console.error("Failed to set login status in localStorage", error);
+         // Optionally show a different toast or handle the error
+      }
+
+
       toast({
         title: 'Login Successful',
         description: 'Redirecting you to the homepage...',
       });
       // Redirect to homepage after successful login simulation
-      router.push('/');
+      // Use window.location.href to force a full page reload, which helps header update
+      window.location.href = '/';
+      // router.push('/'); // router.push might not trigger header re-check immediately
     } else {
       toast({
         title: 'Login Failed',
@@ -137,4 +149,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
