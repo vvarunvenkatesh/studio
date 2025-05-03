@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon } from 'lucide-react'; // Renamed alias to avoid conflict
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Header } from '@/components/header'; // Import the Header component
 
 // Simple Advertisement Slider Component
 const advertisements = [
@@ -29,7 +30,7 @@ function AdvertisementSlider() {
   }, []);
 
   return (
-    // Increased height classes, removed margins (mt, mb) and added w-full
+    // Increased height classes, added w-full. Removed margins/padding.
     <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg">
       {advertisements.map((ad, index) => (
         <Image
@@ -151,26 +152,9 @@ function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCard
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-       <header className="sticky top-0 z-40 w-full border-b bg-card">
-         <div className="container flex h-16 items-center justify-between">
-             <Avatar className="h-9 w-9 cursor-pointer">
-                <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" />
-                <AvatarFallback>U</AvatarFallback>
-             </Avatar>
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                <Link href="/" className="text-2xl font-bold text-card-foreground whitespace-nowrap">
-                  LastminIT<span className="text-primary">tickets</span>
-                </Link>
-            </div>
-           <Button asChild variant="default" size="sm">
-             <Link href="/post-ticket">
-                Post Ticket
-             </Link>
-           </Button>
-         </div>
-       </header>
+       <Header />
 
-       {/* Moved AdvertisementSlider outside the main container */}
+       {/* Moved AdvertisementSlider outside the main container, remove py */}
        <AdvertisementSlider />
 
       {/* Added container class back to main for content alignment */}
@@ -187,7 +171,7 @@ export default function Home() {
                 <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
                 <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
                 <CategoryIcon icon={CalendarIconLucide} label="Event Tickets" href="/tickets?category=event" />
-                <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" /> {/* Updated Label and category */}
+                <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" />
              </div>
 
               {/* Bottom Advertisements Section */}

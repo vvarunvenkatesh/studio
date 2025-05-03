@@ -11,7 +11,7 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-card">
       <div className="container flex h-16 items-center justify-between">
          {/* Profile Icon or Placeholder */}
-         <Avatar className="h-9 w-9 cursor-pointer">
+         <Avatar className="h-9 w-9 cursor-pointer mr-2"> {/* Added mr-2 */}
             <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" /> {/* Added data-ai-hint */}
             <AvatarFallback>U</AvatarFallback>
          </Avatar>
@@ -25,7 +25,7 @@ export function Header() {
         {/* Navigation/Actions on the right */}
         <nav>
           {/* Apply gap-2 directly to the Link component, as Button uses asChild */}
-          <Button asChild>
+          <Button asChild variant="default" size="sm">
             <Link href="/post-ticket" className="gap-2"> {/* Moved gap-2 here */}
               <PlusCircle className="mr-2 h-4 w-4" /> Post Ticket
             </Link>
