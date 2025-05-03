@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, X, TicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon } from 'lucide-react'; // Added TicketCategoryIcon
 import type { Ticket as TicketType } from '@/services/ticket-marketplace'; // Use type alias
+import { cn } from '@/lib/utils'; // Import cn utility
 
 
 // Mapping for category icons and display names
@@ -228,7 +229,10 @@ export default function TicketsPage() {
              {renderSkeletons()}
            </div>
         ) : tickets.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className={cn(
+              "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6",
+              categoryFilter === 'bus' && "ml-2.5" // Add margin-left if category is 'bus'
+            )}>
             {tickets.map((ticket) => (
               <TicketCard
                 key={ticket.id}
@@ -263,4 +267,3 @@ export default function TicketsPage() {
     </div>
   );
 }
-
