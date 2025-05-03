@@ -29,8 +29,8 @@ function AdvertisementSlider() {
   }, []);
 
   return (
-    // Increased height classes and margins
-    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden rounded-lg shadow-lg mt-4 mb-12 md:mt-6 md:mb-16">
+    // Increased height classes, removed margins (mt, mb) and added w-full
+    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg">
       {advertisements.map((ad, index) => (
         <Image
           key={ad.id}
@@ -44,7 +44,8 @@ function AdvertisementSlider() {
         />
       ))}
        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-       <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-10">
+       {/* Added padding to the text container */}
+       <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-10 p-4">
           Find Last Minute Deals!
        </div>
     </div>
@@ -169,48 +170,55 @@ export default function Home() {
          </div>
        </header>
 
+       {/* Moved AdvertisementSlider outside the main container */}
+       <AdvertisementSlider />
+
+      {/* Added container class back to main for content alignment */}
       <main className="flex-1 container py-6 md:py-10">
-         <AdvertisementSlider />
-         <SearchForm />
 
-         <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
-         {/* Added max-w-4xl and mx-auto to center the grid */}
-         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 max-w-4xl mx-auto">
-            <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
-            <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
-            <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
-            <CategoryIcon icon={CalendarIconLucide} label="Event Tickets" href="/tickets?category=event" />
-            <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" /> {/* Updated Label and category */}
-         </div>
+         {/* Added top margin to separate content from slider */}
+         <div className="mt-8 md:mt-12">
+             <SearchForm />
 
-          {/* Bottom Advertisements Section */}
-         <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
-         {/* Added max-w-5xl and mx-auto to center the grid */}
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
-            <BottomAdCard
-                src="https://picsum.photos/400/300?random=10"
-                alt="Travel Deal"
-                title="Weekend Getaway Special"
-                description="Save up to 20% on last-minute train tickets this weekend."
-                href="/tickets?category=train"
-                hint="train travel discount"
-            />
-             <BottomAdCard
-                src="https://picsum.photos/400/300?random=11"
-                alt="Event Promotion"
-                title="Hot Event Tickets Available"
-                description="Don't miss the biggest concerts and sports events. Find tickets now!"
-                href="/tickets?category=event"
-                hint="concert event tickets"
-            />
-             <BottomAdCard
-                src="https://picsum.photos/400/300?random=12"
-                alt="Movie Night Offer"
-                title="Movie Buffs Rejoice!"
-                description="Grab cheap movie tickets for tonight's blockbusters."
-                href="/tickets?category=movie"
-                hint="movie cinema tickets"
-             />
+             <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
+             {/* Added max-w-4xl and mx-auto to center the grid */}
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 max-w-4xl mx-auto">
+                <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
+                <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
+                <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
+                <CategoryIcon icon={CalendarIconLucide} label="Event Tickets" href="/tickets?category=event" />
+                <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" /> {/* Updated Label and category */}
+             </div>
+
+              {/* Bottom Advertisements Section */}
+             <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
+             {/* Added max-w-5xl and mx-auto to center the grid */}
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
+                <BottomAdCard
+                    src="https://picsum.photos/400/300?random=10"
+                    alt="Travel Deal"
+                    title="Weekend Getaway Special"
+                    description="Save up to 20% on last-minute train tickets this weekend."
+                    href="/tickets?category=train"
+                    hint="train travel discount"
+                />
+                 <BottomAdCard
+                    src="https://picsum.photos/400/300?random=11"
+                    alt="Event Promotion"
+                    title="Hot Event Tickets Available"
+                    description="Don't miss the biggest concerts and sports events. Find tickets now!"
+                    href="/tickets?category=event"
+                    hint="concert event tickets"
+                />
+                 <BottomAdCard
+                    src="https://picsum.photos/400/300?random=12"
+                    alt="Movie Night Offer"
+                    title="Movie Buffs Rejoice!"
+                    description="Grab cheap movie tickets for tonight's blockbusters."
+                    href="/tickets?category=movie"
+                    hint="movie cinema tickets"
+                 />
+             </div>
          </div>
 
       </main>
