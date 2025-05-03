@@ -178,13 +178,26 @@ export default function ProfileOrdersPage() {
   const [orders, setOrders] = React.useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  // Function to get unique orders based on ID
+  const getUniqueOrders = (tickets: Ticket[]): Ticket[] => {
+      const seenIds = new Set<string>();
+      return tickets.filter(ticket => {
+          if (seenIds.has(ticket.id)) {
+              return false;
+          }
+          seenIds.add(ticket.id);
+          return true;
+      });
+  };
+
+
   React.useEffect(() => {
     // Load orders from localStorage on mount
     if (typeof window !== 'undefined') {
       try {
         const storedOrdersString = localStorage.getItem('userOrders');
-        const storedOrders = storedOrdersString ? JSON.parse(storedOrdersString) : [];
-        setOrders(storedOrders.reverse()); // Show newest orders first
+        const storedOrders: Ticket[] = storedOrdersString ? JSON.parse(storedOrdersString) : [];
+        setOrders(getUniqueOrders(storedOrders).reverse()); // Ensure uniqueness and show newest orders first
       } catch (e) {
         console.error("Failed to load orders from localStorage:", e);
         // Handle error (e.g., show a message)
@@ -196,8 +209,8 @@ export default function ProfileOrdersPage() {
        const handleStorageChange = (event: StorageEvent) => {
            if (event.key === 'userOrders' && event.newValue) {
              try {
-               const updatedOrders = JSON.parse(event.newValue);
-               setOrders(updatedOrders.reverse()); // Update state with new orders
+               const updatedStoredOrders: Ticket[] = JSON.parse(event.newValue);
+               setOrders(getUniqueOrders(updatedStoredOrders).reverse()); // Ensure uniqueness on update
              } catch (e) {
                console.error("Failed to parse updated orders:", e);
              }
@@ -223,17 +236,19 @@ export default function ProfileOrdersPage() {
   const handleDeleteOrder = (orderId: string) => {
     if (typeof window !== 'undefined') {
       try {
-        // Filter out the order to delete
+        // Filter out the order to delete from the current unique state
         const updatedOrders = orders.filter(order => order.id !== orderId);
-        setOrders(updatedOrders); // Update state
+        setOrders(updatedOrders); // Update state immediately
 
-        // Update localStorage (store in original order before reversing for display)
-        localStorage.setItem('userOrders', JSON.stringify(updatedOrders.reverse()));
+        // Update localStorage with the filtered list (reverse it back for storage if needed)
+        // Assuming the state `orders` is already reversed for display, reverse it back before saving
+        const ordersToSave = [...updatedOrders].reverse();
+        localStorage.setItem('userOrders', JSON.stringify(ordersToSave));
 
         // Dispatch storage event to notify other tabs/windows if necessary
         window.dispatchEvent(new StorageEvent('storage', {
           key: 'userOrders',
-          newValue: JSON.stringify(updatedOrders.reverse()),
+          newValue: JSON.stringify(ordersToSave),
           storageArea: localStorage,
         }));
 
@@ -251,6 +266,7 @@ export default function ProfileOrdersPage() {
         });
         // Optionally revert state if localStorage update fails
         // This would require storing the original orders before trying to update
+        // For simplicity, we're not reverting here. Reloading might fix inconsistency.
       }
     }
   };
@@ -273,8 +289,9 @@ export default function ProfileOrdersPage() {
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Map over the state which is already guaranteed to be unique */}
             {orders.map((order) => (
-              <OrderItem key={order.id} order={order} onDelete={handleDeleteOrder} /> // Pass handleDeleteOrder
+              <OrderItem key={order.id} order={order} onDelete={handleDeleteOrder} />
             ))}
           </div>
         )}
@@ -285,3 +302,4 @@ export default function ProfileOrdersPage() {
     </Card>
   );
 }
+

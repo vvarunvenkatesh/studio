@@ -209,8 +209,21 @@ if (typeof window !== 'undefined' && !localStorage.getItem(marketplaceTicketsKey
 
 // --- Helper Functions for User-Specific Data ---
 
-const getUserPostedTickets = (): Ticket[] => loadFromLocalStorage<Ticket[]>(userPostedTicketsKey, []);
-const saveUserPostedTickets = (postedTickets: Ticket[]) => saveToLocalStorage(userPostedTicketsKey, postedTickets);
+// Function to get unique items based on ID from an array
+const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
+    const seenIds = new Set<string>();
+    return items.filter(item => {
+        if (seenIds.has(item.id)) {
+            return false;
+        }
+        seenIds.add(item.id);
+        return true;
+    });
+};
+
+
+const getUserPostedTickets = (): Ticket[] => getUniqueById(loadFromLocalStorage<Ticket[]>(userPostedTicketsKey, []));
+const saveUserPostedTickets = (postedTickets: Ticket[]) => saveToLocalStorage(userPostedTicketsKey, getUniqueById(postedTickets)); // Ensure uniqueness on save
 const addUserPostedTicket = (ticket: Ticket) => saveUserPostedTickets([...getUserPostedTickets(), ticket]);
 const removeUserPostedTicket = (ticketId: string) => {
     const currentPosted = getUserPostedTickets();
@@ -221,8 +234,8 @@ const updateUserPostedTicket = (ticketId: string, updatedData: Partial<Ticket>) 
     saveUserPostedTickets(currentPosted.map(t => t.id === ticketId ? { ...t, ...updatedData } : t));
 };
 
-const getUserOrders = (): Ticket[] => loadFromLocalStorage<Ticket[]>(userOrdersKey, []);
-const saveUserOrders = (orders: Ticket[]) => saveToLocalStorage(userOrdersKey, orders);
+const getUserOrders = (): Ticket[] => getUniqueById(loadFromLocalStorage<Ticket[]>(userOrdersKey, []));
+const saveUserOrders = (orders: Ticket[]) => saveToLocalStorage(userOrdersKey, getUniqueById(orders)); // Ensure uniqueness on save
 const addUserOrder = (ticket: Ticket) => saveUserOrders([...getUserOrders(), ticket]);
 
 
@@ -302,7 +315,7 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
 /**
  * Asynchronously simulates purchasing a ticket.
  * Marks the ticket status as 'sold' in the marketplace and user's posted lists.
- * Adds the purchased ticket to the user's order history.
+ * Adds the purchased ticket to the user's order history, ensuring uniqueness.
  *
  * @param ticketId The ID of the ticket to purchase.
  * @returns A promise that resolves to an object indicating success or failure, including the ticket data.
@@ -336,7 +349,7 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
   ticketToUpdate.status = 'sold';
   saveToLocalStorage(marketplaceTicketsKey, tickets); // Save updated marketplace list
   updateUserPostedTicket(ticketId, { status: 'sold' }); // Update in user's posted list
-  addUserOrder(ticketToUpdate); // Add to user's order history
+  addUserOrder(ticketToUpdate); // Add to user's order history (will ensure uniqueness)
 
   console.log(`Ticket ${ticketId} purchased successfully.`);
   return { success: true, message: `Ticket ${ticketId} purchased successfully!`, ticket: ticketToUpdate };
@@ -406,3 +419,4 @@ if (typeof window !== 'undefined') {
         // Add similar listeners for userPostedTicketsKey and userOrdersKey if needed
     });
 }
+
