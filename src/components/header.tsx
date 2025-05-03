@@ -19,6 +19,7 @@ export function Header() {
           {isLoggedIn ? (
              <Link href="/profile" passHref>
                  {/* If Button needs `asChild` here, ensure only one child */}
+                 {/* Removed asChild as Button is the direct child */}
                  <Button variant="ghost" size="icon" className="h-9 w-9">
                     <User className="h-5 w-5"/> {/* Single child icon */}
                     {/* Screen reader text doesn't count as a renderable child for Slot */}
@@ -27,7 +28,7 @@ export function Header() {
             </Link>
           ) : (
             // Apply accent hover effect directly
-            <Button asChild variant="ghost" size="sm" className="hover:bg-accent hover:text-accent-foreground gap-2">
+            <Button asChild variant="ghost" size="sm" className="hover:bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:text-black gap-2">
                <Link href="/login">
                    <LogIn className="h-4 w-4" />
                    <span className="hidden sm:inline">Login</span>
@@ -42,7 +43,7 @@ export function Header() {
              <Link href="/" className="text-card-foreground whitespace-nowrap flex items-baseline justify-center">
                  {/* Reverted Brand Name styling */}
                  <span className="text-3xl font-bold">
-                    LastMiniT
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
              </Link>
              {/* Slogan */}
@@ -69,3 +70,4 @@ export function Header() {
     </header>
   );
 }
+
