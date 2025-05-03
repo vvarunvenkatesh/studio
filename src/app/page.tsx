@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight } from 'lucide-react'; // Renamed alias to avoid conflict, Added Chevron icons
+import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight, Ticket } from 'lucide-react'; // Renamed alias to avoid conflict, Added Chevron icons
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header'; // Import the Header component
@@ -227,6 +227,7 @@ export default function Home() {
       <main className="flex-1 container py-6 md:py-10">
 
          {/* Added top margin to separate content from slider */}
+         {/* Removed max-w-5xl and mx-auto from this parent div */}
          <div className="mt-8 md:mt-12">
              <SearchForm />
 
@@ -242,7 +243,7 @@ export default function Home() {
 
               {/* Bottom Advertisements Section */}
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
-             {/* Added max-w-5xl and mx-auto to center the grid */}
+             {/* Kept max-w-5xl and mx-auto here to center the ad grid */}
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
                 <BottomAdCard
                     src="https://picsum.photos/400/300?random=10"
