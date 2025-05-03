@@ -21,8 +21,8 @@ body {
     --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
     --muted: 94 13% 90%; /* Light greenish gray for subtle backgrounds */
     --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
-    --accent: 94 13% 60%; /* #9CAF88 Green */
-    --accent-foreground: 94 10% 95%; /* Very Light Greenish White */
+    --accent: 120 70% 75%; /* Light fluorescent green for hover */
+    --accent-foreground: 120 60% 15%; /* Dark green for text on hover */
     --destructive: 0 84.2% 60.2%; /* Default Destructive Red */
     --destructive-foreground: 0 0% 98%; /* Near White */
     --border: 94 13% 80%; /* Light Greenish Gray border */
@@ -61,8 +61,8 @@ body {
     --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
     --muted: 94 13% 25%; /* Darker green-ish shade for muted */
     --muted-foreground: 94 10% 75%; /* Lighter greenish-white */
-    --accent: 0 0% 98%; /* Near White for accent */
-    --accent-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --accent: 120 70% 35%; /* Darker fluorescent green for dark mode hover */
+    --accent-foreground: 120 30% 95%; /* Light text for dark mode hover */
     --destructive: 0 70% 50%; /* Adjusted red */
     --destructive-foreground: 0 0% 98%;
     --border: 94 13% 50%; /* Medium Dark Green */
