@@ -213,6 +213,10 @@ if (typeof window !== 'undefined' && !localStorage.getItem(marketplaceTicketsKey
 const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
     const seenIds = new Set<string>();
     return items.filter(item => {
+        if (!item || typeof item.id === 'undefined') {
+            console.warn("Encountered invalid item object:", item);
+            return false; // Skip invalid entries
+        }
         if (seenIds.has(item.id)) {
             return false;
         }
@@ -246,13 +250,17 @@ const addUserOrder = (ticket: Ticket) => saveUserOrders([...getUserOrders(), tic
  * Ensures the global `tickets` array is up-to-date with localStorage.
  * Filters out tickets with status 'sold'.
  *
- * @param filters Optional filters for category, fromCity, toCity.
+ * @param filters Optional filters for category, fromCity, toCity, price range, and date range.
  * @returns A promise that resolves to an array of available Ticket objects matching the filters.
  */
 export async function getAvailableTickets(filters?: {
   category?: Ticket['type'];
   fromCity?: string;
   toCity?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
 }): Promise<Ticket[]> {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 50));
@@ -276,6 +284,25 @@ export async function getAvailableTickets(filters?: {
     const toLower = filters.toCity.toLowerCase();
     filteredTickets = filteredTickets.filter(ticket => ticket.toCity?.toLowerCase().includes(toLower));
   }
+
+  // Apply price filter
+  if (filters?.minPrice !== undefined) {
+      filteredTickets = filteredTickets.filter(ticket => ticket.price >= filters!.minPrice!);
+  }
+  if (filters?.maxPrice !== undefined) {
+      filteredTickets = filteredTickets.filter(ticket => ticket.price <= filters!.maxPrice!);
+  }
+
+  // Apply date range filter
+  if (filters?.startDate) {
+      const start = new Date(filters.startDate + 'T00:00:00'); // Ensure comparison starts at beginning of day
+      filteredTickets = filteredTickets.filter(ticket => new Date(ticket.date + 'T00:00:00') >= start);
+  }
+  if (filters?.endDate) {
+      const end = new Date(filters.endDate + 'T23:59:59'); // Ensure comparison ends at end of day
+      filteredTickets = filteredTickets.filter(ticket => new Date(ticket.date + 'T00:00:00') <= end);
+  }
+
 
   // Return only available tickets for the browse pages
   return filteredTickets;
