@@ -7,48 +7,114 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon } from 'lucide-react'; // Renamed alias to avoid conflict
+import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight } from 'lucide-react'; // Renamed alias to avoid conflict, Added Chevron icons
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header'; // Import the Header component
+import { cn } from '@/lib/utils'; // Import cn utility
 
 // Simple Advertisement Slider Component
 const advertisements = [
   { id: 1, src: 'https://picsum.photos/1200/448?random=1', alt: 'concert', hint: 'concert crowd music' },
   { id: 2, src: 'https://picsum.photos/1200/448?random=2', alt: 'train travel', hint: 'train window journey' },
   { id: 3, src: 'https://picsum.photos/1200/448?random=3', alt: 'movie theatre', hint: 'movie theater screen' },
+  { id: 4, src: 'https://picsum.photos/1200/448?random=4', alt: 'bus travel', hint: 'bus road trip' }, // Added another ad
+  { id: 5, src: 'https://picsum.photos/1200/448?random=5', alt: 'sports event', hint: 'stadium sports crowd' }, // Added another ad
 ];
 
 function AdvertisementSlider() {
   const [currentAd, setCurrentAd] = React.useState(0);
+  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const goToNext = React.useCallback(() => {
+    setCurrentAd((prev) => (prev + 1) % advertisements.length);
+    resetInterval();
+  }, []);
+
+  const goToPrevious = () => {
+    setCurrentAd((prev) => (prev - 1 + advertisements.length) % advertisements.length);
+    resetInterval();
+  };
+
+  const goToSlide = (index: number) => {
+     setCurrentAd(index);
+     resetInterval();
+  };
+
+  const resetInterval = () => {
+      if (intervalRef.current) {
+         clearInterval(intervalRef.current);
+      }
+      intervalRef.current = setInterval(goToNext, 5000); // Restart interval
+  }
 
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentAd((prev) => (prev + 1) % advertisements.length);
-    }, 5000); // Change slide every 5 seconds
-    return () => clearInterval(interval);
-  }, []);
+    resetInterval(); // Start the interval on mount
+    return () => {
+        if (intervalRef.current) {
+           clearInterval(intervalRef.current); // Clear interval on unmount
+        }
+    };
+  }, [goToNext]); // Rerun effect if goToNext changes (it shouldn't, but good practice)
 
   return (
     // Increased height classes, added w-full. Removed margins/padding.
-    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg">
+    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg group"> {/* Added group class for hover state on arrows */}
       {advertisements.map((ad, index) => (
         <Image
           key={ad.id}
           src={ad.src}
           alt={ad.alt}
-          layout="fill"
-          objectFit="cover"
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentAd ? 'opacity-100' : 'opacity-0'}`}
+          fill // Use fill instead of layout="fill"
+          sizes="(max-width: 768px) 100vw, 1200px" // Provide sizes for better optimization
+          style={{ objectFit: 'cover' }} // Use style for objectFit
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentAd ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           data-ai-hint={ad.hint}
           priority={index === 0} // Prioritize loading the first image
         />
       ))}
-       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
        {/* Added padding to the text container */}
-       <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-10 p-4">
+       <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-20 p-4">
           Find Last Minute Deals!
        </div>
+
+       {/* Navigation Arrows */}
+       {/* Previous Button */}
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToPrevious}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 text-white hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 w-8 md:h-10 md:w-10"
+            aria-label="Previous slide"
+        >
+            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
+        </Button>
+        {/* Next Button */}
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/30 text-white hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 w-8 md:h-10 md:w-10"
+            aria-label="Next slide"
+        >
+            <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
+        </Button>
+
+        {/* Pagination Bubbles */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex space-x-2 p-2">
+            {advertisements.map((_, index) => (
+                <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={cn(
+                        "h-2 w-2 rounded-full transition-colors duration-300",
+                        index === currentAd ? 'bg-white' : 'bg-white/50 hover:bg-white/75'
+                    )}
+                    aria-label={`Go to slide ${index + 1}`}
+                />
+            ))}
+        </div>
     </div>
   );
 }
@@ -63,9 +129,9 @@ interface CategoryIconProps {
 function CategoryIcon({ icon: Icon, label, href }: CategoryIconProps) {
   return (
     <Link href={href} passHref>
-      <Card className="text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-[#16A085] hover:bg-[#148c73]">
-        <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary-foreground mb-2" />
-        <span className="text-sm md:text-base font-medium text-primary-foreground">{label}</span>
+      <Card className="text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-card hover:bg-card/90"> {/* Use Card background */}
+        <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary mb-2" /> {/* Use Primary text color */}
+        <span className="text-sm md:text-base font-medium text-card-foreground">{label}</span> {/* Use Card Foreground */}
       </Card>
     </Link>
   );
@@ -135,7 +201,7 @@ function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCard
     <Link href={href} passHref>
       <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card">
         <div className="relative h-40 w-full">
-          <Image src={src} alt={alt} layout="fill" objectFit="cover" data-ai-hint={hint} />
+          <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} data-ai-hint={hint} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"/>
         </div>
         <CardHeader className="pb-2 pt-4">
           <CardTitle className="text-lg">{title}</CardTitle>
