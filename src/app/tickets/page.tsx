@@ -145,10 +145,13 @@ export default function TicketsPage() {
                     <label htmlFor="categoryFilter" className="block text-sm font-medium text-muted-foreground mb-1">Category</label>
                     <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as TicketType['type'] | '')}>
                         <SelectTrigger id="categoryFilter">
+                            {/* Placeholder is shown when value is '' */}
                             <SelectValue placeholder="Any Category" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Any Category</SelectItem>
+                            {/* Removed: <SelectItem value="">Any Category</SelectItem> */}
+                            {/* Add an explicit option to clear the filter if needed, or rely on placeholder */}
+                             {/* <SelectItem value="all">Any Category</SelectItem> // Alternative: use 'all' */}
                             <SelectItem value="bus">Bus</SelectItem>
                             <SelectItem value="train">Train</SelectItem>
                             <SelectItem value="movie">Movie</SelectItem>
