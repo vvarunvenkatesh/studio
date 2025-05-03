@@ -10,12 +10,14 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-card">
       <div className="container flex h-16 items-center justify-between relative">
 
-         {/* Profile Icon or Placeholder */}
+         {/* Profile Icon or Placeholder - Link to profile page */}
          <div className="md:ml-4"> {/* Added margin for desktop view */}
-           <Avatar className="h-9 w-9 cursor-pointer">
-              <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" />
-              <AvatarFallback>U</AvatarFallback>
-           </Avatar>
+            <Link href="/profile" passHref>
+                <Avatar className="h-9 w-9 cursor-pointer">
+                    <AvatarImage src="https://picsum.photos/100?a" alt="User Profile" data-ai-hint="profile avatar user" />
+                    <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+            </Link>
          </div>
 
         {/* Centered Title - Adjusted font sizes and alignment */}
@@ -26,7 +28,7 @@ export function Header() {
 
 
         {/* Navigation/Actions on the right */}
-        <nav className="ml-auto md:mr-4"> {/* Adjusted margin for desktop */}
+        <nav className="md:mr-4"> {/* Adjusted margin for desktop */}
           <Button asChild variant="default" size="sm">
             <Link href="/post-ticket" className="gap-2">
               <PlusCircle className="h-4 w-4" /> Post Ticket
