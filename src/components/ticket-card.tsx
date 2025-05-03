@@ -140,7 +140,7 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
     <Card className={cn(
         "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200",
         isSold ? 'opacity-60 bg-muted/50' : 'bg-card',
-        className
+        className // Apply the className prop here
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between mb-1">
@@ -194,7 +194,7 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
              currentTicket.originalTicketDataUri ? (
                 <Button
                     size="sm"
-                    variant="secondary" // Or another appropriate variant
+                    // Removed variant="secondary" to use default primary color
                     onClick={handleDownload}
                     aria-label="Download original ticket"
                     className="gap-2"
