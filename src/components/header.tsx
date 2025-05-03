@@ -25,7 +25,7 @@ export function Header() {
         localStorage.removeItem('isLoggedIn');
         setIsLoggedIn(false);
         // Optionally redirect to home or login page
-        // window.location.href = '/';
+         window.location.href = '/'; // Force reload to update header state reliably
      }
   };
 
@@ -38,16 +38,19 @@ export function Header() {
         {/* Left side: Login/Signup or Profile Button */}
         <div className="flex items-center md:ml-2">
            {isLoggedIn ? (
-               // Simple profile link for now, could be a dropdown later
-               <Button asChild variant="ghost" size="icon" className="rounded-full mr-2 md:mr-4">
-                   <Link href="/profile">
-                       <User className="h-5 w-5 text-foreground" />
-                       <span className="sr-only">Profile</span>
-                   </Link>
-               </Button>
-               // Example Logout Button (Uncomment if needed)
-               // <Button onClick={handleLogout} variant="outline" size="sm">Logout</Button>
+               <>
+                 {/* Simple profile link */}
+                 <Button asChild variant="ghost" size="icon" className="rounded-full mr-2 md:mr-4">
+                     <Link href="/profile">
+                         <User className="h-5 w-5 text-foreground" />
+                         <span className="sr-only">Profile</span>
+                     </Link>
+                 </Button>
+                  {/* Logout Button */}
+                  <Button onClick={handleLogout} variant="outline" size="sm">Logout</Button>
+               </>
             ) : (
+                 // Login/Signup Button with Outline style and gradient hover
                 <Button asChild variant="outline" size="sm" className="bg-background hover:bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:text-primary-foreground gap-2 text-foreground border">
                     <Link href="/login">
                         <span>Login/Signup</span>
@@ -74,7 +77,7 @@ export function Header() {
 
         {/* Right side: Post Ticket Button */}
         <nav className="flex items-center md:mr-2">
-          {/* Ensured Link is the direct child when using asChild */}
+           {/* Post Ticket button with gradient background */}
           <Button asChild size="sm" className="gap-2 text-white bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:opacity-90 transition-opacity">
             <Link href="/post-ticket">
               <PlusCircle className="h-4 w-4" />
@@ -87,3 +90,4 @@ export function Header() {
     </header>
   );
 }
+
