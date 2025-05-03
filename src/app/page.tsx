@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -238,8 +239,8 @@ export default function Home() {
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
              {/* Added max-w-4xl and mx-auto to center the grid */}
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 max-w-4xl mx-auto">
-                <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
                 <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
+                <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
                 <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
                 <CategoryIcon icon={CalendarIconLucide} label="Event Tickets" href="/tickets?category=event" />
                 <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" />
@@ -289,3 +290,4 @@ export default function Home() {
     </div>
   );
 }
+
