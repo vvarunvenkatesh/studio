@@ -34,13 +34,16 @@ export default function TicketsPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   const initialCategory = searchParams.get('category') as TicketType['type'] | null;
-  const [categoryFilter, setCategoryFilter] = React.useState<TicketType['type'] | 'all'>(initialCategory || 'all');
+  // Remove category filter state as it's now managed by the URL only
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
   const [toCityFilter, setToCityFilter] = React.useState(searchParams.get('to') || '');
 
   const currentCategory = searchParams.get('category') as TicketType['type'] | null;
   const currentFrom = searchParams.get('from');
   const currentTo = searchParams.get('to');
+
+   // Simulate current user ID
+  const currentUserId = 'currentUser'; // Replace with actual user ID logic
 
   const pageTitle = React.useMemo(() => {
     if (currentCategory && categoryMap[currentCategory]) {
@@ -69,7 +72,7 @@ export default function TicketsPage() {
         const fromCity = searchParams.get('from');
         const toCity = searchParams.get('to');
 
-        setCategoryFilter(category || 'all');
+        // Set input states based on URL params
         setFromCityFilter(fromCity || '');
         setToCityFilter(toCity || '');
 
@@ -105,25 +108,25 @@ export default function TicketsPage() {
 
 
   const handleFilterChange = () => {
-      const query = new URLSearchParams();
-      if (currentCategory && currentCategory !== 'all') {
-        query.set('category', currentCategory);
-      }
+      const query = new URLSearchParams(searchParams); // Use existing params as base
 
+      // Update or remove from/to params
       if (fromCityFilter) query.set('from', fromCityFilter);
+      else query.delete('from');
+
       if (toCityFilter) query.set('to', toCityFilter);
+      else query.delete('to');
+
       router.push(`/tickets?${query.toString()}`);
   };
 
   const clearFilters = () => {
-      setCategoryFilter(initialCategory || 'all');
       setFromCityFilter('');
       setToCityFilter('');
 
-      const query = new URLSearchParams();
-       if (initialCategory && initialCategory !== 'all') {
-         query.set('category', initialCategory);
-       }
+      const query = new URLSearchParams(searchParams);
+      query.delete('from');
+      query.delete('to');
       router.push(`/tickets?${query.toString()}`);
   };
 
@@ -145,7 +148,7 @@ export default function TicketsPage() {
     ))
   );
 
-   const hasActiveFilters = (categoryFilter && categoryFilter !== 'all') || fromCityFilter || toCityFilter;
+   const hasActiveFilters = fromCityFilter || toCityFilter;
 
 
   return (
@@ -154,7 +157,7 @@ export default function TicketsPage() {
       <main className="flex-1 container py-8">
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
-         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-4xl mx-auto">
+         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-4xl mx-auto"> {/* Centered filter card */}
            <div className="flex flex-col md:flex-row gap-4 items-end">
 
                 <div className="w-full md:w-auto flex-grow">
@@ -185,7 +188,7 @@ export default function TicketsPage() {
                   <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
 
-                {(fromCityFilter || toCityFilter) && (
+                {hasActiveFilters && ( // Only show clear if there are active from/to filters
                     <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground gap-2">
                         <X className="mr-2 h-4 w-4" /> Clear
                     </Button>
@@ -213,7 +216,8 @@ export default function TicketsPage() {
                 key={ticket.id}
                 ticket={ticket}
                 onPurchaseSuccess={handlePurchaseSuccess}
-                className="ml-2.5"
+                isSeller={ticket.sellerId === currentUserId} // Pass isSeller prop
+                className="ml-2.5" // Keep existing margin class
               />
             ))}
           </div>
@@ -221,12 +225,12 @@ export default function TicketsPage() {
           <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8">
             <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">No Tickets Found</h2>
-            {(fromCityFilter || toCityFilter) ? (
+            {hasActiveFilters ? ( // Check if from/to filters are active
                  <p>No tickets match your current filters. Try broadening your search!</p>
             ) : (
                  <p>It looks like no tickets are listed currently for {currentCategory && categoryMap[currentCategory] ? categoryMap[currentCategory].name.toLowerCase() : 'this category'}. Check back later!</p>
             )}
-            {(fromCityFilter || toCityFilter) && (
+            {hasActiveFilters && ( // Only show clear if from/to filters are active
                 <Button variant="link" onClick={clearFilters}>
                     Clear Filters
                 </Button>
@@ -237,3 +241,4 @@ export default function TicketsPage() {
     </div>
   );
 }
+

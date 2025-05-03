@@ -1,3 +1,4 @@
+
 'use client'; // Make this a client component for interaction
 
 import * as React from 'react';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Added specific icons, Download, XCircle for Cancel, Hourglass for Pending
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -19,6 +20,7 @@ interface TicketCardProps {
   onCancelListing?: (ticketId: string) => Promise<void> | void; // Add callback for cancelling listing
   isCancelling?: boolean; // Add state for cancellation loading
   className?: string; // Add className prop
+  isSeller?: boolean; // Added isSeller prop
 }
 
 // Mapping for category icons
@@ -36,7 +38,8 @@ export function TicketCard({
     onPurchaseSuccess,
     onCancelListing, // Pass the cancel handler
     isCancelling,    // Pass the loading state
-    className
+    className,
+    isSeller = false // Default isSeller to false
 }: TicketCardProps) {
   const { toast } = useToast();
   const [isPurchasing, setIsPurchasing] = React.useState(false);
@@ -56,7 +59,7 @@ export function TicketCard({
 
 
   const handlePurchase = async () => {
-    if (isSold) return; // Prevent buying if already sold locally
+    if (isSold || isSeller) return; // Prevent buying if already sold locally or if user is the seller
 
     setIsPurchasing(true);
     try {
@@ -181,7 +184,6 @@ export function TicketCard({
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
              <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
-           {/* Added mr-2 to prevent overlap with potential delete button in parent */}
            <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0">ID: {currentTicket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
@@ -241,7 +243,14 @@ export function TicketCard({
                  ) : (
                      <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
                  )
+             ) : isSeller ? (
+                // If not sold, but the current user is the seller, show "Pending"
+                 <Badge variant="outline" className="text-muted-foreground flex items-center gap-1">
+                    <Hourglass className="h-3 w-3" />
+                    Pending
+                 </Badge>
              ) : (
+                // If not sold and not the seller, show "Buy Ticket"
                 <Button
                   size="sm"
                   onClick={handlePurchase}
@@ -316,3 +325,4 @@ export function TicketCard({
     </Card>
   );
 }
+
