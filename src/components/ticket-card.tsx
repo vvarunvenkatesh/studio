@@ -58,6 +58,28 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
         });
         setIsSold(true); // Update local state to reflect sold status
         setCurrentTicket(result.ticket); // Update ticket data with potentially new status and URI
+
+         // Save purchased ticket to localStorage for "My Orders"
+         if (typeof window !== 'undefined') {
+           try {
+             const existingOrdersString = localStorage.getItem('userOrders');
+             const existingOrders: Ticket[] = existingOrdersString ? JSON.parse(existingOrdersString) : [];
+             // Add the newly purchased ticket
+             existingOrders.push(result.ticket);
+             localStorage.setItem('userOrders', JSON.stringify(existingOrders));
+             // Optional: Dispatch storage event if other components need to react
+               window.dispatchEvent(new StorageEvent('storage', {
+                 key: 'userOrders',
+                 newValue: JSON.stringify(existingOrders),
+                 storageArea: localStorage,
+               }));
+           } catch (e) {
+             console.error("Failed to save order to localStorage:", e);
+             // Optionally inform user that saving the order failed
+           }
+         }
+
+
         if (onPurchaseSuccess) {
           onPurchaseSuccess(result.ticket.id, result.ticket); // Notify parent component with full ticket data
         }
@@ -86,15 +108,15 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
   };
 
    // Function to handle downloading the original ticket
-   const handleDownload = () => {
-     if (currentTicket.originalTicketDataUri) {
+   const handleDownload = (dataUri: string | undefined, ticketId: string, ticketType: string) => {
+     if (dataUri) {
        try {
           const link = document.createElement('a');
-          link.href = currentTicket.originalTicketDataUri;
+          link.href = dataUri;
 
           // Attempt to extract file extension from MIME type in data URI
           let fileExtension = 'file';
-          const mimeMatch = currentTicket.originalTicketDataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
+          const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
           if (mimeMatch && mimeMatch[1]) {
             const mimeType = mimeMatch[1];
             // Basic mapping, can be expanded
@@ -109,7 +131,7 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
             fileExtension = extensionMap[mimeType] || fileExtension;
           }
 
-          const filename = `ticket_${currentTicket.type}_${currentTicket.id}.${fileExtension}`;
+          const filename = `ticket_${ticketType}_${ticketId}.${fileExtension}`;
           link.download = filename;
           document.body.appendChild(link);
           link.click();
@@ -195,7 +217,7 @@ export function TicketCard({ ticket, onPurchaseSuccess, className }: TicketCardP
                 <Button
                     size="sm"
                     // Removed variant="secondary" to use default primary color
-                    onClick={handleDownload}
+                    onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
                     aria-label="Download original ticket"
                     className="gap-2"
                 >
