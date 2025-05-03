@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, Rupee, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Changed DollarSign to Rupee
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Replaced Rupee with IndianRupeeIcon
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -284,7 +284,7 @@ export function TicketCard({
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4 mt-auto">
          <div className="flex items-center font-semibold text-lg text-primary">
-             <Rupee className="mr-1 h-5 w-5" /> {/* Changed DollarSign to Rupee */}
+             <IndianRupeeIcon className="mr-1 h-5 w-5" /> {/* Changed Rupee to IndianRupeeIcon */}
              {currentTicket.price.toFixed(2)}
          </div>
 
@@ -315,7 +315,7 @@ export function TicketCard({
                  size="sm"
                  onClick={handlePurchase}
                  disabled={isPurchasing}
-                 aria-label={`Buy ${currentTicket.type} ticket for ₹${currentTicket.price.toFixed(2)}`} // Changed $ to ₹
+                 aria-label={`Buy ${currentTicket.type} ticket for ₹${currentTicket.price.toFixed(2)}`} // Changed to ₹
                  className="gap-2" // Uses default button style
              >
                  {isPurchasing ? (
@@ -330,3 +330,5 @@ export function TicketCard({
     </Card>
   );
 }
+
+

@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, Rupee, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2 } from 'lucide-react'; // Changed DollarSign to Rupee
+import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, IndianRupeeIcon, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2 } from 'lucide-react'; // Changed Rupee to IndianRupeeIcon
 import type { Ticket } from '@/services/ticket-marketplace';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -126,7 +126,7 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
        {/* Price, Download, and Delete */}
        <div className="flex sm:flex-col items-end sm:items-center justify-between sm:justify-start mt-2 sm:mt-0 sm:ml-4 gap-2">
           <div className="flex items-center font-semibold text-lg text-primary">
-             <Rupee className="mr-1 h-5 w-5" /> {/* Changed DollarSign to Rupee */}
+             <IndianRupeeIcon className="mr-1 h-5 w-5" /> {/* Changed to IndianRupeeIcon */}
              {order.price.toFixed(2)}
          </div>
           {order.originalTicketDataUri ? (
@@ -182,6 +182,10 @@ export default function ProfileOrdersPage() {
   const getUniqueOrders = (tickets: Ticket[]): Ticket[] => {
       const seenIds = new Set<string>();
       return tickets.filter(ticket => {
+          if (!ticket || typeof ticket.id === 'undefined') {
+              console.warn("Encountered invalid ticket object:", ticket);
+              return false; // Skip invalid entries
+          }
           if (seenIds.has(ticket.id)) {
               return false;
           }
@@ -302,3 +306,4 @@ export default function ProfileOrdersPage() {
     </Card>
   );
 }
+
