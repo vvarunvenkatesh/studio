@@ -36,7 +36,7 @@ import { useRouter } from 'next/navigation';
 
 // Define the validation schema using Zod
 const formSchema = z.object({
-  type: z.enum(['train', 'event', 'movie', 'bus'], { required_error: 'Ticket type is required.' }),
+  type: z.enum(['train', 'event', 'movie', 'bus', 'sports'], { required_error: 'Ticket type is required.' }), // Added 'sports'
   description: z
     .string()
     .min(10, { message: 'Description must be at least 10 characters.' })
@@ -50,16 +50,16 @@ const formSchema = z.object({
          .min(startOfToday(), { message: "Date cannot be in the past." }),
   time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: 'Invalid time format (HH:MM).' }), // HH:MM format
   location: z.string().optional(), // Optional for train/bus
-  fromCity: z.string().optional(), // Optional for event/movie
-  toCity: z.string().optional(), // Optional for event/movie
+  fromCity: z.string().optional(), // Optional for event/movie/sports
+  toCity: z.string().optional(), // Optional for event/movie/sports
 }).refine(data => {
-  // Conditional validation: location is required for event/movie
-  if ((data.type === 'event' || data.type === 'movie') && !data.location) {
+  // Conditional validation: location is required for event/movie/sports
+  if ((data.type === 'event' || data.type === 'movie' || data.type === 'sports') && !data.location) { // Added 'sports'
     return false;
   }
   return true;
 }, {
-  message: 'Location / Venue is required for Event or Movie tickets.',
+  message: 'Location / Venue is required for Event, Movie, or Sports tickets.', // Updated message
   path: ['location'], // Specify the path of the error
 }).refine(data => {
    // Conditional validation: fromCity and toCity are required for train/bus
@@ -201,6 +201,7 @@ export function PostTicketForm() {
                   <SelectItem value="bus">Bus</SelectItem>
                   <SelectItem value="event">Event</SelectItem>
                   <SelectItem value="movie">Movie</SelectItem>
+                  <SelectItem value="sports">Sports</SelectItem> {/* Added Sports */}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -369,7 +370,7 @@ export function PostTicketForm() {
           </div>
         ) : null}
 
-         {ticketType === 'event' || ticketType === 'movie' ? (
+         {ticketType === 'event' || ticketType === 'movie' || ticketType === 'sports' ? ( // Added 'sports'
             <FormField
               control={form.control}
               name="location"
@@ -377,7 +378,7 @@ export function PostTicketForm() {
                 <FormItem>
                   <FormLabel>Location / Venue *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Madison Square Garden, AMC Lincoln Square" {...field} />
+                    <Input placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium" {...field} /> {/* Updated placeholder */}
                   </FormControl>
                    <FormDescription>Be specific about the place.</FormDescription>
                   <FormMessage />
@@ -406,7 +407,7 @@ export function PostTicketForm() {
 
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full gap-2" disabled={isSubmitting || isCheckingGrammar}> {/* Added gap-2 */}
+        <Button type="submit" className="w-full gap-2" disabled={isSubmitting || isCheckingGrammar}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

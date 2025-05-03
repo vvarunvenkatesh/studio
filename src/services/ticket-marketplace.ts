@@ -7,9 +7,9 @@ export interface Ticket {
    */
   id: string;
   /**
-   * The type of ticket (e.g., train, event, movie, bus).
+   * The type of ticket (e.g., train, event, movie, bus, sports).
    */
-  type: 'train' | 'event' | 'movie' | 'bus';
+  type: 'train' | 'event' | 'movie' | 'bus' | 'sports';
   /**
    * A description of the ticket.
    */
@@ -27,7 +27,7 @@ export interface Ticket {
    */
   time: string;
   /**
-   * The location/venue, mainly for events/movies.
+   * The location/venue, mainly for events/movies/sports.
    */
   location: string; // Keep location for venue/general purpose
    /**
@@ -104,6 +104,16 @@ let tickets: Ticket[] = [
     toCity: 'Denver',
     status: 'available',
   },
+   {
+    id: '6', // Added sports ticket
+    type: 'sports',
+    description: 'Basketball Game - Section 102, Row 5, Seat 3',
+    price: 90,
+    date: '2024-11-05', // Future date
+    time: '19:30',
+    location: 'City Stadium', // Venue
+    status: 'available',
+  },
 ];
 
 /**
@@ -163,8 +173,9 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status'>): Pro
    if ((newTicket.type === 'train' || newTicket.type === 'bus') && (!newTicket.fromCity || !newTicket.toCity)) {
      console.warn(`Warning: Train/Bus ticket posted without 'fromCity' or 'toCity' (ID: ${newTicket.id})`);
    }
-   if ((newTicket.type === 'event' || newTicket.type === 'movie') && !newTicket.location) {
-      console.warn(`Warning: Event/Movie ticket posted without 'location' (ID: ${newTicket.id})`);
+   // Updated check for event, movie, or sports
+   if ((newTicket.type === 'event' || newTicket.type === 'movie' || newTicket.type === 'sports') && !newTicket.location) {
+      console.warn(`Warning: Event/Movie/Sports ticket posted without 'location' (ID: ${newTicket.id})`);
    }
 
 

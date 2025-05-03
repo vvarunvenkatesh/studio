@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, TicketIcon as TicketCategoryIcon } from 'lucide-react';
+import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon } from 'lucide-react'; // Renamed alias to avoid conflict
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
@@ -29,9 +29,8 @@ function AdvertisementSlider() {
   }, []);
 
   return (
-    // Increased height classes: h-72 (small), md:h-96 (large), lg:h-[28rem] (extra large - 448px)
-    // Also added mt-2 (margin top) and mb-10/md:mb-16 (margin bottom)
-    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden rounded-lg shadow-lg mt-2 mb-10 md:mb-16">
+    // Increased height classes and margins
+    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden rounded-lg shadow-lg mt-4 mb-12 md:mt-6 md:mb-16">
       {advertisements.map((ad, index) => (
         <Image
           key={ad.id}
@@ -85,7 +84,8 @@ function SearchForm() {
   };
 
   return (
-    <Card className="p-4 md:p-6 mb-8 md:mb-12 bg-muted/30 border border-dashed">
+    // Added mx-auto to explicitly center the card within the container
+    <Card className="p-4 md:p-6 mb-8 md:mb-12 bg-muted/30 border border-dashed max-w-4xl mx-auto">
         <h2 className="text-xl font-semibold mb-4 text-center text-foreground">Search for Train or Bus Tickets</h2>
        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-4">
         <div className="flex-1 w-full sm:w-auto">
@@ -131,7 +131,7 @@ interface BottomAdCardProps {
 function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCardProps) {
   return (
     <Link href={href} passHref>
-      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col">
+      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card">
         <div className="relative h-40 w-full">
           <Image src={src} alt={alt} layout="fill" objectFit="cover" data-ai-hint={hint} />
         </div>
@@ -174,17 +174,19 @@ export default function Home() {
          <SearchForm />
 
          <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
-         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16"> {/* Added margin bottom */}
+         {/* Added max-w-4xl and mx-auto to center the grid */}
+         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 max-w-4xl mx-auto">
             <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
             <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
             <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
             <CategoryIcon icon={CalendarIconLucide} label="Event Tickets" href="/tickets?category=event" />
-            <CategoryIcon icon={TicketCategoryIcon} label="Spots tickets" href="/tickets" /> {/* Updated Label */}
+            <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" /> {/* Updated Label and category */}
          </div>
 
           {/* Bottom Advertisements Section */}
          <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+         {/* Added max-w-5xl and mx-auto to center the grid */}
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
             <BottomAdCard
                 src="https://picsum.photos/400/300?random=10"
                 alt="Travel Deal"
@@ -213,7 +215,7 @@ export default function Home() {
 
       </main>
 
-       <footer className="py-4 border-t bg-muted/30 mt-auto"> {/* Adjusted footer bg */}
+       <footer className="py-4 border-t bg-muted/30 mt-auto">
          <div className="container text-center text-sm text-muted-foreground">
            © {new Date().getFullYear()} LastminIT tickets. All rights reserved.
          </div>

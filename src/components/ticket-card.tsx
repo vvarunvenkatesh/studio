@@ -6,7 +6,7 @@ import type { Ticket } from '@/services/ticket-marketplace';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight } from 'lucide-react'; // Added Clock and ArrowRight
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, DollarSign, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon } from 'lucide-react'; // Added specific icons
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -18,10 +18,11 @@ interface TicketCardProps {
 
 // Mapping for category icons
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
-    bus: TicketIcon, // Using default TicketIcon for Bus for now
-    train: TicketIcon,
-    movie: TicketIcon,
-    event: TicketIcon,
+    bus: Bus,
+    train: Train,
+    movie: Film,
+    event: CalendarIconLucide,
+    sports: TicketCategoryIcon, // Added sports icon
 };
 
 export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
@@ -71,20 +72,20 @@ export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
   };
 
   return (
-    <Card className={`flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 ${isSold ? 'opacity-60 bg-muted/50' : ''}`}>
-      <CardHeader className="pb-2"> {/* Reduced bottom padding */}
-        <div className="flex items-start justify-between mb-1"> {/* Align items start */}
-           <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2"> {/* Added margin-right */}
-             <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" /> {/* Added flex-shrink-0 */}
-             <span className="truncate">{ticket.type} Ticket</span> {/* Added span for truncation */}
+    <Card className={`flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 ${isSold ? 'opacity-60 bg-muted/50' : 'bg-card'}`}> {/* Use bg-card for non-sold */}
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between mb-1">
+           <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2">
+             <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
+             <span className="truncate">{ticket.type} Ticket</span>
            </CardTitle>
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0">ID: {ticket.id}</Badge> {/* Added whitespace-nowrap */}
+           <Badge variant={isSold ? 'destructive' : 'secondary'} className="text-xs whitespace-nowrap flex-shrink-0">ID: {ticket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
              {ticket.description}
          </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-1.5 text-sm pt-2"> {/* Reduced top padding and gap */}
+      <CardContent className="grid gap-1.5 text-sm pt-2">
          {/* Route for Train/Bus */}
          {(ticket.type === 'train' || ticket.type === 'bus') && ticket.fromCity && ticket.toCity && (
              <div className="flex items-center font-medium">
@@ -93,8 +94,8 @@ export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
                 <span className="truncate">{ticket.toCity}</span>
              </div>
          )}
-         {/* Location for Event/Movie */}
-          {(ticket.type === 'event' || ticket.type === 'movie') && ticket.location && (
+         {/* Location for Event/Movie/Sports */}
+          {(ticket.type === 'event' || ticket.type === 'movie' || ticket.type === 'sports') && ticket.location && ( // Added 'sports'
              <div className="flex items-center">
                 <MapPin className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">{ticket.location}</span>
@@ -104,7 +105,7 @@ export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
          {(ticket.type === 'train' || ticket.type === 'bus') && ticket.location && (!ticket.fromCity || !ticket.toCity) && (
              <div className="flex items-center text-xs text-muted-foreground">
                 <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{ticket.location}</span> {/* Show platform/gate if route isn't primary */}
+                <span className="truncate">{ticket.location}</span>
              </div>
           )}
 
@@ -130,7 +131,7 @@ export function TicketCard({ ticket, onPurchaseSuccess }: TicketCardProps) {
               onClick={handlePurchase}
               disabled={isPurchasing}
               aria-label={`Buy ${ticket.type} ticket for $${ticket.price.toFixed(2)}`}
-              className="gap-2" // Added gap-2
+              className="gap-2"
             >
               {isPurchasing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

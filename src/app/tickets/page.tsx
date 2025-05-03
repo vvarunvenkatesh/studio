@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, X, TicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter } from 'lucide-react';
+import { Search, X, TicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon } from 'lucide-react'; // Added TicketCategoryIcon
 import type { Ticket as TicketType } from '@/services/ticket-marketplace'; // Use type alias
 
 
@@ -21,6 +21,7 @@ const categoryMap: Record<TicketType['type'], { icon: React.ElementType; name: s
     train: { icon: Train, name: 'Train' },
     movie: { icon: Film, name: 'Movie' },
     event: { icon: CalendarIconLucide, name: 'Event' },
+    sports: { icon: TicketCategoryIcon, name: 'Sports' }, // Added sports
 };
 
 export default function TicketsPage() {
@@ -167,6 +168,7 @@ export default function TicketsPage() {
                             <SelectItem value="train">Train</SelectItem>
                             <SelectItem value="movie">Movie</SelectItem>
                             <SelectItem value="event">Event</SelectItem>
+                            <SelectItem value="sports">Sports</SelectItem> {/* Added Sports */}
                         </SelectContent>
                     </Select>
                 </div>
@@ -198,14 +200,14 @@ export default function TicketsPage() {
                  </div>
 
                 {/* Apply Filter Button */}
-                <Button onClick={handleFilterChange} className="w-full md:w-auto gap-2"> {/* Added gap-2 */}
+                <Button onClick={handleFilterChange} className="w-full md:w-auto gap-2">
                   <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
 
                 {/* Clear Filters Button */}
                 {/* Show clear button if any filter is active */}
                 {hasActiveFilters && (
-                    <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground gap-2"> {/* Added gap-2 */}
+                    <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto text-muted-foreground gap-2">
                         <X className="mr-2 h-4 w-4" /> Clear
                     </Button>
                 )}
