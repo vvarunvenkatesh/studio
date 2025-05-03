@@ -1,4 +1,5 @@
 
+
 'use client'; // Needed for useState and useEffect
 
 import * as React from 'react';
@@ -89,8 +90,8 @@ export function Header({ className }: HeaderProps) { // Destructure className
                  </Link>
                </div>
             ) : (
-                 // Login/Signup Button with Outline style and gradient hover
-                 <Button asChild variant="outline" size="sm" className="bg-background hover:bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:text-primary-foreground gap-2 text-foreground border">
+                 // Login/Signup Button with Outline style, added border and theme-based light green hover
+                 <Button asChild variant="outline" size="sm" className="bg-background hover:bg-accent hover:text-accent-foreground gap-2 text-foreground border">
                      {/* Link should be the direct child for asChild */}
                      <Link href="/login">
                          <span>Login/Signup</span>
@@ -131,5 +132,6 @@ export function Header({ className }: HeaderProps) { // Destructure className
     </header>
   );
 }
+
 
 
