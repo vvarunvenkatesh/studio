@@ -424,10 +424,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                 <FormItem>
                    <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Location / Venue *</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium"
-                       className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
-                       {...field} /> {/* Updated placeholder */}
+                    <div> {/* Wrap Input in a div to ensure single child for FormControl Slot */}
+                        <Input
+                          placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium"
+                           className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                           {...field} /> {/* Updated placeholder */}
+                    </div>
                   </FormControl>
                    <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>Be specific about the place.</FormDescription>
                   <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
@@ -445,10 +447,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                  <FormItem>
                     <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Platform / Gate / Terminal (Optional)</FormLabel>
                    <FormControl>
-                     <Input
-                       placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3"
-                        className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
-                        {...field} />
+                    <div> {/* Wrap Input in a div to ensure single child for FormControl Slot */}
+                       <Input
+                         placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3"
+                          className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                          {...field} />
+                    </div>
                    </FormControl>
                    <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>Add specific departure point details if known.</FormDescription>
                    <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
