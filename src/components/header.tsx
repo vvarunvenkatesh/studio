@@ -6,45 +6,55 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, User } from 'lucide-react'; // User icon for fallback
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
+import { cn } from '@/lib/utils'; // Import cn utility
 
-export function Header() {
+interface HeaderProps {
+  className?: string; // Add className prop
+}
+
+
+export function Header({ className }: HeaderProps) { // Destructure className
   // State to track login status
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
-  // State to store user profile image URL (initially placeholder)
-  // In a real app, this would come from user data fetched after login
+  // State to store user profile image URL
   const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(null);
+
 
   // Check localStorage on component mount (client-side only)
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const loggedInStatus = localStorage.getItem('isLoggedIn');
       const storedImageUrl = localStorage.getItem('profileImageUrl');
-      const loggedIn = loggedInStatus === 'true';
-      setIsLoggedIn(loggedIn);
-      if (loggedIn && storedImageUrl) {
+      setIsLoggedIn(loggedInStatus === 'true');
+      if (loggedInStatus === 'true' && storedImageUrl) {
         setProfileImageUrl(storedImageUrl);
       } else {
-        setProfileImageUrl(null); // Clear image if not logged in or no image stored
+        // Reset if not logged in or no image stored
+        setProfileImageUrl(null);
       }
 
       // Add event listener for storage changes (optional, for cross-tab updates)
       const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'isLoggedIn') {
-          const newIsLoggedIn = event.newValue === 'true';
-          setIsLoggedIn(newIsLoggedIn);
+          const newLoginStatus = event.newValue === 'true';
+          setIsLoggedIn(newLoginStatus);
            // Reset image if logging out
-           if (!newIsLoggedIn) {
+           if (!newLoginStatus) {
              setProfileImageUrl(null);
-             localStorage.removeItem('profileImageUrl'); // Clear stored image on logout
+             // Also clear from storage if desired
+             // localStorage.removeItem('profileImageUrl');
+           } else {
+              // If logging in, try to load image immediately
+              const updatedImageUrl = localStorage.getItem('profileImageUrl');
+              setProfileImageUrl(updatedImageUrl);
            }
         }
          if (event.key === 'profileImageUrl') {
-            // Re-check login status when image changes
-            const currentLoginStatus = localStorage.getItem('isLoggedIn') === 'true';
-            if (currentLoginStatus) { // Only update if logged in
-                setProfileImageUrl(event.newValue);
+            // Update image only if currently logged in
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+               setProfileImageUrl(event.newValue);
             } else {
-                 setProfileImageUrl(null); // Ensure image is cleared if logged out during update
+                setProfileImageUrl(null); // Clear if somehow updated while logged out
             }
          }
       };
@@ -56,24 +66,22 @@ export function Header() {
         window.removeEventListener('storage', handleStorageChange);
       };
     }
-  }, []); // Only run on mount
+  }, []); // Run only once on mount
 
 
   return (
-    // Keep header background white (bg-card)
-    <header className="sticky top-0 z-40 w-full border-b bg-card">
+    // Apply className prop here, keep default styles
+    <header className={cn("sticky top-0 z-40 w-full border-b bg-card", className)}>
       <div className="container flex h-16 items-center justify-between px-4 md:px-6 relative">
 
         {/* Left side: Login/Signup or Profile Button */}
         <div className="flex items-center md:ml-4"> {/* Added margin for desktop */}
            {isLoggedIn ? (
-               <div className="flex items-center gap-3"> {/* Added gap for spacing */}
-                 {/* Avatar instead of icon */}
+               <div className="flex items-center gap-3">
                  <Link href="/profile">
                    <Avatar className="h-8 w-8 cursor-pointer">
-                     {/* Use state for image URL */}
+                     {/* Use state for image URL, provide fallback */}
                      <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
-                     {/* Fallback with initials or generic icon */}
                      <AvatarFallback>
                        <User className="h-4 w-4 text-muted-foreground" />
                      </AvatarFallback>
@@ -108,8 +116,8 @@ export function Header() {
 
         {/* Right side: Post Ticket Button */}
         <nav className="flex items-center md:mr-4"> {/* Added margin for desktop */}
-           {/* Post Ticket button with specified gradient */}
-          <Button asChild size="sm" className="gap-2 text-white bg-gradient-to-r from-[#FF006A] via-[#FFA800] to-[#FFD500] hover:opacity-90 transition-opacity">
+           {/* Post Ticket button with specified color */}
+          <Button asChild size="sm" className="gap-2 text-white bg-[#16A085] hover:bg-[#148c73] transition-colors">
             <Link href="/post-ticket">
               <PlusCircle className="h-4 w-4" />
               <span className="hidden sm:inline">Post Ticket</span>

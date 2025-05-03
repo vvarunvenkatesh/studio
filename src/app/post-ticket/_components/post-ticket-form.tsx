@@ -75,7 +75,11 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export function PostTicketForm() {
+interface PostTicketFormProps {
+  onTypeChange?: (type: FormData['type'] | undefined) => void; // Callback for type change
+}
+
+export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -96,6 +100,14 @@ export function PostTicketForm() {
   });
 
   const ticketType = form.watch('type'); // Watch the ticket type field
+
+  // Call the onTypeChange callback when ticketType changes
+  React.useEffect(() => {
+    if (onTypeChange) {
+      onTypeChange(ticketType);
+    }
+  }, [ticketType, onTypeChange]);
+
 
   // Handle AI Grammar Check
   const handleGrammarCheck = async () => {
@@ -150,8 +162,8 @@ export function PostTicketForm() {
         date: format(values.date, 'yyyy-MM-dd'),
         time: values.time,
         location: values.location || '', // Ensure location is string even if undefined initially
-        fromCity: values.fromCity, // Keep optional fields as they are
-        toCity: values.toCity,
+        fromCity: values.fromCity || '', // Ensure optional fields are strings
+        toCity: values.toCity || '',
       };
 
       const createdTicket = await postTicket(ticketData);
@@ -181,7 +193,15 @@ export function PostTicketForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto bg-card p-6 md:p-8 rounded-lg shadow">
+       {/* Apply conditional styling to the form element itself */}
+       <form
+         onSubmit={form.handleSubmit(onSubmit)}
+         className={cn(
+           "space-y-6 max-w-2xl mx-auto p-6 md:p-8 rounded-lg shadow relative z-10", // Added z-index
+           // Apply card styles only if not movie type, otherwise make transparent for bg image
+           ticketType === 'movie' ? 'bg-transparent text-white' : 'bg-card',
+         )}
+        >
 
         {/* Ticket Type */}
         <FormField
@@ -189,13 +209,15 @@ export function PostTicketForm() {
           name="type"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Ticket Type *</FormLabel>
+              {/* Label color adjusted for movie type */}
+               <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Ticket Type *</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white' : ''}>
                     <SelectValue placeholder="Select ticket type" />
                   </SelectTrigger>
                 </FormControl>
+                {/* Popover content styling remains default */}
                 <SelectContent>
                   <SelectItem value="train">Train</SelectItem>
                   <SelectItem value="bus">Bus</SelectItem>
@@ -204,7 +226,7 @@ export function PostTicketForm() {
                   <SelectItem value="sports">Sports</SelectItem> {/* Added Sports */}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
             </FormItem>
           )}
         />
@@ -215,19 +237,25 @@ export function PostTicketForm() {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description *</FormLabel>
+               <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Description *</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Textarea
                     placeholder="Add details like seat number, section, special features, route specifics..."
-                    className="min-h-[100px] resize-none"
+                    className={cn(
+                       "min-h-[100px] resize-none",
+                       ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''
+                     )}
                     {...field}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute bottom-2 right-2 h-7 w-7 text-muted-foreground hover:text-primary"
+                    className={cn(
+                       "absolute bottom-2 right-2 h-7 w-7 text-muted-foreground hover:text-primary",
+                       ticketType === 'movie' ? 'text-white/70 hover:text-white' : ''
+                    )}
                     onClick={handleGrammarCheck}
                     disabled={isCheckingGrammar || isSubmitting || !field.value || field.value.length < 10}
                     title="Check Grammar & Spelling (AI)"
@@ -241,10 +269,10 @@ export function PostTicketForm() {
                   </Button>
                 </div>
               </FormControl>
-              <FormDescription>
+              <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>
                 Provide clear details (min 10 chars). Use <Sparkles className="inline h-3 w-3 align-text-bottom" /> for AI check.
               </FormDescription>
-              <FormMessage />
+              <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
             </FormItem>
           )}
         />
@@ -256,12 +284,13 @@ export function PostTicketForm() {
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Price ($) *</FormLabel>
+                <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Price ($) *</FormLabel>
                 <FormControl>
                    <Input
                       type="number"
                       step="0.01"
                       placeholder="e.g., 25.50"
+                      className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
                       {...field}
                       value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : String(field.value)}
                       onChange={(e) => {
@@ -271,7 +300,7 @@ export function PostTicketForm() {
                       min="0.01"
                       />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
               </FormItem>
             )}
           />
@@ -282,7 +311,7 @@ export function PostTicketForm() {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Date *</FormLabel>
+                 <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Date *</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -290,7 +319,8 @@ export function PostTicketForm() {
                         variant={'outline'}
                         className={cn(
                           'w-full pl-3 text-left font-normal justify-start',
-                          !field.value && 'text-muted-foreground'
+                          !field.value && 'text-muted-foreground',
+                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white hover:bg-background/80 hover:text-white [&[data-state=open]]:bg-background/80' : ''
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
@@ -302,6 +332,7 @@ export function PostTicketForm() {
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
+                  {/* Calendar popover content styling remains default */}
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
@@ -312,7 +343,7 @@ export function PostTicketForm() {
                     />
                   </PopoverContent>
                 </Popover>
-                <FormMessage />
+                <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
               </FormItem>
             )}
           />
@@ -323,14 +354,22 @@ export function PostTicketForm() {
             name="time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Time (HH:MM) *</FormLabel>
+                 <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Time (HH:MM) *</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Input type="time" placeholder="e.g., 14:30" {...field} />
-                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="time"
+                      placeholder="e.g., 14:30"
+                      className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                       {...field}
+                     />
+                    <Clock className={cn(
+                       "absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground",
+                        ticketType === 'movie' ? 'text-white/70' : ''
+                     )} />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
               </FormItem>
             )}
           />
@@ -345,11 +384,14 @@ export function PostTicketForm() {
               name="fromCity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>From (City) *</FormLabel>
+                   <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>From (City) *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., New York" {...field} />
+                    <Input
+                       placeholder="e.g., New York"
+                       className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                       {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
                 </FormItem>
               )}
             />
@@ -359,11 +401,14 @@ export function PostTicketForm() {
               name="toCity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>To (City) *</FormLabel>
+                   <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>To (City) *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Boston" {...field} />
+                    <Input
+                       placeholder="e.g., Boston"
+                       className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                       {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
                 </FormItem>
               )}
             />
@@ -376,12 +421,15 @@ export function PostTicketForm() {
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location / Venue *</FormLabel>
+                   <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Location / Venue *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium" {...field} /> {/* Updated placeholder */}
+                    <Input
+                      placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium"
+                       className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                       {...field} /> {/* Updated placeholder */}
                   </FormControl>
-                   <FormDescription>Be specific about the place.</FormDescription>
-                  <FormMessage />
+                   <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>Be specific about the place.</FormDescription>
+                  <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
                 </FormItem>
               )}
             />
@@ -394,12 +442,15 @@ export function PostTicketForm() {
                name="location"
                render={({ field }) => (
                  <FormItem>
-                   <FormLabel>Platform / Gate / Terminal (Optional)</FormLabel>
+                    <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Platform / Gate / Terminal (Optional)</FormLabel>
                    <FormControl>
-                     <Input placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3" {...field} />
+                     <Input
+                       placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3"
+                        className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : ''}
+                        {...field} />
                    </FormControl>
-                   <FormDescription>Add specific departure point details if known.</FormDescription>
-                   <FormMessage />
+                   <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>Add specific departure point details if known.</FormDescription>
+                   <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
                  </FormItem>
                )}
              />
@@ -407,7 +458,14 @@ export function PostTicketForm() {
 
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full gap-2" disabled={isSubmitting || isCheckingGrammar}>
+         <Button
+            type="submit"
+            className={cn(
+              "w-full gap-2",
+              // Conditional button styling for movie type
+              ticketType === 'movie' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : ''
+            )}
+            disabled={isSubmitting || isCheckingGrammar}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -417,7 +475,10 @@ export function PostTicketForm() {
             'Post Ticket for Sale'
           )}
         </Button>
-         <p className="text-xs text-muted-foreground text-center">Fields marked with * are required.</p>
+         <p className={cn(
+             "text-xs text-muted-foreground text-center",
+             ticketType === 'movie' ? 'text-white/70' : ''
+           )}>Fields marked with * are required.</p>
       </form>
     </Form>
   );
