@@ -1,3 +1,4 @@
+
 'use client'; // Needed for useState and useEffect
 
 import * as React from 'react';
@@ -77,7 +78,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
         {/* Left side: Login/Signup or Profile Button */}
          {/* Added margin for desktop */}
-         <div className="flex items-center md:ml-4"> {/* Increased ml for desktop */}
+         <div className="flex items-center md:ml-4"> {/* Adjusted ml */}
            {isLoggedIn ? (
                <div className="flex items-center gap-3"> {/* Removed ml-4 */}
                  <Link href="/profile">
@@ -123,14 +124,13 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
 
         {/* Right side: Post Ticket Button */}
-         {/* Added margin for desktop */}
-        <nav className="flex items-center md:mr-4"> {/* Adjusted mr */}
+         {/* Adjusted margin for desktop - changed md:mr-4 to md:mr-6 */}
+        <nav className="flex items-center md:mr-6"> {/* Adjusted mr to 6 (1.5rem ~ 24px) */}
            {/* Post Ticket button with specified color #FF2459 */}
            {/* Added mr-4 to create gap */}
-          <Button asChild size="sm" className="gap-2 text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
+          <Button asChild size="sm" className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
             <Link href="/post-ticket">
                 {/* Wrap children in a div as Button with asChild expects a single element */}
-                {/* Removed PlusCircle icon */}
                 <div className="flex items-center">
                   <span className="hidden sm:inline">Post Ticket</span>
                   <span className="sm:hidden">Post</span> {/* Shorter text for mobile */}
@@ -142,3 +142,4 @@ export function Header({ className }: HeaderProps) { // Destructure className
     </header>
   );
 }
+
