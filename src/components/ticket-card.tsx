@@ -1,5 +1,4 @@
 
-
 'use client'; // Make this a client component for interaction
 
 import * as React from 'react';
@@ -171,12 +170,48 @@ export function TicketCard({
      }
    };
 
+  // Helper to render the Cancel Listing button/dialog
+  const renderCancelButton = () => (
+    <AlertDialog>
+        <AlertDialogTrigger asChild>
+            <Button
+                size="sm"
+                variant="destructive"
+                disabled={isCancelling}
+                aria-label="Cancel ticket listing"
+                className="gap-2"
+            >
+                {isCancelling ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <XCircle className="mr-2 h-4 w-4" />
+                )}
+                {isCancelling ? 'Cancelling...' : 'Cancel Listing'}
+            </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will permanently remove your ticket listing from the marketplace. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Keep Listing</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onCancelListing?.(currentTicket.id)} className={buttonVariants({ variant: "destructive" })}>
+                    Cancel Listing
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+  );
+
 
   return (
     <Card className={cn(
         "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full", // Added h-full
         // Adjust opacity/styling based on variant and status
-        (variant === 'browse' && isSold) ? 'opacity-60 bg-muted/50' : 'bg-card',
+        (isSold) ? 'opacity-60 bg-muted/50' : 'bg-card', // Apply sold style regardless of variant
         className // Apply the className prop here
     )}>
       <CardHeader className="pb-2">
@@ -227,104 +262,43 @@ export function TicketCard({
              {currentTicket.price.toFixed(2)}
          </div>
 
-         {/* Conditional Rendering based on variant and status */}
-         {variant === 'browse' && (
-             isSold ? (
-                 // If sold and has downloadable file, show download
-                 currentTicket.originalTicketDataUri ? (
-                     <Button
-                         size="sm"
-                         onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
-                         aria-label="Download original ticket"
-                         className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                     >
-                         <Download className="mr-2 h-4 w-4" />
-                         Download
-                     </Button>
-                 ) : (
-                     <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
-                 )
-             ) : isSeller ? (
-                // If not sold, but the current user is the seller, show "Pending"
-                 <Badge variant="outline" className="text-muted-foreground flex items-center gap-1">
-                    <Hourglass className="h-3 w-3" />
-                    Pending
-                 </Badge>
+         {/* Conditional Rendering based on status and seller */}
+         {isSold ? (
+             // If sold and has downloadable file, show download
+             currentTicket.originalTicketDataUri ? (
+                 <Button
+                     size="sm"
+                     onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
+                     aria-label="Download original ticket"
+                     className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                 >
+                     <Download className="mr-2 h-4 w-4" />
+                     Download
+                 </Button>
              ) : (
-                // If not sold and not the seller, show "Buy Ticket"
-                <Button
-                  size="sm"
-                  onClick={handlePurchase}
-                  disabled={isPurchasing}
-                  aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
-                  className="gap-2"
-                >
-                  {isPurchasing ? (
+                 <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
+             )
+         ) : isSeller ? (
+             // If not sold, and user is the seller, show Cancel Listing
+             renderCancelButton()
+         ) : (
+            // If not sold and not the seller, show "Buy Ticket"
+            <Button
+                size="sm"
+                onClick={handlePurchase}
+                disabled={isPurchasing}
+                aria-label={`Buy ${currentTicket.type} ticket for $${currentTicket.price.toFixed(2)}`}
+                className="gap-2"
+            >
+                {isPurchasing ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
+                ) : (
                     <ShoppingCart className="mr-2 h-4 w-4" />
-                  )}
-                  {isPurchasing ? 'Processing...' : 'Buy Ticket'}
-                </Button>
-             )
+                )}
+                {isPurchasing ? 'Processing...' : 'Buy Ticket'}
+            </Button>
          )}
-
-         {variant === 'manage' && (
-             isSold ? (
-                // If sold and has downloadable file, show download
-                 currentTicket.originalTicketDataUri ? (
-                     <Button
-                         size="sm"
-                         onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
-                         aria-label="Download original ticket"
-                         className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                     >
-                         <Download className="mr-2 h-4 w-4" />
-                         Download
-                     </Button>
-                 ) : (
-                     <Badge variant="destructive">Sold</Badge> // If sold, no file, show Sold
-                 )
-             ) : (
-                 // If not sold (i.e., 'available') and variant is 'manage', show "Cancel Listing" button
-                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          disabled={isCancelling}
-                          aria-label="Cancel ticket listing"
-                          className="gap-2"
-                        >
-                          {isCancelling ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <XCircle className="mr-2 h-4 w-4" />
-                          )}
-                          {isCancelling ? 'Cancelling...' : 'Cancel Listing'}
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will permanently remove your ticket listing from the marketplace. This action cannot be undone.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Keep Listing</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onCancelListing?.(currentTicket.id)} className={buttonVariants({ variant: "destructive" })}>
-                            Cancel Listing
-                        </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                 </AlertDialog>
-             )
-         )}
-
       </CardFooter>
     </Card>
   );
 }
-
-

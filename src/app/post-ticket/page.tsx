@@ -10,7 +10,7 @@ import { TicketCard } from '@/components/ticket-card'; // Import TicketCard
 import { Ticket as TicketIcon, Loader2 } from 'lucide-react'; // Import TicketIcon, Loader2
 import { deleteTicket } from '@/services/ticket-marketplace'; // Import deleteTicket service
 import { useToast } from '@/hooks/use-toast'; // Import useToast
-// AlertDialog components are no longer directly needed here for delete, but kept for potential future use
+// AlertDialog components are needed for confirmation within TicketCard, but not directly triggered here anymore.
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button'; // Import Button
 
@@ -130,13 +130,13 @@ export default function PostTicketPage() {
              ) : postedTickets.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {postedTickets.map((ticket) => (
-                        // Removed the outer div with relative group/listing and the delete overlay
                        <TicketCard
                             key={ticket.id}
                             ticket={ticket}
                             variant="manage" // Specify the manage variant
                             onCancelListing={handleDeleteTicket} // Pass the cancel handler
                             isCancelling={isDeleting === ticket.id} // Pass the loading state
+                            isSeller={true} // User is always the seller on this page
                             className="ml-2.5"
                         />
                     ))}
@@ -156,4 +156,3 @@ export default function PostTicketPage() {
     </div>
   );
 }
-

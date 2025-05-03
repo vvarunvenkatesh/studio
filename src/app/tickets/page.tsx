@@ -1,12 +1,11 @@
 
-
 'use client';
 
 import * as React from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { TicketCard } from '@/components/ticket-card';
-import { getAvailableTickets, type Ticket } from '@/services/ticket-marketplace';
+import { getAvailableTickets, deleteTicket, type Ticket } from '@/services/ticket-marketplace'; // Import deleteTicket
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Search, X, TicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon } from 'lucide-react';
 import type { Ticket as TicketType } from '@/services/ticket-marketplace';
 import { cn } from '@/lib/utils';
-
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 // Mapping for category icons and display names
 const categoryMap: Record<TicketType['type'], { icon: React.ElementType; name: string }> = {
@@ -29,11 +28,12 @@ const categoryMap: Record<TicketType['type'], { icon: React.ElementType; name: s
 export default function TicketsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast(); // Get toast hook
   const [tickets, setTickets] = React.useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState<string | null>(null); // Track deleting state
 
-  const initialCategory = searchParams.get('category') as TicketType['type'] | null;
   // Remove category filter state as it's now managed by the URL only
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
   const [toCityFilter, setToCityFilter] = React.useState(searchParams.get('to') || '');
@@ -61,9 +61,7 @@ export default function TicketsPage() {
     return 'Available Tickets';
   }, [currentCategory, currentFrom, currentTo]);
 
-
-  React.useEffect(() => {
-    const fetchTickets = async () => {
+  const loadTickets = React.useCallback(async () => {
       setIsLoading(true);
       setError(null);
       try {
@@ -80,7 +78,6 @@ export default function TicketsPage() {
         if (fromCity) filters.fromCity = fromCity;
         if (toCity) filters.toCity = toCity;
 
-
         const fetchedTickets = await getAvailableTickets(filters);
         setTickets(fetchedTickets);
       } catch (err) {
@@ -89,10 +86,27 @@ export default function TicketsPage() {
       } finally {
         setIsLoading(false);
       }
+  }, [searchParams]); // Depend on searchParams
+
+  React.useEffect(() => {
+    loadTickets(); // Load initially
+
+    // Listen for storage changes to reload tickets
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'marketplaceTickets' || event.key === 'userPostedTickets') {
+           loadTickets(); // Reload if marketplace or user's posted tickets change
+        }
     };
 
-    fetchTickets();
-  }, [searchParams]);
+    window.addEventListener('storage', handleStorageChange);
+
+    // Cleanup listener on component unmount
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+
+  }, [loadTickets]); // Depend on the memoized loadTickets function
+
 
   // Callback function to handle purchased ticket state update
   const handlePurchaseSuccess = (purchasedTicketId: string, purchasedTicket: Ticket) => {
@@ -102,8 +116,38 @@ export default function TicketsPage() {
               ticket.id === purchasedTicketId ? { ...ticket, status: 'sold', originalTicketDataUri: purchasedTicket.originalTicketDataUri } : ticket
           )
       );
-     // Optionally, you could store the purchased ticket info in local storage or context for the user's "My Orders" page
      console.log("Ticket purchased:", purchasedTicket);
+  };
+
+  // Handle cancelling a ticket listing
+  const handleCancelListing = async (ticketId: string) => {
+    setIsDeleting(ticketId);
+    try {
+        const result = await deleteTicket(ticketId);
+        if (result.success) {
+            toast({
+                title: 'Listing Cancelled',
+                description: 'Your ticket listing has been removed.',
+            });
+            // Reload tickets after successful deletion
+            loadTickets();
+        } else {
+            toast({
+                title: 'Cancellation Failed',
+                description: result.message || 'Could not cancel the ticket listing.',
+                variant: 'destructive',
+            });
+        }
+    } catch (error) {
+        console.error('Error cancelling ticket listing:', error);
+        toast({
+            title: 'Error',
+            description: 'An error occurred while cancelling the listing.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsDeleting(null);
+    }
   };
 
 
@@ -215,8 +259,11 @@ export default function TicketsPage() {
               <TicketCard
                 key={ticket.id}
                 ticket={ticket}
+                variant="browse" // Always browse variant on this page
                 onPurchaseSuccess={handlePurchaseSuccess}
                 isSeller={ticket.sellerId === currentUserId} // Pass isSeller prop
+                onCancelListing={handleCancelListing} // Pass cancel handler
+                isCancelling={isDeleting === ticket.id} // Pass deleting state
                 className="ml-2.5" // Keep existing margin class
               />
             ))}
@@ -241,5 +288,3 @@ export default function TicketsPage() {
     </div>
   );
 }
-
-
