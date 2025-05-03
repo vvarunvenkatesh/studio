@@ -84,12 +84,13 @@ export default function SignupPage() {
               {/* Slogan */}
               <span className="text-xs text-foreground mt-[-4px] opacity-80">Ticket Reselling Platform</span>
           </CardTitle>
-          <CardDescription>Create your account to start selling</CardDescription>
+          <CardDescription>Create your account</CardDescription> {/* Updated description */}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
              <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              {/* Use foreground color for labels */}
+              <Label htmlFor="name" className="text-foreground">Full Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -102,7 +103,8 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              {/* Use foreground color for labels */}
+              <Label htmlFor="email" className="text-foreground">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -115,7 +117,8 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              {/* Use foreground color for labels */}
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -127,7 +130,8 @@ export default function SignupPage() {
               />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              {/* Use foreground color for labels */}
+              <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -163,5 +167,6 @@ export default function SignupPage() {
     </div>
   );
 }
+
 
 
