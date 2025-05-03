@@ -44,7 +44,10 @@ export function Header() {
                  </span>
              </Link>
              {/* Slogan */}
-             <span className="text-xs text-muted-foreground mt-[-4px]">Ticket Reselling Platform</span>
+             {/* Changed text color to text-foreground and added opacity */}
+             <span className="text-xs text-foreground mt-[-4px] opacity-80">
+               Ticket Reselling Platform
+             </span>
          </div>
 
 
