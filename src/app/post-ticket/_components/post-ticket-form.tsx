@@ -109,15 +109,16 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     if (onTypeChange) {
       onTypeChange(ticketType);
     }
-    // Reset file input when type changes away from 'train'
-    if (ticketType !== 'train') {
-       form.setValue('originalTicketDataUri', undefined);
-       setSelectedFileName(null);
-       if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-       }
-    }
+    // // Reset file input if needed based on type changes (optional)
+    // if (ticketType !== 'train') { // Example: Reset only if NOT a train ticket
+    //    form.setValue('originalTicketDataUri', undefined);
+    //    setSelectedFileName(null);
+    //    if (fileInputRef.current) {
+    //       fileInputRef.current.value = '';
+    //    }
+    // }
   }, [ticketType, onTypeChange, form]);
+
 
   const handleGrammarCheck = async () => {
     const description = form.getValues('description');
@@ -338,54 +339,52 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           )}
         />
 
-       {/* Optional File Upload for Train Tickets */}
-        {ticketType === 'train' && (
-           <FormField
-              control={form.control}
-              name="originalTicketDataUri"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Original Train Ticket (Optional)</FormLabel>
-                  <FormControl>
-                    {/* Use a div wrapper for layout */}
-                    <div className="flex items-center gap-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleUploadClick}
-                             className={cn(
-                                'gap-2',
-                                ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white hover:bg-background/80 hover:text-white' : ''
-                             )}
-                         >
-                           {selectedFileName ? <FileCheck className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-                           {selectedFileName ? "Change File" : "Upload File"}
-                         </Button>
-                         <Input
-                            ref={fileInputRef}
-                            type="file"
-                            className="hidden" // Hide the actual input
-                            accept="image/*,.pdf,.doc,.docx" // Specify acceptable file types
-                            onChange={handleFileChange}
-                        />
-                         {selectedFileName && (
-                           <span className={cn(
-                              "text-sm text-muted-foreground truncate max-w-[200px]", // Added truncate and max-width
-                              ticketType === 'movie' ? 'text-white/80' : ''
-                           )}>
-                             {selectedFileName}
-                           </span>
+       {/* Optional File Upload for Original Ticket */}
+       <FormField
+          control={form.control}
+          name="originalTicketDataUri"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Original Ticket (Optional)</FormLabel>
+              <FormControl>
+                {/* Use a div wrapper for layout */}
+                <div className="flex items-center gap-4">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleUploadClick}
+                         className={cn(
+                            'gap-2',
+                            ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white hover:bg-background/80 hover:text-white' : ''
                          )}
-                    </div>
-                  </FormControl>
-                   <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>
-                     Upload a picture or scan of the original ticket (max 5MB).
-                   </FormDescription>
-                  <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
-                </FormItem>
-              )}
-           />
-        )}
+                     >
+                       {selectedFileName ? <FileCheck className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
+                       {selectedFileName ? "Change File" : "Upload Original Ticket"}
+                     </Button>
+                     <Input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden" // Hide the actual input
+                        accept="image/*,.pdf,.doc,.docx" // Specify acceptable file types
+                        onChange={handleFileChange}
+                    />
+                     {selectedFileName && (
+                       <span className={cn(
+                          "text-sm text-muted-foreground truncate max-w-[200px]", // Added truncate and max-width
+                          ticketType === 'movie' ? 'text-white/80' : ''
+                       )}>
+                         {selectedFileName}
+                       </span>
+                     )}
+                </div>
+              </FormControl>
+               <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>
+                 Upload a picture or scan of the original ticket (max 5MB). This helps build trust with buyers.
+               </FormDescription>
+              <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+            </FormItem>
+          )}
+       />
 
 
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
