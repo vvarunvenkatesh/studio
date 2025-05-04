@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react';
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Changed Rupee to IndianRupeeIcon
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -79,11 +79,11 @@ export function TicketCard({
              const existingOrders: Ticket[] = existingOrdersString ? JSON.parse(existingOrdersString) : [];
              // Add the newly purchased ticket
              existingOrders.push(result.ticket);
-             localStorage.setItem('userOrders', JSON.stringify(existingOrders));
+             saveUserOrders(existingOrders); // Use the helper to save with uniqueness check
              // Optional: Dispatch storage event if other components need to react
                window.dispatchEvent(new StorageEvent('storage', {
                  key: 'userOrders',
-                 newValue: JSON.stringify(existingOrders),
+                 newValue: JSON.stringify(existingOrders), // Send the full list after adding
                  storageArea: localStorage,
                }));
            } catch (e) {
@@ -232,15 +232,14 @@ export function TicketCard({
 
 
   return (
+    // Revert conditional background styling based on status/variant
     <Card className={cn(
-        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full", // Added h-full
-        // Adjust opacity/styling based on variant and status
-        (isSold && variant === 'manage') ? 'opacity-60 bg-muted/50' : // Show sold tickets dimmed in manage view
-        'bg-card', // Default for available tickets
+        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full bg-card", // Use default bg-card
         className // Apply the className prop here
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between mb-1">
+           {/* Use default text-card-foreground */}
            <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2 text-card-foreground">
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
              <span className="truncate">{currentTicket.type} Ticket</span>
@@ -248,11 +247,13 @@ export function TicketCard({
            {/* Added margin-right to badge to avoid overlap with potential Cancel button in manage variant */}
            <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
         </div>
+         {/* Use default text-muted-foreground */}
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
              {currentTicket.description}
          </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-1.5 text-sm pt-2 flex-grow text-foreground"> {/* Added flex-grow and text-foreground */}
+      {/* Use default text-card-foreground */}
+      <CardContent className="grid gap-1.5 text-sm pt-2 flex-grow text-card-foreground"> {/* Added flex-grow and text-foreground */}
          {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.fromCity && currentTicket.toCity && (
              <div className="flex items-center font-medium">
                 <span className="truncate">{currentTicket.fromCity}</span>
@@ -332,3 +333,31 @@ export function TicketCard({
 }
 
 
+// Helper function to save user orders and ensure uniqueness
+function saveUserOrders(orders: Ticket[]) {
+    if (typeof window !== 'undefined') {
+      try {
+        const uniqueOrders = getUniqueById(orders); // Ensure uniqueness before saving
+        localStorage.setItem('userOrders', JSON.stringify(uniqueOrders));
+        console.log("Saved unique orders:", uniqueOrders)
+      } catch (e) {
+        console.error("Failed to save orders to localStorage:", e);
+      }
+    }
+}
+
+// Function to get unique items based on ID from an array
+const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
+    const seenIds = new Set<string>();
+    return items.filter(item => {
+        if (!item || typeof item.id === 'undefined') {
+            console.warn("Encountered invalid item object:", item);
+            return false; // Skip invalid entries
+        }
+        if (seenIds.has(item.id)) {
+            return false;
+        }
+        seenIds.add(item.id);
+        return true;
+    });
+};

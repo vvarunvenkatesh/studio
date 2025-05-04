@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -60,21 +59,23 @@ export default function ForgotPasswordPage() {
         priority
       />
 
-      {/* Forgot Password Card */}
-      <Card className="w-full max-w-sm bg-background/90 backdrop-blur-sm">
+      {/* Forgot Password Card - Use default bg-card */}
+      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Consistent LastMiniT styling - Updated text color */}
+                 {/* Use text-foreground defined in globals.css */}
                  <span className="text-3xl font-bold text-foreground">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
              </Link>
+              {/* Use text-foreground defined in globals.css */}
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
                Ticket Reselling Platform
              </span>
           </CardTitle>
-          <CardDescription className="text-foreground">
+          {/* Use default text-card-foreground */}
+          <CardDescription className="text-card-foreground">
             {linkSent ? 'Check your email' : 'Enter your email to reset your password'}
           </CardDescription>
         </CardHeader>
@@ -87,7 +88,8 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSendResetLink} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground">Email</Label>
+                {/* Use default text-card-foreground */}
+                <Label htmlFor="email" className="text-card-foreground">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -96,7 +98,8 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSending}
-                  className="bg-background/80 text-foreground" // Ensure text-foreground is applied
+                  // Use default text-foreground for input text
+                  className="bg-background/80 text-foreground"
                 />
               </div>
               <Button type="submit" className="w-full gap-2" disabled={isSending}>
@@ -112,7 +115,8 @@ export default function ForgotPasswordPage() {
             </form>
           )}
         </CardContent>
-        <CardFooter className="text-center text-sm text-foreground">
+        {/* Use default text-card-foreground */}
+        <CardFooter className="text-center text-sm text-card-foreground">
           Remembered your password?{' '}
           <Link
             href="/login" // Link back to login page
@@ -125,6 +129,7 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+
 
 
 

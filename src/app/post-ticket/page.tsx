@@ -105,29 +105,23 @@ export default function PostTicketPage() {
       ticketType === 'movie' ? 'bg-movie-poster' : 'bg-background' // Changed default to background
     )}>
       {/* Header background should remain consistent, maybe slightly transparent for movie poster */}
-       <Header className={ticketType === 'movie' ? 'bg-card/80 backdrop-blur-sm' : ''} />
+       {/* Reverted conditional background for Header */}
+       <Header />
       {/* Remove explicit bottom padding pb-20/pb-12 */}
       <main className="flex-1 container py-8 md:py-12 relative z-10"> {/* Ensure content is above pseudo-element */}
         <div className="max-w-3xl mx-auto">
-           {/* Adjust title color if movie type */}
-            <h1 className={cn(
-                "text-3xl font-bold mb-6 text-center md:text-left",
-                ticketType === 'movie' ? 'text-white' : 'text-foreground'
-             )}>Post a New Ticket</h1>
+           {/* Reverted conditional text color for title */}
+            <h1 className="text-3xl font-bold mb-6 text-center md:text-left text-foreground">Post a New Ticket</h1>
            <PostTicketForm onTypeChange={handleTypeChange} /> {/* Pass the callback */}
         </div>
 
          {/* Display User's Active Posted Tickets */}
          <div className="max-w-5xl mx-auto mt-12 md:mt-16">
-             <h2 className={cn(
-                 "text-2xl font-bold mb-6 text-center",
-                  ticketType === 'movie' ? 'text-white' : 'text-foreground'
-             )}>Your Active Listings</h2>
+             {/* Reverted conditional text color for title */}
+             <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Your Active Listings</h2>
              {isLoading ? (
-                 <p className={cn(
-                    "text-center text-muted-foreground",
-                     ticketType === 'movie' ? 'text-white/70' : ''
-                 )}>Loading your listings...</p>
+                 // Reverted conditional text color
+                 <p className="text-center text-muted-foreground">Loading your listings...</p>
              ) : postedTickets.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {postedTickets.map((ticket) => (
@@ -146,10 +140,8 @@ export default function PostTicketPage() {
                     ))}
                  </div>
              ) : (
-                <div className={cn(
-                    "text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8",
-                    ticketType === 'movie' ? 'bg-card/20 border-white/30 text-white/80' : 'bg-muted/30'
-                 )}>
+                // Reverted conditional background/border/text color
+                <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8 bg-muted/30">
                     <TicketIcon className="mx-auto h-12 w-12 mb-4" />
                     <p>You have no active tickets listed for sale.</p>
                  </div>

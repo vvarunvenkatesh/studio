@@ -117,7 +117,8 @@ export default function ProfileBasicInfoPage() {
 
   return (
     // Removed mx-auto to align card left within the Tabs content area
-    <Card className="w-full max-w-2xl">
+    // Use default bg-card
+    <Card className="w-full max-w-2xl bg-card">
       <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
          <div className="relative group">
             <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
@@ -138,7 +139,9 @@ export default function ProfileBasicInfoPage() {
             />
          </div>
          <div className="text-center sm:text-left">
-            <CardTitle className="text-foreground">Basic Information</CardTitle>
+            {/* Use default text-card-foreground */}
+            <CardTitle className="text-card-foreground">Basic Information</CardTitle>
+            {/* Use default text-muted-foreground */}
             <CardDescription className="text-muted-foreground">View and manage your profile details.</CardDescription>
               {selectedFile && (
                  <Button size="sm" onClick={handleImageSave} disabled={isSaving} className="mt-2 gap-2">
@@ -152,35 +155,42 @@ export default function ProfileBasicInfoPage() {
          {/* Changed grid to single column for better centering appearance */}
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-1">
-            <Label htmlFor="name" className="text-foreground">Name</Label>
+             {/* Use default text-card-foreground */}
+            <Label htmlFor="name" className="text-card-foreground">Name</Label>
             {/* In a real app, make these editable with a form */}
-            <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
+            <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-card-foreground"/> {/* Ensure text-card-foreground */}
           </div>
           <div className="space-y-1">
-            <Label htmlFor="email" className="text-foreground">Email Address</Label>
-            <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
+             {/* Use default text-card-foreground */}
+            <Label htmlFor="email" className="text-card-foreground">Email Address</Label>
+            <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-card-foreground"/> {/* Ensure text-card-foreground */}
           </div>
         </div>
          {/* Changed grid to single column for better centering appearance */}
         <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
-                <Label htmlFor="contact" className="text-foreground">Contact Number</Label>
-                <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
+                {/* Use default text-card-foreground */}
+                <Label htmlFor="contact" className="text-card-foreground">Contact Number</Label>
+                <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-card-foreground"/> {/* Ensure text-card-foreground */}
             </div>
             <div className="space-y-1">
-                <Label className="text-foreground">Gender</Label>
+                {/* Use default text-card-foreground */}
+                <Label className="text-card-foreground">Gender</Label>
                 <RadioGroup defaultValue={userData.gender} className="flex items-center space-x-4 pt-2" disabled>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="male" id="male" />
-                        <Label htmlFor="male" className="text-foreground">Male</Label>
+                         {/* Use default text-card-foreground */}
+                        <Label htmlFor="male" className="text-card-foreground">Male</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="female" id="female" />
-                        <Label htmlFor="female" className="text-foreground">Female</Label>
+                         {/* Use default text-card-foreground */}
+                        <Label htmlFor="female" className="text-card-foreground">Female</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="other" id="other" />
-                        <Label htmlFor="other" className="text-foreground">Other</Label>
+                         {/* Use default text-card-foreground */}
+                        <Label htmlFor="other" className="text-card-foreground">Other</Label>
                     </div>
                 </RadioGroup>
             </div>
@@ -199,4 +209,5 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+
 

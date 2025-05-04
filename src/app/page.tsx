@@ -132,6 +132,7 @@ interface CategoryIconProps {
 function CategoryIcon({ icon: Icon, label, href }: CategoryIconProps) {
   return (
     <Link href={href} passHref>
+      {/* Use default bg-card and ensure text-card-foreground is used */}
       <Card className="ml-2.5 text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-card hover:bg-card/90">
         <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary mb-2" />
         <span className="text-sm md:text-base font-medium text-card-foreground">{label}</span>
@@ -201,14 +202,17 @@ interface BottomAdCardProps {
 function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCardProps) {
   return (
     <Link href={href} passHref>
+      {/* Use default bg-card */}
       <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card">
         <div className="relative h-40 w-full">
           <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} data-ai-hint={hint} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"/>
         </div>
         <CardHeader className="pb-2 pt-4">
+          {/* Use default text-card-foreground */}
           <CardTitle className="text-lg text-card-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
+          {/* Use default text-muted-foreground */}
           <CardDescription className="text-muted-foreground">{description}</CardDescription>
         </CardContent>
       </Card>
@@ -276,4 +280,5 @@ export default function Home() {
     </div>
   );
 }
+
 

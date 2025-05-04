@@ -79,6 +79,7 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
    };
 
   return (
+    // Use default bg-card
     <Card className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 bg-card shadow-sm">
        <div className="flex-shrink-0 flex items-center justify-center sm:justify-start mb-2 sm:mb-0">
           <CategorySpecificIcon className="h-8 w-8 text-primary" />
@@ -86,13 +87,13 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
 
        <div className="flex-grow grid gap-1.5 text-sm">
           <div className="flex justify-between items-start">
-             <h3 className="font-semibold capitalize">{order.type} Ticket</h3>
+             <h3 className="font-semibold capitalize text-card-foreground">{order.type} Ticket</h3>
              <Badge variant="secondary" className="text-xs whitespace-nowrap">ID: {order.id}</Badge>
           </div>
           <p className="text-muted-foreground text-xs line-clamp-2">{order.description}</p>
 
           {/* Details Section */}
-          <div className="mt-2 space-y-1 text-xs">
+          <div className="mt-2 space-y-1 text-xs text-card-foreground">
              {(order.type === 'train' || order.type === 'bus') && order.fromCity && order.toCity && (
                <div className="flex items-center font-medium">
                  <span className="truncate">{order.fromCity}</span>
@@ -277,10 +278,11 @@ export default function ProfileOrdersPage() {
 
 
   return (
+    // Use default bg-background
     <Card className="w-full bg-background">
       <CardHeader>
-        <CardTitle>My Orders</CardTitle>
-        <CardDescription>View your past ticket purchases.</CardDescription>
+        <CardTitle className='text-foreground'>My Orders</CardTitle>
+        <CardDescription className='text-muted-foreground'>View your past ticket purchases.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -306,4 +308,5 @@ export default function ProfileOrdersPage() {
     </Card>
   );
 }
+
 

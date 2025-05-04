@@ -139,15 +139,17 @@ export default function LoginPage() {
         priority
       />
 
-      {/* Login Card */}
-      <Card className="w-full max-w-sm bg-background/90 backdrop-blur-sm">
+      {/* Login Card - Use default bg-card */}
+      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
+                 {/* Use text-foreground defined in globals.css */}
                  <span className="text-3xl font-bold text-foreground">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                  </span>
              </Link>
+             {/* Use text-foreground defined in globals.css */}
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
                Ticket Reselling Platform
              </span>
@@ -170,7 +172,8 @@ export default function LoginPage() {
           <form onSubmit={handleOtpVerification} className="space-y-4">
             {/* Identifier Input (Email or Phone) */}
             <div className="space-y-2">
-              <Label htmlFor={loginMethod} className="text-foreground">{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Label>
+              {/* Use default text-card-foreground */}
+              <Label htmlFor={loginMethod} className="text-card-foreground">{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Label>
               <div className="flex gap-2">
                   <Input
                     id={loginMethod}
@@ -180,7 +183,8 @@ export default function LoginPage() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     disabled={isSendingOtp || otpSent || isVerifyingOtp}
-                    className="bg-background/80 text-foreground" // Ensure text-foreground is applied
+                    // Use default text-foreground for input text
+                    className="bg-background/80 text-foreground"
                   />
                   {/* Send OTP Button - Show only if OTP not sent yet */}
                   {!otpSent && (
@@ -207,7 +211,8 @@ export default function LoginPage() {
             {otpSent && (
               <div className="space-y-2">
                  <div className="flex items-center justify-between">
-                    <Label htmlFor="otp" className="text-foreground">Enter OTP</Label>
+                     {/* Use default text-card-foreground */}
+                    <Label htmlFor="otp" className="text-card-foreground">Enter OTP</Label>
                      {/* Optional: Add a resend OTP link/button */}
                     <Button
                         variant="link"
@@ -229,7 +234,8 @@ export default function LoginPage() {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))} // Allow only digits
                   disabled={isVerifyingOtp || isSendingOtp}
-                  className="bg-background/80 text-foreground" // Ensure text-foreground is applied
+                  // Use default text-foreground for input text
+                  className="bg-background/80 text-foreground"
                 />
               </div>
             )}
@@ -252,7 +258,8 @@ export default function LoginPage() {
             )}
           </form>
         </CardContent>
-        <CardFooter className="text-center text-sm text-foreground">
+         {/* Use default text-card-foreground */}
+        <CardFooter className="text-center text-sm text-card-foreground">
           Don't have an account?{' '}
           <Link
             href="/signup"
@@ -268,3 +275,4 @@ export default function LoginPage() {
 
 
     
+

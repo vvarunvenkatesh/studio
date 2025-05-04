@@ -259,11 +259,11 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
 
   return (
     <Form {...form}>
+       {/* Reverted dynamic background color change based on ticketType */}
        <form
          onSubmit={form.handleSubmit(onSubmit)}
          className={cn(
-           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10",
-           ticketType === 'movie' ? 'bg-transparent text-white' : 'bg-card',
+           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10 bg-card", // Use default bg-card
          )}
         >
 
@@ -273,10 +273,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           name="type"
           render={({ field }) => (
             <FormItem>
-               <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Ticket Type *</FormLabel>
+              {/* Reverted text color change */}
+               <FormLabel>Ticket Type *</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger className={ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white' : ''}>
+                   {/* Reverted background/border/text color changes */}
+                  <SelectTrigger>
                     <SelectValue placeholder="Select ticket type" />
                   </SelectTrigger>
                 </FormControl>
@@ -288,7 +290,8 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                   <SelectItem value="sports">Sports</SelectItem>
                 </SelectContent>
               </Select>
-              <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+              {/* Reverted text color change */}
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -299,25 +302,22 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-               <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Description *</FormLabel>
+               {/* Reverted text color change */}
+               <FormLabel>Description *</FormLabel>
               <FormControl>
                 <div className="relative">
+                   {/* Reverted background/border/text color changes */}
                   <Textarea
                     placeholder="Add details like seat number, section, special features, route specifics..."
-                    className={cn(
-                       "min-h-[100px] resize-none",
-                       ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
-                     )}
+                    className="min-h-[100px] resize-none text-foreground"
                     {...field}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className={cn(
-                       "absolute bottom-2 right-2 h-7 w-7 text-muted-foreground hover:text-primary",
-                       ticketType === 'movie' ? 'text-white/70 hover:text-white' : ''
-                    )}
+                    // Reverted text color change
+                    className="absolute bottom-2 right-2 h-7 w-7 text-muted-foreground hover:text-primary"
                     onClick={handleGrammarCheck}
                     disabled={isCheckingGrammar || isSubmitting || !field.value || field.value.length < 10}
                     title="Check Grammar & Spelling (AI)"
@@ -331,10 +331,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                   </Button>
                 </div>
               </FormControl>
-              <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>
+              {/* Reverted text color change */}
+              <FormDescription>
                 Provide clear details (min 10 chars). Use <Sparkles className="inline h-3 w-3 align-text-bottom" /> for AI check.
               </FormDescription>
-              <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+              {/* Reverted text color change */}
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -345,18 +347,16 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           name="originalTicketDataUri"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Original Ticket (Optional)</FormLabel>
+              {/* Reverted text color change */}
+              <FormLabel>Original Ticket (Optional)</FormLabel>
               <FormControl>
-                {/* Use a div wrapper for layout */}
                 <div className="flex items-center gap-4">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={handleUploadClick}
-                         className={cn(
-                            'gap-2',
-                            ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white hover:bg-background/80 hover:text-white' : ''
-                         )}
+                        // Reverted background/border/text color changes
+                         className='gap-2'
                      >
                        {selectedFileName ? <FileCheck className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
                        {selectedFileName ? "Change File" : "Upload Original Ticket"}
@@ -364,24 +364,24 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                      <Input
                         ref={fileInputRef}
                         type="file"
-                        className="hidden" // Hide the actual input
-                        accept="image/*,.pdf,.doc,.docx" // Specify acceptable file types
+                        className="hidden"
+                        accept="image/*,.pdf,.doc,.docx"
                         onChange={handleFileChange}
                     />
                      {selectedFileName && (
-                       <span className={cn(
-                          "text-sm text-muted-foreground truncate max-w-[200px]", // Added truncate and max-width
-                          ticketType === 'movie' ? 'text-white/80' : ''
-                       )}>
+                        // Reverted text color change
+                       <span className="text-sm text-muted-foreground truncate max-w-[200px]">
                          {selectedFileName}
                        </span>
                      )}
                 </div>
               </FormControl>
-               <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>
+              {/* Reverted text color change */}
+               <FormDescription>
                  Upload a picture or scan of the original ticket (max 5MB). This helps build trust with buyers.
                </FormDescription>
-              <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+              {/* Reverted text color change */}
+              <FormMessage />
             </FormItem>
           )}
        />
@@ -394,15 +394,15 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Price (₹) *</FormLabel>
+                 {/* Reverted text color change */}
+                <FormLabel>Price (₹) *</FormLabel>
                 <FormControl>
+                   {/* Reverted background/border/text color changes */}
                    <Input
                       type="number"
                       step="0.01"
-                      placeholder="e.g., 1500.50" // Updated placeholder
-                      className={cn(
-                          ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
-                      )}
+                      placeholder="e.g., 1500.50"
+                      className="text-foreground"
                       {...field}
                       value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : String(field.value)}
                       onChange={(e) => {
@@ -412,7 +412,8 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                       min="0.01"
                       />
                 </FormControl>
-                <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+                {/* Reverted text color change */}
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -423,16 +424,17 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                 <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Date *</FormLabel>
+                 {/* Reverted text color change */}
+                 <FormLabel>Date *</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
+                       {/* Reverted background/border/text color changes */}
                       <Button
                         variant={'outline'}
                         className={cn(
                           'w-full pl-3 text-left font-normal justify-start',
-                          !field.value && 'text-muted-foreground',
-                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white hover:bg-background/80 hover:text-white [&[data-state=open]]:bg-background/80' : ''
+                          !field.value && 'text-muted-foreground'
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
@@ -454,7 +456,8 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                     />
                   </PopoverContent>
                 </Popover>
-                <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+                {/* Reverted text color change */}
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -465,24 +468,23 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             name="time"
             render={({ field }) => (
               <FormItem>
-                 <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Time (HH:MM) *</FormLabel>
+                 {/* Reverted text color change */}
+                 <FormLabel>Time (HH:MM) *</FormLabel>
                 <FormControl>
                   <div className="relative">
+                    {/* Reverted background/border/text color changes */}
                     <Input
                       type="time"
                       placeholder="e.g., 14:30"
-                      className={cn(
-                          ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
-                      )}
+                      className="text-foreground"
                        {...field}
                      />
-                    <Clock className={cn(
-                       "absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground",
-                        ticketType === 'movie' ? 'text-white/70' : ''
-                     )} />
+                    {/* Reverted text color change */}
+                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   </div>
                 </FormControl>
-                <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+                {/* Reverted text color change */}
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -497,16 +499,17 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
               name="fromCity"
               render={({ field }) => (
                 <FormItem>
-                   <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>From (City) *</FormLabel>
+                   {/* Reverted text color change */}
+                   <FormLabel>From (City) *</FormLabel>
                   <FormControl>
+                     {/* Reverted background/border/text color changes */}
                      <Input
                        placeholder="e.g., New York"
-                       className={cn(
-                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
-                       )}
+                       className="text-foreground"
                        {...field} />
                   </FormControl>
-                  <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+                  {/* Reverted text color change */}
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -516,16 +519,17 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
               name="toCity"
               render={({ field }) => (
                 <FormItem>
-                   <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>To (City) *</FormLabel>
+                   {/* Reverted text color change */}
+                   <FormLabel>To (City) *</FormLabel>
                   <FormControl>
+                     {/* Reverted background/border/text color changes */}
                      <Input
                        placeholder="e.g., Boston"
-                       className={cn(
-                           ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
-                       )}
+                       className="text-foreground"
                        {...field} />
                   </FormControl>
-                  <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+                  {/* Reverted text color change */}
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -538,17 +542,19 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
               name="location"
               render={({ field }) => (
                 <FormItem>
-                   <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Location / Venue *</FormLabel>
+                   {/* Reverted text color change */}
+                   <FormLabel>Location / Venue *</FormLabel>
                   <FormControl>
+                     {/* Reverted background/border/text color changes */}
                      <Input
                        placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium"
-                        className={cn(
-                            ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
-                        )}
+                        className="text-foreground"
                         {...field} />
                   </FormControl>
-                   <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>Be specific about the place.</FormDescription>
-                  <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+                   {/* Reverted text color change */}
+                   <FormDescription>Be specific about the place.</FormDescription>
+                  {/* Reverted text color change */}
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -561,17 +567,19 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                name="location"
                render={({ field }) => (
                  <FormItem>
-                    <FormLabel className={ticketType === 'movie' ? 'text-white/90' : ''}>Platform / Gate / Terminal (Optional)</FormLabel>
+                    {/* Reverted text color change */}
+                    <FormLabel>Platform / Gate / Terminal (Optional)</FormLabel>
                    <FormControl>
+                      {/* Reverted background/border/text color changes */}
                       <Input
                         placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3"
-                         className={cn(
-                             ticketType === 'movie' ? 'bg-background/70 border-white/50 text-white placeholder:text-white/60' : 'text-foreground'
-                         )}
+                         className="text-foreground"
                          {...field} />
                    </FormControl>
-                   <FormDescription className={ticketType === 'movie' ? 'text-white/70' : ''}>Add specific departure point details if known.</FormDescription>
-                   <FormMessage className={ticketType === 'movie' ? 'text-red-300' : ''}/>
+                   {/* Reverted text color change */}
+                   <FormDescription>Add specific departure point details if known.</FormDescription>
+                   {/* Reverted text color change */}
+                   <FormMessage />
                  </FormItem>
                )}
              />
@@ -579,12 +587,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
 
 
         {/* Submit Button */}
+         {/* Reverted background/text color changes */}
          <Button
             type="submit"
-            className={cn(
-              "w-full gap-2",
-              ticketType === 'movie' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : ''
-            )}
+            className="w-full gap-2"
             disabled={isSubmitting || isCheckingGrammar}>
           {isSubmitting ? (
             <>
@@ -595,10 +601,8 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             'Post Ticket for Sale'
           )}
         </Button>
-         <p className={cn(
-             "text-xs text-muted-foreground text-center",
-             ticketType === 'movie' ? 'text-white/70' : ''
-           )}>Fields marked with * are required.</p>
+         {/* Reverted text color change */}
+         <p className="text-xs text-muted-foreground text-center">Fields marked with * are required.</p>
       </form>
     </Form>
   );
