@@ -297,7 +297,7 @@ export default function TicketsPage() {
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
         {/* Centered filter card */}
-        <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
+        <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto"> {/* Reverted bg-muted/30 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
 
             {/* From City */}
@@ -405,7 +405,7 @@ export default function TicketsPage() {
                 onCancelListing={handleCancelListing}
                 // Pass the cancelling state for this specific ticket
                 isCancelling={isDeleting === ticket.id}
-                className="ml-2.5" // Keep existing margin class
+                className="ml-2.5" // Keep existing margin class, Reverted bg-card
               />
             ))}
           </div>
@@ -429,5 +429,6 @@ export default function TicketsPage() {
     </div>
   );
 }
+
 
 

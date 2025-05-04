@@ -263,7 +263,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
        <form
          onSubmit={form.handleSubmit(onSubmit)}
          className={cn(
-           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10 bg-card", // Use default bg-card
+           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10 bg-card", // Reverted bg-card
          )}
         >
 

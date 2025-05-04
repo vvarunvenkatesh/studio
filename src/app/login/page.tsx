@@ -140,7 +140,7 @@ export default function LoginPage() {
       />
 
       {/* Login Card - Use default bg-card */}
-      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm">
+      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Reverted bg-card */}
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
@@ -275,4 +275,5 @@ export default function LoginPage() {
 
 
     
+
 

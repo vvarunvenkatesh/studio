@@ -234,7 +234,7 @@ export function TicketCard({
   return (
     // Revert conditional background styling based on status/variant
     <Card className={cn(
-        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full bg-card", // Use default bg-card
+        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full bg-card", // Reverted bg-card
         className // Apply the className prop here
     )}>
       <CardHeader className="pb-2">

@@ -135,7 +135,7 @@ export default function PostTicketPage() {
                             onCancelListing={handleDeleteTicket}
                             // Pass the loading state for this specific ticket
                             isCancelling={isDeleting === ticket.id}
-                            className="ml-2.5"
+                            className="ml-2.5" // Reverted bg-card
                         />
                     ))}
                  </div>

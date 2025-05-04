@@ -70,7 +70,7 @@ export default function SignupPage() {
       />
 
       {/* Signup Card - Use default bg-card */}
-      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm">
+      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Reverted bg-card */}
         <CardHeader className="text-center">
            {/* CardTitle now contains the brand name and slogan */}
           <CardTitle className="flex flex-col items-center">
@@ -172,6 +172,7 @@ export default function SignupPage() {
     </div>
   );
 }
+
 
 
 

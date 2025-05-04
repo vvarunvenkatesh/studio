@@ -118,7 +118,7 @@ export default function ProfileBasicInfoPage() {
   return (
     // Removed mx-auto to align card left within the Tabs content area
     // Use default bg-card
-    <Card className="w-full max-w-2xl bg-card">
+    <Card className="w-full max-w-2xl bg-card"> {/* Reverted bg-card */}
       <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
          <div className="relative group">
             <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
@@ -209,5 +209,6 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+
 
 

@@ -80,7 +80,7 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
 
   return (
     // Use default bg-card
-    <Card className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 bg-card shadow-sm">
+    <Card className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 bg-card shadow-sm"> {/* Reverted bg-card */}
        <div className="flex-shrink-0 flex items-center justify-center sm:justify-start mb-2 sm:mb-0">
           <CategorySpecificIcon className="h-8 w-8 text-primary" />
        </div>
@@ -279,7 +279,7 @@ export default function ProfileOrdersPage() {
 
   return (
     // Use default bg-background
-    <Card className="w-full bg-background">
+    <Card className="w-full bg-background"> {/* Reverted bg-background */}
       <CardHeader>
         <CardTitle className='text-foreground'>My Orders</CardTitle>
         <CardDescription className='text-muted-foreground'>View your past ticket purchases.</CardDescription>
@@ -308,5 +308,6 @@ export default function ProfileOrdersPage() {
     </Card>
   );
 }
+
 
 
