@@ -10,15 +10,15 @@ body {
   :root {
     /* Light Theme */
     --background: 48 27% 90%; /* Off-white (#EBE9E1) */
-    --foreground: 0 0% 9%; /* Near Black */
+    --foreground: 16 80% 48%; /* Orange-Red (#E43D12) */
     --card: 94 33% 95%; /* Lighter Greenish White for cards */
-    --card-foreground: 0 0% 9%; /* Near Black for text on cards */
+    --card-foreground: 16 80% 48%; /* Orange-Red for text on cards */
     --popover: 0 0% 100%; /* White */
-    --popover-foreground: 0 0% 9%; /* Near Black */
+    --popover-foreground: 16 80% 48%; /* Orange-Red */
     --primary: 94 30% 40%; /* Darker Green */
     --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
     --secondary: 94 13% 75%; /* Lighter Green */
-    --secondary-foreground: 0 0% 9%; /* Near Black */
+    --secondary-foreground: 16 80% 48%; /* Orange-Red */
     --muted: 94 13% 90%; /* Light greenish gray for subtle backgrounds */
     --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
     --accent: 341 100% 57%; /* Red (#FF2459) for hover/accent */
@@ -48,17 +48,17 @@ body {
   }
 
   .dark {
-    /* Dark Theme */
+    /* Dark Theme - Adjusting foreground */
     --background: 94 20% 10%; /* Dark Greenish Black */
-    --foreground: 94 10% 95%; /* Very Light Greenish White */
+    --foreground: 16 80% 70%; /* Lighter Orange-Red for dark mode */
     --card: 94 30% 35%; /* Dark Green for cards */
-    --card-foreground: 94 10% 95%; /* Very Light Greenish White for text on cards */
+    --card-foreground: 16 80% 70%; /* Lighter Orange-Red for text on cards */
     --popover: 94 13% 55%; /* Slightly darker green */
-    --popover-foreground: 94 20% 5%; /* Very Dark Greenish Black */
+    --popover-foreground: 16 80% 70%; /* Lighter Orange-Red */
     --primary: 94 10% 95%; /* Light color for primary elements on green background */
     --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
     --secondary: 94 13% 75%; /* Lighter Green */
-    --secondary-foreground: 94 20% 10%; /* Dark Greenish Black */
+    --secondary-foreground: 16 80% 70%; /* Lighter Orange-Red */
     --muted: 94 13% 25%; /* Darker green-ish shade for muted */
     --muted-foreground: 94 10% 75%; /* Lighter greenish-white */
     --accent: 341 100% 57%; /* Red (#FF2459) for hover/accent */

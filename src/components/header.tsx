@@ -108,36 +108,67 @@ export function Header({ className }: HeaderProps) { // Destructure className
         {isMobile ? (
           <>
             {/* Mobile View */}
-            {/* Brand Title (aligned left) - Removed Link wrapper */}
-            <div className="flex flex-col items-start">
-                {/* Corrected title display for mobile */}
-                <span className="text-2xl font-bold text-foreground whitespace-nowrap flex items-baseline justify-start gap-1">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
-                </span>
-                 <span className="text-xs text-foreground mt-[-4px] opacity-80">
-                   Ticket Reselling Platform
-                 </span>
-            </div>
+            {/* Hamburger Menu (Left) */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="p-2">
+                    <Menu className="h-6 w-6"/>
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-full sm:w-64">
+                  {/* Menu Content */}
+                   <div className="py-4 flex flex-col h-full">
+                       <div className="flex-grow space-y-2">
+                            <Button asChild variant="ghost" className="w-full justify-start">
+                              <Link href="/post-ticket" onClick={() => setMobileMenuOpen(false)}>Post Ticket</Link>
+                            </Button>
+                            <Button asChild variant="ghost" className="w-full justify-start">
+                               <Link href="/tickets" onClick={() => setMobileMenuOpen(false)}>Browse Tickets</Link>
+                            </Button>
+                            {/* Add other links like Home, Profile etc. here */}
+                       </div>
+                       {/* Login/Logout/Profile at the bottom */}
+                        <div className="mt-auto">
+                            {isLoggedIn ? (
+                                <Button asChild variant="ghost" className="w-full justify-start">
+                                  <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
+                                </Button>
+                            ) : (
+                                <Button asChild variant="ghost" className="w-full justify-start">
+                                   <Link href="/login" onClick={() => setMobileMenuOpen(false)}>Login/Signup</Link>
+                                </Button>
+                            )}
+                       </div>
+                   </div>
+                </SheetContent>
+              </Sheet>
 
-            {/* Right side: Location and Profile/Login */}
-            <div className="flex items-center gap-2">
-                 {/* Location Selector (Mobile) */}
-                <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                    <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
-                        <MapPin className="h-4 w-4 flex-shrink-0" />
-                        <SelectValue placeholder="Select Location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableLocations.map(location => (
-                            <SelectItem key={location} value={location}>
-                                {location}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                 {/* Profile or Login/Signup (Mobile) - No profile in header */}
-                 {/* Content removed */}
-            </div>
+            {/* Brand Title (Center) */}
+             <div className="flex flex-col items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                 {/* Removed Link wrapper */}
+                 <span className="text-2xl font-bold text-foreground whitespace-nowrap flex items-baseline justify-start gap-1">
+                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                 </span>
+                  <span className="text-xs text-foreground mt-[-4px] opacity-80">
+                    Ticket Reselling Platform
+                  </span>
+             </div>
+
+            {/* Location Selector (Right) */}
+            <Select value={selectedLocation} onValueChange={handleLocationChange}>
+              <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <SelectValue placeholder="Select Location" />
+              </SelectTrigger>
+              <SelectContent>
+                  {availableLocations.map(location => (
+                      <SelectItem key={location} value={location}>
+                          {location}
+                      </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </>
         ) : (
           // Desktop View: Original layout with Post Ticket, Centered Title, Location, Profile/Login
@@ -180,8 +211,6 @@ export function Header({ className }: HeaderProps) { // Destructure className
                     </SelectContent>
                 </Select>
 
-               {/* Profile or Login/Signup section removed for consistency with mobile removal */}
-               {/* Content removed */}
                {/* Show Profile Avatar or Login/Signup Button */}
                {isLoggedIn ? (
                   <Link href="/profile" className="ml-1 md:ml-2">
@@ -211,4 +240,5 @@ export function Header({ className }: HeaderProps) { // Destructure className
     </header>
   );
 }
+
 

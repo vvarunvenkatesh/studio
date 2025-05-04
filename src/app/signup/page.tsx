@@ -71,7 +71,7 @@ export default function SignupPage() {
       />
 
       {/* Signup Card */}
-      <Card className="w-full max-w-sm bg-background/90 backdrop-blur-sm"> {/* Changed bg-card/90 to bg-background/90 */}
+      <Card className="w-full max-w-sm bg-background/90 backdrop-blur-sm">
         <CardHeader className="text-center">
            {/* CardTitle now contains the brand name and slogan */}
           <CardTitle className="flex flex-col items-center">
@@ -84,7 +84,7 @@ export default function SignupPage() {
               {/* Slogan */}
               <span className="text-xs text-foreground mt-[-4px] opacity-80">Ticket Reselling Platform</span>
           </CardTitle>
-          <CardDescription className="text-foreground">Create your account</CardDescription> {/* Updated description */}
+          <CardDescription className="text-foreground">Create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
@@ -99,7 +99,7 @@ export default function SignupPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isSigningUp}
-                className="bg-background/80 text-foreground" // Added text-foreground
+                className="bg-background/80 text-foreground" // Ensure text-foreground is applied
               />
             </div>
             <div className="space-y-2">
@@ -113,7 +113,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isSigningUp}
-                className="bg-background/80 text-foreground" // Added text-foreground
+                className="bg-background/80 text-foreground" // Ensure text-foreground is applied
               />
             </div>
             <div className="space-y-2">
@@ -126,7 +126,7 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isSigningUp}
-                className="bg-background/80 text-foreground" // Added text-foreground
+                className="bg-background/80 text-foreground" // Ensure text-foreground is applied
               />
             </div>
              <div className="space-y-2">
@@ -139,7 +139,7 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={isSigningUp}
-                className="bg-background/80 text-foreground" // Added text-foreground
+                className="bg-background/80 text-foreground" // Ensure text-foreground is applied
               />
             </div>
             <Button type="submit" className="w-full gap-2" disabled={isSigningUp}>
@@ -167,6 +167,7 @@ export default function SignupPage() {
     </div>
   );
 }
+
 
 
 

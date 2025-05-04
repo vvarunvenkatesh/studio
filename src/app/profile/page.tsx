@@ -138,8 +138,8 @@ export default function ProfileBasicInfoPage() {
             />
          </div>
          <div className="text-center sm:text-left">
-            <CardTitle>Basic Information</CardTitle>
-            <CardDescription>View and manage your profile details.</CardDescription>
+            <CardTitle className="text-foreground">Basic Information</CardTitle>
+            <CardDescription className="text-muted-foreground">View and manage your profile details.</CardDescription>
               {selectedFile && (
                  <Button size="sm" onClick={handleImageSave} disabled={isSaving} className="mt-2 gap-2">
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit2 className="h-4 w-4" />}
@@ -152,35 +152,35 @@ export default function ProfileBasicInfoPage() {
          {/* Changed grid to single column for better centering appearance */}
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-1">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name" className="text-foreground">Name</Label>
             {/* In a real app, make these editable with a form */}
-            <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground"/> {/* Added text-foreground */}
+            <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
           </div>
           <div className="space-y-1">
-            <Label htmlFor="email">Email Address</Label>
-            <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground"/> {/* Added text-foreground */}
+            <Label htmlFor="email" className="text-foreground">Email Address</Label>
+            <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
           </div>
         </div>
          {/* Changed grid to single column for better centering appearance */}
         <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
-                <Label htmlFor="contact">Contact Number</Label>
-                <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground"/> {/* Added text-foreground */}
+                <Label htmlFor="contact" className="text-foreground">Contact Number</Label>
+                <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
             </div>
             <div className="space-y-1">
-                <Label>Gender</Label>
+                <Label className="text-foreground">Gender</Label>
                 <RadioGroup defaultValue={userData.gender} className="flex items-center space-x-4 pt-2" disabled>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="male" id="male" />
-                        <Label htmlFor="male">Male</Label>
+                        <Label htmlFor="male" className="text-foreground">Male</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="female" id="female" />
-                        <Label htmlFor="female">Female</Label>
+                        <Label htmlFor="female" className="text-foreground">Female</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="other" id="other" />
-                        <Label htmlFor="other">Other</Label>
+                        <Label htmlFor="other" className="text-foreground">Other</Label>
                     </div>
                 </RadioGroup>
             </div>
@@ -199,3 +199,4 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+

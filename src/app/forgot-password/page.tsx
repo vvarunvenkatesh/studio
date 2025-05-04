@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
       />
 
       {/* Forgot Password Card */}
-      <Card className="w-full max-w-sm bg-background/90 backdrop-blur-sm"> {/* Changed bg-card/90 to bg-background/90 */}
+      <Card className="w-full max-w-sm bg-background/90 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSending}
-                  className="bg-background/80 text-foreground" // Added text-foreground
+                  className="bg-background/80 text-foreground" // Ensure text-foreground is applied
                 />
               </div>
               <Button type="submit" className="w-full gap-2" disabled={isSending}>
@@ -125,5 +125,6 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+
 
 

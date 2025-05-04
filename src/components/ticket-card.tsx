@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Replaced Rupee with IndianRupeeIcon
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -225,7 +225,7 @@ export function TicketCard({
   );
 
 
-  // Hide card completely if it's sold and in browse mode - THIS WAS REMOVED PREVIOUSLY TO SHOW SOLD TICKETS WITH DOWNLOAD
+  // Hide card completely if it's sold and in browse mode - Removed to show sold tickets with download option
   // if (isSold && variant === 'browse') {
   //     return null;
   // }
@@ -241,7 +241,7 @@ export function TicketCard({
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between mb-1">
-           <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2">
+           <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2 text-card-foreground">
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
              <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
@@ -252,7 +252,7 @@ export function TicketCard({
              {currentTicket.description}
          </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-1.5 text-sm pt-2 flex-grow"> {/* Added flex-grow */}
+      <CardContent className="grid gap-1.5 text-sm pt-2 flex-grow text-foreground"> {/* Added flex-grow and text-foreground */}
          {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.fromCity && currentTicket.toCity && (
              <div className="flex items-center font-medium">
                 <span className="truncate">{currentTicket.fromCity}</span>
@@ -284,14 +284,13 @@ export function TicketCard({
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4 mt-auto">
          <div className="flex items-center font-semibold text-lg text-primary">
-             <IndianRupeeIcon className="mr-1 h-5 w-5" /> {/* Changed Rupee to IndianRupeeIcon */}
+             <IndianRupeeIcon className="mr-1 h-5 w-5" />
              {currentTicket.price.toFixed(2)}
          </div>
 
          {/* Footer Action Logic: Download, Sold, Cancel, Pending, or Buy */}
          {isSold ? (
              // 1. If sold: Show Download if available, else "Sold" badge
-             // This logic is now applied even in 'browse' variant
              currentTicket.originalTicketDataUri ? (
                  <Button
                      size="sm"
@@ -316,7 +315,7 @@ export function TicketCard({
                  size="sm"
                  onClick={handlePurchase}
                  disabled={isPurchasing}
-                 aria-label={`Buy ${currentTicket.type} ticket for ₹${currentTicket.price.toFixed(2)}`} // Changed to ₹
+                 aria-label={`Buy ${currentTicket.type} ticket for ₹${currentTicket.price.toFixed(2)}`}
                  className="gap-2" // Uses default button style
              >
                  {isPurchasing ? (
@@ -331,4 +330,5 @@ export function TicketCard({
     </Card>
   );
 }
+
 

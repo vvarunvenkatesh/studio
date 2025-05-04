@@ -175,7 +175,7 @@ export default function TicketsPage() {
     setTickets(prevTickets =>
       prevTickets.map(ticket =>
         ticket.id === purchasedTicketId ? { ...ticket, status: 'sold' } : ticket
-      )
+      ).filter(ticket => ticket.status !== 'sold') // Filter out sold tickets after update
     );
     console.log("Ticket purchased and status updated in browse view:", purchasedTicketId);
   };
@@ -242,6 +242,8 @@ export default function TicketsPage() {
     const category = searchParams.get('category');
     if (category) {
       query.set('category', category);
+    } else {
+        query.delete('category'); // Remove category if not explicitly set
     }
 
     router.push(`/tickets?${query.toString()}`);
@@ -295,7 +297,7 @@ export default function TicketsPage() {
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
         {/* Centered filter card */}
-        <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto"> {/* Increased max-width */}
+        <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
 
             {/* From City */}
@@ -307,7 +309,7 @@ export default function TicketsPage() {
                 placeholder="Departure City"
                 value={fromCityFilter}
                 onChange={(e) => setFromCityFilter(e.target.value)}
-                className="bg-background text-foreground"
+                className="bg-background text-foreground" // Ensure text-foreground
               />
             </div>
 
@@ -320,7 +322,7 @@ export default function TicketsPage() {
                 placeholder="Destination City"
                 value={toCityFilter}
                 onChange={(e) => setToCityFilter(e.target.value)}
-                className="bg-background text-foreground"
+                className="bg-background text-foreground" // Ensure text-foreground
               />
             </div>
 
@@ -345,7 +347,7 @@ export default function TicketsPage() {
                        placeholder="Min"
                        value={priceRange[0] ?? ''}
                        onChange={(e) => setPriceRange([e.target.value ? parseInt(e.target.value) : undefined, priceRange[1]])}
-                       className="bg-background text-foreground"
+                       className="bg-background text-foreground" // Ensure text-foreground
                        min="0"
                      />
                     <span className="text-muted-foreground">-</span>
@@ -355,7 +357,7 @@ export default function TicketsPage() {
                        placeholder="Max"
                        value={priceRange[1] ?? ''}
                        onChange={(e) => setPriceRange([priceRange[0], e.target.value ? parseInt(e.target.value) : undefined])}
-                       className="bg-background text-foreground"
+                       className="bg-background text-foreground" // Ensure text-foreground
                        min="0"
                      />
                 </div>
@@ -363,7 +365,7 @@ export default function TicketsPage() {
 
 
             {/* Filter Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full"> {/* Adjust column span and alignment */}
+            <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full">
                 <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2">
                     <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
@@ -410,11 +412,11 @@ export default function TicketsPage() {
         ) : !error ? (
           <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8">
             <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No Tickets Found</h2>
-            {(hasActiveFilters || currentCategory) ? ( // Check if any filters are active
-              <p>No tickets match your current filters. Try broadening your search!</p>
+            <h2 className="text-xl font-semibold mb-2 text-foreground">No Tickets Found</h2>
+            {(hasActiveFilters) ? ( // Check if any filters are active (excluding category)
+              <p className="text-muted-foreground">No tickets match your current filters. Try broadening your search!</p>
             ) : (
-              <p>It looks like no tickets are listed currently. Check back later!</p>
+              <p className="text-muted-foreground">It looks like no tickets are listed currently for this category. Check back later!</p>
             )}
             {hasActiveFilters && ( // Only show clear if any filters are active
               <Button variant="link" onClick={clearFilters} className="mt-2">
@@ -427,4 +429,5 @@ export default function TicketsPage() {
     </div>
   );
 }
+
 

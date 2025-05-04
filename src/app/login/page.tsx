@@ -180,7 +180,7 @@ export default function LoginPage() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     disabled={isSendingOtp || otpSent || isVerifyingOtp}
-                    className="bg-background/80 flex-1 text-foreground" // Added text-foreground
+                    className="bg-background/80 text-foreground" // Ensure text-foreground is applied
                   />
                   {/* Send OTP Button - Show only if OTP not sent yet */}
                   {!otpSent && (
@@ -229,7 +229,7 @@ export default function LoginPage() {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))} // Allow only digits
                   disabled={isVerifyingOtp || isSendingOtp}
-                  className="bg-background/80 text-foreground" // Added text-foreground
+                  className="bg-background/80 text-foreground" // Ensure text-foreground is applied
                 />
               </div>
             )}
