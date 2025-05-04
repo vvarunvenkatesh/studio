@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -133,8 +134,9 @@ function CategoryIcon({ icon: Icon, label, href }: CategoryIconProps) {
   return (
     <Link href={href} passHref>
       {/* Use default bg-card and ensure text-card-foreground is used */}
-      <Card className="ml-2.5 text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-card hover:bg-card/90"> {/* Reverted bg-card */}
-        <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary mb-2" />
+      <Card className="text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-card hover:bg-card/90 ml-2.5"> {/* Reverted bg-card, added ml-2.5 */}
+        {/* Changed icon color to text-accent-foreground (Near White) */}
+        <Icon className="h-10 w-10 md:h-12 md:w-12 text-accent-foreground mb-2" />
         <span className="text-sm md:text-base font-medium text-card-foreground">{label}</span>
       </Card>
     </Link>
@@ -203,7 +205,7 @@ function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCard
   return (
     <Link href={href} passHref>
       {/* Use default bg-card */}
-      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card"> {/* Reverted bg-card */}
+      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card ml-2.5"> {/* Reverted bg-card, added ml-2.5 */}
         <div className="relative h-40 w-full">
           <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} data-ai-hint={hint} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"/>
         </div>
@@ -234,7 +236,8 @@ export default function Home() {
              <SearchForm />
 
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 max-w-4xl mx-auto">
+             {/* Centered grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 max-w-4xl mx-auto">
                 <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
                 <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
                 <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
@@ -245,7 +248,8 @@ export default function Home() {
               {/* Bottom Advertisements Section - Centered */}
               <div className="max-w-5xl mx-auto">
                  <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                 {/* Centered grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     <BottomAdCard
                         src="https://picsum.photos/400/300?random=10"
                         alt="Travel Deal"
@@ -280,6 +284,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
