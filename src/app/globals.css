@@ -8,10 +8,10 @@ body {
 
 @layer base {
   :root {
-    /* Light Theme - Updated background and foreground */
+    /* Light Theme - Updated background, foreground and card */
     --background: 48 27% 90%; /* Off-white (#EBE9E1) */
     --foreground: 16 80% 48%; /* Orange-Red (#E43D12) */
-    --card: 48 27% 90%; /* Reverted to Off-white (#EBE9E1) - Same as background */
+    --card: 345 100% 82%; /* New Pinkish color (#FFA2B6) */
     --card-foreground: 16 80% 48%; /* Orange-Red for text on cards */
     --popover: 0 0% 100%; /* White */
     --popover-foreground: 16 80% 48%; /* Orange-Red */
@@ -51,7 +51,7 @@ body {
     /* Dark Theme - Adjusted background, foreground and card */
     --background: 94 20% 10%; /* Dark Greenish Black */
     --foreground: 16 80% 70%; /* Lighter Orange-Red for dark mode */
-    --card: 94 20% 10%; /* Reverted to Dark Greenish Black - Same as background */
+    --card: 345 30% 20%; /* Darker, desaturated version of #FFA2B6 */
     --card-foreground: 16 80% 70%; /* Lighter Orange-Red for text on cards */
     --popover: 94 13% 55%; /* Slightly darker green */
     --popover-foreground: 16 80% 70%; /* Lighter Orange-Red */
