@@ -11,9 +11,9 @@ body {
     /* Light Theme - Updated card background */
     --background: 48 27% 90%; /* Off-white (#EBE9E1) */
     --foreground: 16 80% 48%; /* Orange-Red (#E43D12) */
-    --card: 35 100% 80%; /* Light Peach (#FFCB9A) */
+    --card: 181 70% 50%; /* Lighter Teal (#54BEC1) */
     --card-foreground: 222.2 84% 4.9%; /* Default Dark Text */
-    --popover: 35 100% 80%; /* Light Peach (#FFCB9A) */
+    --popover: 181 70% 50%; /* Lighter Teal (#54BEC1) */
     --popover-foreground: 16 80% 48%; /* Orange-Red */
     --primary: 94 30% 40%; /* Darker Green */
     --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
@@ -51,9 +51,9 @@ body {
     /* Dark Theme - Updated card background */
     --background: 94 20% 10%; /* Dark Greenish Black */
     --foreground: 16 80% 70%; /* Lighter Orange-Red for dark mode */
-    --card: 35 60% 20%; /* Dark Peach-Brown (#734d1c) */
+    --card: 181 70% 23%; /* Dark Teal (#116466) */
     --card-foreground: 210 40% 98%; /* Default Light Text */
-    --popover: 35 60% 20%; /* Dark Peach-Brown (#734d1c) */
+    --popover: 181 70% 23%; /* Dark Teal (#116466) */
     --popover-foreground: 16 80% 70%; /* Lighter Orange-Red */
     --primary: 94 10% 95%; /* Light color for primary elements on green background */
     --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
