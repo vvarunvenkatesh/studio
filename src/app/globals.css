@@ -8,12 +8,12 @@ body {
 
 @layer base {
   :root {
-    /* Light Theme - Updated card background */
+    /* Light Theme - Updated card/popover background to #EDC7B7 */
     --background: 48 27% 90%; /* Off-white (#EBE9E1) */
     --foreground: 16 80% 48%; /* Orange-Red (#E43D12) */
-    --card: 181 70% 50%; /* Lighter Teal (#54BEC1) */
+    --card: 22 56% 82%; /* Light Beige (#EDC7B7) */
     --card-foreground: 222.2 84% 4.9%; /* Default Dark Text */
-    --popover: 181 70% 50%; /* Lighter Teal (#54BEC1) */
+    --popover: 22 56% 82%; /* Light Beige (#EDC7B7) */
     --popover-foreground: 16 80% 48%; /* Orange-Red */
     --primary: 94 30% 40%; /* Darker Green */
     --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
@@ -48,13 +48,13 @@ body {
   }
 
   .dark {
-    /* Dark Theme - Updated card background */
+    /* Dark Theme - Updated card/popover background to #EDC7B7 (adjusting for dark) */
     --background: 94 20% 10%; /* Dark Greenish Black */
     --foreground: 16 80% 70%; /* Lighter Orange-Red for dark mode */
-    --card: 181 70% 23%; /* Dark Teal (#116466) */
-    --card-foreground: 210 40% 98%; /* Default Light Text */
-    --popover: 181 70% 23%; /* Dark Teal (#116466) */
-    --popover-foreground: 16 80% 70%; /* Lighter Orange-Red */
+    --card: 22 56% 82%; /* Light Beige (#EDC7B7) - May need darker variant for dark mode */
+    --card-foreground: 222.2 84% 4.9%; /* Default Dark Text - Adjust for light card */
+    --popover: 22 56% 82%; /* Light Beige (#EDC7B7) - May need darker variant */
+    --popover-foreground: 16 80% 48%; /* Orange-Red */
     --primary: 94 10% 95%; /* Light color for primary elements on green background */
     --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
     --secondary: 94 13% 75%; /* Lighter Green */
