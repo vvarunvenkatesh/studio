@@ -32,7 +32,7 @@ import { format, startOfToday } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { checkTicketDescription } from '@/ai/flows/check-ticket-description';
 import { postTicket } from '@/services/ticket-marketplace';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams as useNextSearchParams } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"; // Import AlertDialog components
 
 // Define the validation schema using Zod
@@ -84,12 +84,15 @@ interface PostTicketFormProps {
 export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const pathname = usePathname(); // Get current path
+  const searchParams = useNextSearchParams(); // Get current search params
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCheckingGrammar, setIsCheckingGrammar] = React.useState(false);
   const [selectedFileName, setSelectedFileName] = React.useState<string | null>(null); // State for selected file name
   const fileInputRef = React.useRef<HTMLInputElement>(null); // Ref for file input
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false); // State for calendar popover
 
   React.useEffect(() => {
       // Check login status on mount
@@ -234,9 +237,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     fileInputRef.current?.click();
   };
 
-  // Redirect to login page, passing the current path (/post-ticket)
+  // Redirect to login page, passing the current path and query string
   const redirectToLogin = () => {
-    router.push(`/login?redirect=${encodeURIComponent('/post-ticket')}`);
+    const currentPath = pathname + '?' + searchParams.toString();
+    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
   };
 
 
@@ -310,6 +314,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
          onSubmit={form.handleSubmit(onSubmit)}
          className={cn(
            "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10 bg-card", // Use default bg-card
+           ticketType === 'movie' ? 'bg-card/90 backdrop-blur-sm' : '' // Conditional style for movie type
          )}
         >
 
@@ -474,7 +479,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
               <FormItem className="flex flex-col">
                  {/* Use default text-foreground */}
                  <FormLabel className="text-foreground">Date *</FormLabel>
-                <Popover>
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
                        {/* Use default styling */}
@@ -498,7 +503,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={field.onChange}
+                      onSelect={(date) => {
+                          field.onChange(date);
+                          setIsCalendarOpen(false); // Close popover on date selection
+                      }}
                       disabled={(date) => date < startOfToday() } // Disable past dates
                       initialFocus
                     />

@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'; // Added usePathname
 import { Header } from '@/components/header';
 import { TicketCard } from '@/components/ticket-card';
 import { getAvailableTickets, deleteTicket, type Ticket } from '@/services/ticket-marketplace'; // Import deleteTicket
@@ -53,6 +53,7 @@ const parseDateRange = (dateParam: string | null): DateRange | undefined => {
 export default function TicketsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname(); // Use pathname for current page path
   const { toast } = useToast(); // Get toast hook
   const [tickets, setTickets] = React.useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -246,7 +247,7 @@ export default function TicketsPage() {
         query.delete('category'); // Remove category if not explicitly set
     }
 
-    router.push(`/tickets?${query.toString()}`);
+    router.push(`${pathname}?${query.toString()}`); // Use pathname here
   };
 
   const clearFilters = () => {
@@ -268,7 +269,7 @@ export default function TicketsPage() {
         query.delete('category'); // If no category was present, ensure it's cleared
     }
 
-    router.push(`/tickets?${query.toString()}`);
+    router.push(`${pathname}?${query.toString()}`); // Use pathname here
   };
 
   const renderSkeletons = () => (
@@ -292,7 +293,7 @@ export default function TicketsPage() {
   const hasActiveFilters = fromCityFilter || toCityFilter || priceRange[0] !== undefined || priceRange[1] !== undefined || dateRange?.from;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background pb-16 md:pb-0"> {/* Added padding bottom */}
       <Header />
       <main className="flex-1 container py-8">
         {/* Use default text-foreground */}
@@ -339,7 +340,8 @@ export default function TicketsPage() {
                 <DateRangePicker
                     id="dateRangeFilter"
                     date={dateRange}
-                    onDateChange={setDateRange}
+                    onDateChange={setDateRange} // Pass the state setter
+                    // No need for onDateSelect prop here as default behavior handles closing
                     // Use default bg-background and text-foreground
                     className="bg-background text-foreground [&>button]:text-foreground"
                  />
