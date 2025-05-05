@@ -1,9 +1,10 @@
+
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
 import {Button} from '@/components/ui/button';
-import {User, MapPin, Menu} from 'lucide-react'; // Keep MapPin
+import {User, MapPin, Menu} from 'lucide-react';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   Select,
@@ -17,6 +18,7 @@ import {useIsMobile} from '@/hooks/use-mobile';
 import {Sheet, SheetContent, SheetTrigger} from '@/components/ui/sheet';
 import {Label} from '@/components/ui/label'; // Import Label
 import { DialogTitle } from "@/components/ui/dialog"; // Import DialogTitle
+
 
 interface HeaderProps {
   className?: string;
@@ -170,6 +172,8 @@ export function Header({className}: HeaderProps) {
                 <Link
                   href="/"
                   className="whitespace-nowrap flex items-baseline justify-center gap-1"
+                  passHref // Removed passHref as it's not needed for basic Link functionality here
+                  // Removed aria-disabled={true} as it shouldn't be disabled
                 >
                   <span className="text-3xl font-bold text-foreground">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
@@ -182,12 +186,13 @@ export function Header({className}: HeaderProps) {
 
               {/* Mobile Location Button */}
                <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                <SelectTrigger asChild className="w-auto h-auto p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0">
-                   <Button variant="ghost" size="icon" className="p-2 text-foreground hover:bg-accent hover:text-accent-foreground">
-                     <MapPin className="h-6 w-6 flex-shrink-0" />
-                     <span className="sr-only">Select Location</span>
-                   </Button>
-                </SelectTrigger>
+                 {/* Remove asChild from Trigger */}
+                <SelectTrigger
+                   className="w-auto h-auto p-2 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-foreground hover:bg-accent hover:text-accent-foreground"
+                   aria-label="Select Location"
+                 >
+                   <MapPin className="h-6 w-6 flex-shrink-0" />
+                 </SelectTrigger>
                 <SelectContent>
                   {availableLocations.map((location) => (
                     <SelectItem key={location} value={location}>
@@ -267,4 +272,3 @@ export function Header({className}: HeaderProps) {
     </header>
   );
 }
-    

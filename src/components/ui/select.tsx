@@ -29,11 +29,9 @@ const SelectTrigger = React.forwardRef<
     )}
     {...props}
   >
-    {/* Wrap children in a div to ensure SelectPrimitive.Trigger receives only one child */}
-    <div className="flex items-center gap-1 overflow-hidden">
-        {children}
-    </div>
-    {/* Remove asChild and render ChevronDown directly inside Icon */}
+     {/* Render children directly without the intermediate div */}
+     {children}
+    {/* Use Icon directly, without asChild */}
     <SelectPrimitive.Icon className="ml-2 flex-shrink-0 h-4 w-4 opacity-50">
       <ChevronDown />
     </SelectPrimitive.Icon>
@@ -193,6 +191,3 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 }
-
-
-
