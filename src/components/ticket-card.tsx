@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
 import { cn } from '@/lib/utils'; // Import cn
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter, usePathname, useSearchParams as useNextSearchParams } from 'next/navigation'; // Import useRouter, usePathname, useSearchParams
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -44,6 +44,9 @@ export function TicketCard({
 }: TicketCardProps) {
   const { toast } = useToast();
   const router = useRouter(); // Get router instance
+  const pathname = usePathname(); // Get current path
+  const searchParams = useNextSearchParams(); // Get current search params
+
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isPurchasing, setIsPurchasing] = React.useState(false);
@@ -80,9 +83,10 @@ export function TicketCard({
   const formattedDate = format(new Date(currentTicket.date), 'PPP'); // Format date nicely
   const CategorySpecificIcon = categoryIconMap[currentTicket.type] || TicketIcon; // Get specific icon or default
 
-  // Redirect to login page
+  // Redirect to login page, passing the current path and query string
   const redirectToLogin = () => {
-    router.push('/login');
+    const currentPath = pathname + '?' + searchParams.toString();
+    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
   };
 
 
@@ -419,4 +423,5 @@ const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
         return true;
     });
 };
+
 

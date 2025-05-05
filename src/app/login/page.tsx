@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
 import { Loader2, Mail, Phone, KeyRound } from 'lucide-react'; // Import icons, added KeyRound for OTP
 import { cn } from '@/lib/utils';
 
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams(); // Get search params
 
   const isValidIdentifier = () => {
     if (loginMethod === 'email') {
@@ -100,12 +101,14 @@ export default function LoginPage() {
          // Optionally show a different toast or handle the error
       }
 
+      const redirectPath = searchParams.get('redirect'); // Get the redirect path from query params
+
       toast({
         title: 'Login Successful',
-        description: 'Redirecting you to the homepage...',
+        description: redirectPath ? 'Redirecting you back...' : 'Redirecting you to the homepage...',
       });
-      // Redirect to homepage after successful login simulation
-      window.location.href = '/'; // Use window.location.href to force a full page reload
+      // Redirect to the stored path or homepage after successful login simulation
+      window.location.href = redirectPath || '/'; // Use window.location.href to force a full page reload and navigation
     } else {
       toast({
         title: 'Login Failed',

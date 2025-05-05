@@ -234,9 +234,9 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     fileInputRef.current?.click();
   };
 
-  // Redirect to login page
+  // Redirect to login page, passing the current path (/post-ticket)
   const redirectToLogin = () => {
-    router.push('/login');
+    router.push(`/login?redirect=${encodeURIComponent('/post-ticket')}`);
   };
 
 
@@ -674,4 +674,3 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     </>
   );
 }
-
