@@ -51,13 +51,14 @@ export default function LoginPage() {
       setIsSendingOtp(true);
       // Simulate API call to send OTP
       console.log(`Sending OTP to ${loginMethod}: ${identifier}`);
+      // ** NOTE: This is a simulation. Real OTP sending requires backend integration. **
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Simulate success
       setOtpSent(true);
       toast({
-        title: 'OTP Sent',
-        description: `An OTP has been sent to your ${loginMethod}.`,
+        title: 'OTP Sent (Simulation)',
+        description: `An OTP has been sent to your ${loginMethod}. Use '123456' to login.`,
       });
       setIsSendingOtp(false);
   };
@@ -76,6 +77,7 @@ export default function LoginPage() {
 
     // Simulate API call for OTP verification
     console.log(`Verifying OTP: ${otp} for ${identifier}`);
+    // ** NOTE: This is a simulation. Real OTP verification requires backend integration. **
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Basic validation (replace with actual OTP verification logic)
@@ -275,3 +277,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
