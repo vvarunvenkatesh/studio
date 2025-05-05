@@ -247,16 +247,7 @@ export function Header({className}: HeaderProps) {
 
               {isLoggedIn ? (
                 <Link href="/profile" className="ml-1 md:ml-2">
-                  <Avatar className="h-8 w-8 cursor-pointer">
-                    <AvatarImage
-                      src={profileImageUrl || undefined}
-                      alt="User profile picture"
-                      data-ai-hint="user avatar"
-                    />
-                    <AvatarFallback>
-                      <User className="h-4 w-4 text-muted-foreground" />
-                    </AvatarFallback>
-                  </Avatar>
+                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 </Link>
               ) : (
                 <Button
