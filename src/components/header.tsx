@@ -1,6 +1,3 @@
-
-'use client'; // Needed for useState and useEffect
-
 import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -176,20 +173,20 @@ export function Header({ className }: HeaderProps) { // Destructure className
 
             {/* Profile/Location Section - Right side */}
              <div className="flex items-center gap-2"> {/* Reduced gap for mobile */}
-                   {/* Location Selector */}
-                    <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                        <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1"> {/* Adjusted size and padding */}
-                            <MapPin className="h-4 w-4 flex-shrink-0" />
-                            <SelectValue placeholder="Loc" /> {/* Shortened placeholder */}
-                        </SelectTrigger>
-                        <SelectContent>
-                            {availableLocations.map(location => (
-                                <SelectItem key={location} value={location}>
-                                    {location}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+               {/* Location Selector */}
+               <Select value={selectedLocation} onValueChange={handleLocationChange}>
+                    <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1"> {/* Adjusted size and padding */}
+                        <MapPin className="h-4 w-4 flex-shrink-0" />
+                         {!isMobile && <SelectValue placeholder="Loc" />}  {/* Shortened placeholder */}
+                    </SelectTrigger>
+                    <SelectContent>
+                        {availableLocations.map(location => (
+                            <SelectItem key={location} value={location}>
+                                {location}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                {/* Profile Avatar/Login Button */}
                {/* No changes needed here for mobile */}
               </div>
