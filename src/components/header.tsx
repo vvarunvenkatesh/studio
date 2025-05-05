@@ -180,33 +180,23 @@ export function Header({className}: HeaderProps) {
                   Ticket Reselling Platform
                 </span>
               </div>
-
+                 <Select value={selectedLocation} onValueChange={handleLocationChange}>
+                <SelectTrigger
+                  className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1"
+                >
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <SelectValue placeholder="Select Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLocations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {/* Profile or Login/Signup */}
-              <div className="flex items-center">
-                {isLoggedIn ? (
-                  <Link href="/profile" className="ml-1 md:ml-2">
-                    <Avatar className="h-8 w-8 cursor-pointer">
-                      <AvatarImage
-                        src={profileImageUrl || undefined}
-                        alt="User profile picture"
-                        data-ai-hint="user avatar"
-                      />
-                      <AvatarFallback>
-                        <User className="h-4 w-4 text-muted-foreground" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </Link>
-                ) : (
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent"
-                  >
-                    <Link href="/login">Login/Signup</Link>
-                  </Button>
-                )}
-              </div>
+              
             </div>
           </>
         ) : (
