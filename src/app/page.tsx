@@ -243,7 +243,8 @@ export default function Home() {
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
               {/* Adjusted grid columns and removed max-width, letting container handle padding */}
               {/* Using grid-cols-2 for mobile, grid-cols-3 for sm, grid-cols-5 for md */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 mx-auto">
+              {/* Added px-4 for horizontal padding */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 mx-auto px-4">
                 <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
                 <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
                 <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
@@ -292,4 +293,3 @@ export default function Home() {
     </div>
   );
 }
-
