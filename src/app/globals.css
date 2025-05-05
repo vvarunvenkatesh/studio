@@ -8,83 +8,81 @@ body {
 
 @layer base {
   :root {
-    /* Light Theme - Updated card/popover background to #EDC7B7 */
-    --background: 48 27% 90%; /* Off-white (#EBE9E1) */
-    --foreground: 16 80% 48%; /* Orange-Red (#E43D12) */
-    --card: 22 56% 82%; /* Light Beige (#EDC7B7) */
-    --card-foreground: 222.2 84% 4.9%; /* Default Dark Text */
-    --popover: 22 56% 82%; /* Light Beige (#EDC7B7) */
-    --popover-foreground: 16 80% 48%; /* Orange-Red */
-    --primary: 94 30% 40%; /* Darker Green */
-    --primary-foreground: 94 10% 95%; /* Very Light Greenish White */
-    --secondary: 94 13% 75%; /* Lighter Green */
-    --secondary-foreground: 16 80% 48%; /* Orange-Red */
-    --muted: 94 13% 90%; /* Light greenish gray for subtle backgrounds */
-    --muted-foreground: 94 10% 40%; /* Desaturated Greenish Gray */
-    --accent: 341 100% 57%; /* Red (#FF2459) for hover/accent */
-    --accent-foreground: 0 0% 98%; /* Near White for text on accent */
+    /* Light Theme - White with Shades */
+    --background: 0 0% 100%; /* White */
+    --foreground: 0 0% 15%; /* Dark Gray for text */
+    --card: 0 0% 98%; /* Slightly Off-white for cards */
+    --card-foreground: 0 0% 15%; /* Dark Gray text on cards */
+    --popover: 0 0% 98%; /* Slightly Off-white for popovers */
+    --popover-foreground: 0 0% 15%; /* Dark Gray text on popovers */
+    --primary: 0 0% 40%; /* Medium Gray for primary elements */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --secondary: 0 0% 85%; /* Light Gray for secondary */
+    --secondary-foreground: 0 0% 15%; /* Dark Gray text on secondary */
+    --muted: 0 0% 95%; /* Very Light Gray for muted backgrounds */
+    --muted-foreground: 0 0% 40%; /* Medium Gray text on muted */
+    --accent: 0 0% 90%; /* Light Gray for accent/hover */
+    --accent-foreground: 0 0% 10%; /* Near Black text on accent */
     --destructive: 0 84.2% 60.2%; /* Default Destructive Red */
     --destructive-foreground: 0 0% 98%; /* Near White */
-    --border: 94 13% 80%; /* Light Greenish Gray border */
-    --input: 0 0% 98%; /* Slightly off-white for inputs */
-    --ring: 94 30% 40%; /* Darker Green - same as primary */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-
-    /* Sidebar variables (adjust if needed, keeping header white) */
-    --sidebar-background: 94 30% 35%; /* Dark Green */
-    --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
-    --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
-    --sidebar-primary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --sidebar-accent: 341 100% 57%; /* Red (#FF2459) for sidebar accent */
-    --sidebar-accent-foreground: 0 0% 98%; /* Near White */
-    --sidebar-border: 94 30% 25%; /* Darker Green border */
-    --sidebar-ring: 94 10% 95%; /* Very Light Greenish White */
-
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    /* Dark Theme - Updated card/popover background to #EDC7B7 (adjusting for dark) */
-    --background: 94 20% 10%; /* Dark Greenish Black */
-    --foreground: 16 80% 70%; /* Lighter Orange-Red for dark mode */
-    --card: 22 56% 82%; /* Light Beige (#EDC7B7) - May need darker variant for dark mode */
-    --card-foreground: 222.2 84% 4.9%; /* Default Dark Text - Adjust for light card */
-    --popover: 22 56% 82%; /* Light Beige (#EDC7B7) - May need darker variant */
-    --popover-foreground: 16 80% 48%; /* Orange-Red */
-    --primary: 94 10% 95%; /* Light color for primary elements on green background */
-    --primary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --secondary: 94 13% 75%; /* Lighter Green */
-    --secondary-foreground: 16 80% 70%; /* Lighter Orange-Red */
-    --muted: 94 13% 25%; /* Darker green-ish shade for muted */
-    --muted-foreground: 94 10% 75%; /* Lighter greenish-white */
-    --accent: 341 100% 57%; /* Red (#FF2459) for hover/accent */
-    --accent-foreground: 0 0% 98%; /* Near White for text on accent */
-    --destructive: 0 70% 50%; /* Adjusted red */
-    --destructive-foreground: 0 0% 98%;
-    --border: 94 13% 50%; /* Medium Dark Green */
-    --input: 94 13% 50%; /* Medium Dark Green */
-    --ring: 94 10% 95%; /* Light Ring */
-    --chart-1: 220 70% 50%;
+    --border: 0 0% 88%; /* Light Gray border */
+    --input: 0 0% 97%; /* Slightly off-white for inputs */
+    --ring: 0 0% 60%; /* Gray for focus rings */
+    --chart-1: 220 70% 50%; /* Example chart colors (adjust as needed) */
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    /* Sidebar variables (adjust if needed, keeping header white) */
-    --sidebar-background: 94 20% 10%; /* Dark Greenish Black */
-    --sidebar-foreground: 94 10% 95%; /* Very Light Greenish White */
-    --sidebar-primary: 94 10% 95%; /* Very Light Greenish White */
-    --sidebar-primary-foreground: 94 20% 10%; /* Dark Greenish Black */
-    --sidebar-accent: 341 100% 57%; /* Red (#FF2459) for sidebar accent */
-    --sidebar-accent-foreground: 0 0% 98%; /* Near White */
-    --sidebar-border: 94 13% 50%; /* Medium Dark Green */
-    --sidebar-ring: 94 10% 95%; /* Very Light Greenish White */
+    /* Sidebar variables (Light Theme) */
+    --sidebar-background: 0 0% 96%; /* Very Light Gray */
+    --sidebar-foreground: 0 0% 15%; /* Dark Gray */
+    --sidebar-primary: 0 0% 40%; /* Medium Gray */
+    --sidebar-primary-foreground: 0 0% 100%; /* White */
+    --sidebar-accent: 0 0% 85%; /* Light Gray */
+    --sidebar-accent-foreground: 0 0% 10%; /* Near Black */
+    --sidebar-border: 0 0% 80%; /* Slightly darker gray border */
+    --sidebar-ring: 0 0% 60%; /* Gray */
 
-    /* --radius: 0.5rem; */ /* Already defined in :root */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark Theme - Standard Dark Gray/Black */
+    --background: 0 0% 10%; /* Near Black */
+    --foreground: 0 0% 95%; /* Light Gray */
+    --card: 0 0% 15%; /* Dark Gray */
+    --card-foreground: 0 0% 95%; /* Light Gray */
+    --popover: 0 0% 15%; /* Dark Gray */
+    --popover-foreground: 0 0% 95%; /* Light Gray */
+    --primary: 0 0% 80%; /* Light Gray for primary */
+    --primary-foreground: 0 0% 10%; /* Near Black */
+    --secondary: 0 0% 30%; /* Medium Dark Gray */
+    --secondary-foreground: 0 0% 95%; /* Light Gray */
+    --muted: 0 0% 20%; /* Darker Gray */
+    --muted-foreground: 0 0% 60%; /* Lighter Gray */
+    --accent: 0 0% 25%; /* Dark Gray Accent */
+    --accent-foreground: 0 0% 98%; /* Near White */
+    --destructive: 0 62.8% 30.6%; /* Darker Red */
+    --destructive-foreground: 0 0% 98%; /* Near White */
+    --border: 0 0% 25%; /* Dark Gray Border */
+    --input: 0 0% 22%; /* Dark Gray Input */
+    --ring: 0 0% 80%; /* Light Gray Ring */
+    --chart-1: 220 70% 50%; /* Keep chart colors or adjust for dark */
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* Sidebar variables (Dark Theme) */
+    --sidebar-background: 0 0% 8%; /* Very Dark Gray/Black */
+    --sidebar-foreground: 0 0% 95%; /* Light Gray */
+    --sidebar-primary: 0 0% 80%; /* Light Gray */
+    --sidebar-primary-foreground: 0 0% 10%; /* Near Black */
+    --sidebar-accent: 0 0% 25%; /* Dark Gray */
+    --sidebar-accent-foreground: 0 0% 98%; /* Near White */
+    --sidebar-border: 0 0% 20%; /* Darker Gray */
+    --sidebar-ring: 0 0% 80%; /* Light Gray */
   }
 }
 
@@ -115,6 +113,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5); /* Adjust darkness/opacity as needed */
+  /* Use a transparent overlay that works with both light/dark modes */
+  background-color: hsla(var(--background) / 0.5);
   z-index: -1;
 }

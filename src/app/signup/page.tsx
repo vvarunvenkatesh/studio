@@ -62,15 +62,15 @@ export default function SignupPage() {
       <Image
         src="https://picsum.photos/1920/1080?random=signup" // Different random image
         alt="Background"
-        layout="fill"
-        objectFit="cover"
+        fill // Use fill instead of layout="fill"
+        style={{ objectFit: 'cover' }} // Use style prop for objectFit
         className="-z-10 brightness-50"
         data-ai-hint="cityscape urban modern"
         priority
       />
 
       {/* Signup Card - Use default bg-card */}
-      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Reverted bg-card */}
+      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Use default bg-card */}
         <CardHeader className="text-center">
            {/* CardTitle now contains the brand name and slogan */}
           <CardTitle className="flex flex-col items-center">
@@ -83,14 +83,14 @@ export default function SignupPage() {
               {/* Slogan - Use text-foreground defined in globals.css */}
               <span className="text-xs text-foreground mt-[-4px] opacity-80">Ticket Reselling Platform</span>
           </CardTitle>
-          {/* Use default text-card-foreground */}
-          <CardDescription className="text-card-foreground">Create your account</CardDescription>
+          {/* Use default text-foreground */}
+          <CardDescription className="text-foreground">Create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
              <div className="space-y-2">
-              {/* Use default text-card-foreground */}
-              <Label htmlFor="name" className="text-card-foreground">Full Name</Label>
+              {/* Use default text-foreground */}
+              <Label htmlFor="name" className="text-foreground">Full Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -104,8 +104,8 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              {/* Use default text-card-foreground */}
-              <Label htmlFor="email" className="text-card-foreground">Email</Label>
+              {/* Use default text-foreground */}
+              <Label htmlFor="email" className="text-foreground">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -119,8 +119,8 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              {/* Use default text-card-foreground */}
-              <Label htmlFor="password" className="text-card-foreground">Password</Label>
+              {/* Use default text-foreground */}
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -133,8 +133,8 @@ export default function SignupPage() {
               />
             </div>
              <div className="space-y-2">
-              {/* Use default text-card-foreground */}
-              <Label htmlFor="confirmPassword" className="text-card-foreground">Confirm Password</Label>
+              {/* Use default text-foreground */}
+              <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -158,8 +158,8 @@ export default function SignupPage() {
             </Button>
           </form>
         </CardContent>
-         {/* Use default text-card-foreground */}
-        <CardFooter className="text-center text-sm text-card-foreground">
+         {/* Use default text-muted-foreground */}
+        <CardFooter className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link
             href="/login" // Link back to login page
@@ -172,9 +172,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
-
-
-
-
-

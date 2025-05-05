@@ -273,16 +273,17 @@ export default function TicketsPage() {
 
   const renderSkeletons = () => (
     Array.from({ length: 8 }).map((_, index) => (
+      // Use default skeleton colors
       <div key={index} className="flex flex-col space-y-3 ml-2.5">
-        <Skeleton className="h-[125px] w-full rounded-xl" />
+        <Skeleton className="h-[125px] w-full rounded-xl bg-muted" />
         <div className="space-y-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-4 w-1/4" />
+          <Skeleton className="h-4 w-3/4 bg-muted" />
+          <Skeleton className="h-4 w-1/2 bg-muted" />
+          <Skeleton className="h-4 w-1/4 bg-muted" />
         </div>
         <div className="flex justify-between items-center pt-2">
-          <Skeleton className="h-6 w-1/4" />
-          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-6 w-1/4 bg-muted" />
+          <Skeleton className="h-8 w-1/3 bg-muted" />
         </div>
       </div>
     ))
@@ -294,14 +295,16 @@ export default function TicketsPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1 container py-8">
+        {/* Use default text-foreground */}
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
-        {/* Centered filter card */}
-        <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto"> {/* Reverted bg-muted/30 */}
+        {/* Centered filter card - Use default bg-muted/30 */}
+        <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
 
             {/* From City */}
             <div className="w-full">
+              {/* Use default text-muted-foreground */}
               <Label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From City</Label>
               <Input
                 id="fromCityFilter"
@@ -309,12 +312,14 @@ export default function TicketsPage() {
                 placeholder="Departure City"
                 value={fromCityFilter}
                 onChange={(e) => setFromCityFilter(e.target.value)}
-                className="bg-background text-foreground" // Ensure text-foreground
+                // Use default bg-background and text-foreground
+                className="bg-background text-foreground"
               />
             </div>
 
             {/* To City */}
             <div className="w-full">
+              {/* Use default text-muted-foreground */}
               <Label htmlFor="toCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">To City</Label>
               <Input
                 id="toCityFilter"
@@ -322,23 +327,27 @@ export default function TicketsPage() {
                 placeholder="Destination City"
                 value={toCityFilter}
                 onChange={(e) => setToCityFilter(e.target.value)}
-                className="bg-background text-foreground" // Ensure text-foreground
+                // Use default bg-background and text-foreground
+                className="bg-background text-foreground"
               />
             </div>
 
              {/* Date Range */}
              <div className="w-full">
+                 {/* Use default text-muted-foreground */}
                 <Label htmlFor="dateRangeFilter" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</Label>
                 <DateRangePicker
                     id="dateRangeFilter"
                     date={dateRange}
                     onDateChange={setDateRange}
-                    className="bg-background text-foreground [&>button]:text-foreground" // Adjust styling if needed
+                    // Use default bg-background and text-foreground
+                    className="bg-background text-foreground [&>button]:text-foreground"
                  />
              </div>
 
              {/* Price Range */}
              <div className="w-full">
+                 {/* Use default text-muted-foreground */}
                 <Label htmlFor="minPriceFilter" className="block text-sm font-medium text-muted-foreground mb-1">Price Range (₹)</Label>
                 <div className="flex items-center gap-2">
                     <Input
@@ -347,9 +356,11 @@ export default function TicketsPage() {
                        placeholder="Min"
                        value={priceRange[0] ?? ''}
                        onChange={(e) => setPriceRange([e.target.value ? parseInt(e.target.value) : undefined, priceRange[1]])}
-                       className="bg-background text-foreground" // Ensure text-foreground
+                       // Use default bg-background and text-foreground
+                       className="bg-background text-foreground"
                        min="0"
                      />
+                     {/* Use default text-muted-foreground */}
                     <span className="text-muted-foreground">-</span>
                      <Input
                        id="maxPriceFilter"
@@ -357,7 +368,8 @@ export default function TicketsPage() {
                        placeholder="Max"
                        value={priceRange[1] ?? ''}
                        onChange={(e) => setPriceRange([priceRange[0], e.target.value ? parseInt(e.target.value) : undefined])}
-                       className="bg-background text-foreground" // Ensure text-foreground
+                       // Use default bg-background and text-foreground
+                       className="bg-background text-foreground"
                        min="0"
                      />
                 </div>
@@ -371,6 +383,7 @@ export default function TicketsPage() {
                 </Button>
 
                 {hasActiveFilters && ( // Show clear only if any filters are active
+                    // Use default ghost button style
                     <Button variant="ghost" onClick={clearFilters} className="w-full sm:w-auto text-muted-foreground gap-2">
                         <X className="mr-2 h-4 w-4" /> Clear Filters
                     </Button>
@@ -380,6 +393,7 @@ export default function TicketsPage() {
         </Card>
 
         {error && (
+          // Use default destructive color
           <div className="text-center text-destructive mt-10">
             <p>{error}</p>
           </div>
@@ -405,13 +419,15 @@ export default function TicketsPage() {
                 onCancelListing={handleCancelListing}
                 // Pass the cancelling state for this specific ticket
                 isCancelling={isDeleting === ticket.id}
-                className="ml-2.5" // Keep existing margin class, Reverted bg-card
+                className="ml-2.5" // Keep existing margin class
               />
             ))}
           </div>
         ) : !error ? (
-          <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8">
+          // Use default muted foreground and border/bg colors
+          <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8 bg-muted/30">
             <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            {/* Use default text-foreground */}
             <h2 className="text-xl font-semibold mb-2 text-foreground">No Tickets Found</h2>
             {(hasActiveFilters) ? ( // Check if any filters are active (excluding category)
               <p className="text-muted-foreground">No tickets match your current filters. Try broadening your search!</p>
@@ -419,6 +435,7 @@ export default function TicketsPage() {
               <p className="text-muted-foreground">It looks like no tickets are listed currently for this category. Check back later!</p>
             )}
             {hasActiveFilters && ( // Only show clear if any filters are active
+              // Use default link button style
               <Button variant="link" onClick={clearFilters} className="mt-2">
                 Clear Filters
               </Button>
@@ -429,6 +446,3 @@ export default function TicketsPage() {
     </div>
   );
 }
-
-
-

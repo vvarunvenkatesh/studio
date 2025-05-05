@@ -52,15 +52,15 @@ export default function ForgotPasswordPage() {
       <Image
         src="https://picsum.photos/1920/1080?random=forgot" // Different random image
         alt="Background"
-        layout="fill"
-        objectFit="cover"
+        fill // Use fill instead of layout="fill"
+        style={{ objectFit: 'cover' }} // Use style prop for objectFit
         className="-z-10 brightness-50"
         data-ai-hint="path road direction"
         priority
       />
 
       {/* Forgot Password Card - Use default bg-card */}
-      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Reverted bg-card */}
+      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Use default bg-card */}
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
@@ -75,12 +75,13 @@ export default function ForgotPasswordPage() {
              </span>
           </CardTitle>
           {/* Use default text-card-foreground */}
-          <CardDescription className="text-card-foreground">
+          <CardDescription className="text-foreground"> {/* Changed to text-foreground */}
             {linkSent ? 'Check your email' : 'Enter your email to reset your password'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {linkSent ? (
+            // Use default text-muted-foreground
             <div className="text-center text-sm text-muted-foreground">
               <p>A password reset link has been sent to your email address (if it exists in our system).</p>
               <p className="mt-2">Please check your inbox and spam folder.</p>
@@ -88,8 +89,8 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSendResetLink} className="space-y-4">
               <div className="space-y-2">
-                {/* Use default text-card-foreground */}
-                <Label htmlFor="email" className="text-card-foreground">Email</Label>
+                {/* Use default text-foreground */}
+                <Label htmlFor="email" className="text-foreground">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -115,8 +116,8 @@ export default function ForgotPasswordPage() {
             </form>
           )}
         </CardContent>
-        {/* Use default text-card-foreground */}
-        <CardFooter className="text-center text-sm text-card-foreground">
+        {/* Use default text-muted-foreground */}
+        <CardFooter className="text-center text-sm text-muted-foreground">
           Remembered your password?{' '}
           <Link
             href="/login" // Link back to login page
@@ -129,8 +130,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-
-
-
-
-

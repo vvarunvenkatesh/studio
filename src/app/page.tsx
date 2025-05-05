@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header'; // Import the Header component
 import { cn } from '@/lib/utils'; // Import cn utility
+import { Label } from '@/components/ui/label'; // Import Label for SearchForm
 
 // Simple Advertisement Slider Component
 const advertisements = [
@@ -82,7 +83,7 @@ function AdvertisementSlider() {
        </div>
 
        {/* Navigation Arrows */}
-       {/* Previous Button - Removed background and rounded-full */}
+       {/* Previous Button - Use ghost variant */}
         <Button
             variant="ghost"
             size="icon"
@@ -92,7 +93,7 @@ function AdvertisementSlider() {
         >
             <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
         </Button>
-        {/* Next Button - Removed background and rounded-full */}
+        {/* Next Button - Use ghost variant */}
         <Button
             variant="ghost"
             size="icon"
@@ -133,11 +134,11 @@ interface CategoryIconProps {
 function CategoryIcon({ icon: Icon, label, href }: CategoryIconProps) {
   return (
     <Link href={href} passHref>
-      {/* Use default bg-card and ensure text-card-foreground is used */}
-      <Card className="text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-card hover:bg-card/90 ml-2.5"> {/* Reverted bg-card, added ml-2.5 */}
-        {/* Changed icon color to text-accent-foreground (Near White) */}
-        <Icon className="h-10 w-10 md:h-12 md:w-12 text-accent-foreground mb-2" />
-        <span className="text-sm md:text-base font-medium text-card-foreground">{label}</span>
+      {/* Use default bg-card and text-foreground */}
+      <Card className="text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-card hover:bg-card/90 ml-2.5">
+        {/* Icon color uses primary color from theme */}
+        <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary mb-2" />
+        <span className="text-sm md:text-base font-medium text-foreground">{label}</span>
       </Card>
     </Link>
   );
@@ -158,29 +159,33 @@ function SearchForm() {
   };
 
   return (
+    // Use default bg-muted/30 and border color
     <Card className="p-4 md:p-6 mb-8 md:mb-12 bg-muted/30 border border-dashed max-w-4xl mx-auto">
+        {/* Use default text-foreground */}
         <h2 className="text-xl font-semibold mb-4 text-center text-foreground">Search for Train or Bus Tickets</h2>
        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-4">
         <div className="flex-1 w-full sm:w-auto">
-            <label htmlFor="fromCity" className="sr-only">From City</label>
+            <Label htmlFor="fromCity" className="sr-only">From City</Label>
             <Input
                 id="fromCity"
                 type="text"
                 placeholder="From City"
                 value={fromCity}
                 onChange={(e) => setFromCity(e.target.value)}
-                className="bg-background text-foreground" // Ensure text-foreground
+                // Use default bg-background and text-foreground
+                className="bg-background text-foreground"
             />
         </div>
          <div className="flex-1 w-full sm:w-auto">
-            <label htmlFor="toCity" className="sr-only">To City</label>
+            <Label htmlFor="toCity" className="sr-only">To City</Label>
             <Input
                 id="toCity"
                 type="text"
                 placeholder="To City"
                 value={toCity}
                 onChange={(e) => setToCity(e.target.value)}
-                className="bg-background text-foreground" // Ensure text-foreground
+                 // Use default bg-background and text-foreground
+                className="bg-background text-foreground"
             />
          </div>
         <Button type="submit" className="w-full sm:w-auto gap-2">
@@ -205,13 +210,13 @@ function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCard
   return (
     <Link href={href} passHref>
       {/* Use default bg-card */}
-      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card ml-2.5"> {/* Reverted bg-card, added ml-2.5 */}
+      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card ml-2.5">
         <div className="relative h-40 w-full">
           <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} data-ai-hint={hint} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"/>
         </div>
         <CardHeader className="pb-2 pt-4">
-          {/* Use default text-card-foreground */}
-          <CardTitle className="text-lg text-card-foreground">{title}</CardTitle>
+          {/* Use default text-foreground */}
+          <CardTitle className="text-lg text-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
           {/* Use default text-muted-foreground */}
@@ -235,6 +240,7 @@ export default function Home() {
          <div className="mt-8 md:mt-12">
              <SearchForm />
 
+             {/* Use default text-foreground */}
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
              {/* Centered grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 max-w-4xl mx-auto">
@@ -247,6 +253,7 @@ export default function Home() {
 
               {/* Bottom Advertisements Section - Centered */}
               <div className="max-w-5xl mx-auto">
+                 {/* Use default text-foreground */}
                  <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
                  {/* Centered grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -284,7 +291,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
-

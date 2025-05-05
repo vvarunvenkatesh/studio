@@ -140,7 +140,7 @@ export default function LoginPage() {
       />
 
       {/* Login Card - Use default bg-card */}
-      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Reverted bg-card */}
+      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Use default bg-card */}
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
@@ -172,8 +172,8 @@ export default function LoginPage() {
           <form onSubmit={handleOtpVerification} className="space-y-4">
             {/* Identifier Input (Email or Phone) */}
             <div className="space-y-2">
-              {/* Use default text-card-foreground */}
-              <Label htmlFor={loginMethod} className="text-card-foreground">{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Label>
+              {/* Use default text-foreground */}
+              <Label htmlFor={loginMethod} className="text-foreground">{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Label>
               <div className="flex gap-2">
                   <Input
                     id={loginMethod}
@@ -211,8 +211,8 @@ export default function LoginPage() {
             {otpSent && (
               <div className="space-y-2">
                  <div className="flex items-center justify-between">
-                     {/* Use default text-card-foreground */}
-                    <Label htmlFor="otp" className="text-card-foreground">Enter OTP</Label>
+                     {/* Use default text-foreground */}
+                    <Label htmlFor="otp" className="text-foreground">Enter OTP</Label>
                      {/* Optional: Add a resend OTP link/button */}
                     <Button
                         variant="link"
@@ -258,8 +258,8 @@ export default function LoginPage() {
             )}
           </form>
         </CardContent>
-         {/* Use default text-card-foreground */}
-        <CardFooter className="text-center text-sm text-card-foreground">
+         {/* Use default text-muted-foreground */}
+        <CardFooter className="text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
           <Link
             href="/signup"
@@ -272,8 +272,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-
-    
-
-

@@ -70,7 +70,7 @@ const formSchema = z.object({
   return true;
 }, {
    message: 'Departure and Destination cities are required for Train or Bus tickets.',
-   path: ['fromCity'],
+   path: ['fromCity'], // Associate error with fromCity field for now
 });
 
 
@@ -109,14 +109,14 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     if (onTypeChange) {
       onTypeChange(ticketType);
     }
-    // // Reset file input if needed based on type changes (optional)
-    // if (ticketType !== 'train') { // Example: Reset only if NOT a train ticket
-    //    form.setValue('originalTicketDataUri', undefined);
-    //    setSelectedFileName(null);
-    //    if (fileInputRef.current) {
-    //       fileInputRef.current.value = '';
-    //    }
-    // }
+    // Reset fields that might not apply to the new type (optional)
+    if (ticketType === 'train' || ticketType === 'bus') {
+       form.setValue('location', ''); // Reset location if switching to train/bus
+    } else if (ticketType === 'event' || ticketType === 'movie' || ticketType === 'sports') {
+       form.setValue('fromCity', ''); // Reset cities if switching to event/movie/sports
+       form.setValue('toCity', '');
+    }
+
   }, [ticketType, onTypeChange, form]);
 
 
@@ -216,6 +216,8 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   async function onSubmit(values: FormData) {
     setIsSubmitting(true);
     try {
+      // Combine date and time into a single ISO string or structure if your backend expects it
+      // For this example, we'll keep them separate as defined in the Ticket interface
       const ticketData = {
         type: values.type,
         description: values.description,
@@ -241,6 +243,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           fileInputRef.current.value = ''; // Reset file input visually
        }
 
+      // Redirect after a short delay to allow toast visibility
       setTimeout(() => {
          router.push('/');
       }, 1500);
@@ -259,11 +262,11 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
 
   return (
     <Form {...form}>
-       {/* Reverted dynamic background color change based on ticketType */}
+       {/* Use default bg-card */}
        <form
          onSubmit={form.handleSubmit(onSubmit)}
          className={cn(
-           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10 bg-card", // Reverted bg-card
+           "space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow relative z-10 bg-card", // Use default bg-card
          )}
         >
 
@@ -273,11 +276,11 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           name="type"
           render={({ field }) => (
             <FormItem>
-              {/* Reverted text color change */}
-               <FormLabel>Ticket Type *</FormLabel>
+              {/* Use default text-foreground */}
+               <FormLabel className="text-foreground">Ticket Type *</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                   {/* Reverted background/border/text color changes */}
+                   {/* Use default styling */}
                   <SelectTrigger>
                     <SelectValue placeholder="Select ticket type" />
                   </SelectTrigger>
@@ -290,7 +293,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                   <SelectItem value="sports">Sports</SelectItem>
                 </SelectContent>
               </Select>
-              {/* Reverted text color change */}
+              {/* Use default text-destructive */}
               <FormMessage />
             </FormItem>
           )}
@@ -302,21 +305,21 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-               {/* Reverted text color change */}
-               <FormLabel>Description *</FormLabel>
+               {/* Use default text-foreground */}
+               <FormLabel className="text-foreground">Description *</FormLabel>
               <FormControl>
                 <div className="relative">
-                   {/* Reverted background/border/text color changes */}
+                   {/* Use default styling */}
                   <Textarea
                     placeholder="Add details like seat number, section, special features, route specifics..."
-                    className="min-h-[100px] resize-none text-foreground"
+                    className="min-h-[100px] resize-none text-foreground" // Ensure text-foreground for input text
                     {...field}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    // Reverted text color change
+                    // Use default text colors
                     className="absolute bottom-2 right-2 h-7 w-7 text-muted-foreground hover:text-primary"
                     onClick={handleGrammarCheck}
                     disabled={isCheckingGrammar || isSubmitting || !field.value || field.value.length < 10}
@@ -331,11 +334,11 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                   </Button>
                 </div>
               </FormControl>
-              {/* Reverted text color change */}
-              <FormDescription>
+              {/* Use default text-muted-foreground */}
+              <FormDescription className="text-muted-foreground">
                 Provide clear details (min 10 chars). Use <Sparkles className="inline h-3 w-3 align-text-bottom" /> for AI check.
               </FormDescription>
-              {/* Reverted text color change */}
+              {/* Use default text-destructive */}
               <FormMessage />
             </FormItem>
           )}
@@ -347,15 +350,15 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           name="originalTicketDataUri"
           render={({ field }) => (
             <FormItem>
-              {/* Reverted text color change */}
-              <FormLabel>Original Ticket (Optional)</FormLabel>
+              {/* Use default text-foreground */}
+              <FormLabel className="text-foreground">Original Ticket (Optional)</FormLabel>
               <FormControl>
                 <div className="flex items-center gap-4">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={handleUploadClick}
-                        // Reverted background/border/text color changes
+                        // Use default styling
                          className='gap-2'
                      >
                        {selectedFileName ? <FileCheck className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
@@ -365,22 +368,22 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                         ref={fileInputRef}
                         type="file"
                         className="hidden"
-                        accept="image/*,.pdf,.doc,.docx"
+                        accept="image/*,.pdf,.doc,.docx" // Allow common formats
                         onChange={handleFileChange}
                     />
                      {selectedFileName && (
-                        // Reverted text color change
+                        // Use default text-muted-foreground
                        <span className="text-sm text-muted-foreground truncate max-w-[200px]">
                          {selectedFileName}
                        </span>
                      )}
                 </div>
               </FormControl>
-              {/* Reverted text color change */}
-               <FormDescription>
+              {/* Use default text-muted-foreground */}
+               <FormDescription className="text-muted-foreground">
                  Upload a picture or scan of the original ticket (max 5MB). This helps build trust with buyers.
                </FormDescription>
-              {/* Reverted text color change */}
+              {/* Use default text-destructive */}
               <FormMessage />
             </FormItem>
           )}
@@ -394,25 +397,27 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             name="price"
             render={({ field }) => (
               <FormItem>
-                 {/* Reverted text color change */}
-                <FormLabel>Price (₹) *</FormLabel>
+                 {/* Use default text-foreground */}
+                <FormLabel className="text-foreground">Price (₹) *</FormLabel>
                 <FormControl>
-                   {/* Reverted background/border/text color changes */}
+                   {/* Use default styling */}
                    <Input
                       type="number"
                       step="0.01"
                       placeholder="e.g., 1500.50"
-                      className="text-foreground"
+                      className="text-foreground" // Ensure text-foreground for input text
                       {...field}
+                      // Handle potential undefined/NaN values for input type number
                       value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : String(field.value)}
                       onChange={(e) => {
                          const value = e.target.value;
+                         // Allow clearing the field, otherwise parse as float
                          field.onChange(value === '' ? undefined : parseFloat(value));
                       }}
-                      min="0.01"
+                      min="0.01" // Ensure min is respected by browser validation
                       />
                 </FormControl>
-                {/* Reverted text color change */}
+                {/* Use default text-destructive */}
                 <FormMessage />
               </FormItem>
             )}
@@ -424,16 +429,16 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                 {/* Reverted text color change */}
-                 <FormLabel>Date *</FormLabel>
+                 {/* Use default text-foreground */}
+                 <FormLabel className="text-foreground">Date *</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
-                       {/* Reverted background/border/text color changes */}
+                       {/* Use default styling */}
                       <Button
                         variant={'outline'}
                         className={cn(
-                          'w-full pl-3 text-left font-normal justify-start',
+                          'w-full pl-3 text-left font-normal justify-start', // Added justify-start
                           !field.value && 'text-muted-foreground'
                         )}
                       >
@@ -451,12 +456,12 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < startOfToday() }
+                      disabled={(date) => date < startOfToday() } // Disable past dates
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
-                {/* Reverted text color change */}
+                {/* Use default text-destructive */}
                 <FormMessage />
               </FormItem>
             )}
@@ -468,22 +473,22 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             name="time"
             render={({ field }) => (
               <FormItem>
-                 {/* Reverted text color change */}
-                 <FormLabel>Time (HH:MM) *</FormLabel>
+                 {/* Use default text-foreground */}
+                 <FormLabel className="text-foreground">Time (HH:MM) *</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    {/* Reverted background/border/text color changes */}
+                    {/* Use default styling */}
                     <Input
                       type="time"
                       placeholder="e.g., 14:30"
-                      className="text-foreground"
+                      className="text-foreground appearance-none" // Ensure text-foreground, remove browser default spinner for time
                        {...field}
                      />
-                    {/* Reverted text color change */}
-                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    {/* Use default text-muted-foreground */}
+                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   </div>
                 </FormControl>
-                {/* Reverted text color change */}
+                {/* Use default text-destructive */}
                 <FormMessage />
               </FormItem>
             )}
@@ -499,16 +504,16 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
               name="fromCity"
               render={({ field }) => (
                 <FormItem>
-                   {/* Reverted text color change */}
-                   <FormLabel>From (City) *</FormLabel>
+                   {/* Use default text-foreground */}
+                   <FormLabel className="text-foreground">From (City) *</FormLabel>
                   <FormControl>
-                     {/* Reverted background/border/text color changes */}
+                     {/* Use default styling */}
                      <Input
                        placeholder="e.g., New York"
-                       className="text-foreground"
+                       className="text-foreground" // Ensure text-foreground
                        {...field} />
                   </FormControl>
-                  {/* Reverted text color change */}
+                  {/* Use default text-destructive */}
                   <FormMessage />
                 </FormItem>
               )}
@@ -519,16 +524,16 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
               name="toCity"
               render={({ field }) => (
                 <FormItem>
-                   {/* Reverted text color change */}
-                   <FormLabel>To (City) *</FormLabel>
+                   {/* Use default text-foreground */}
+                   <FormLabel className="text-foreground">To (City) *</FormLabel>
                   <FormControl>
-                     {/* Reverted background/border/text color changes */}
+                     {/* Use default styling */}
                      <Input
                        placeholder="e.g., Boston"
-                       className="text-foreground"
+                       className="text-foreground" // Ensure text-foreground
                        {...field} />
                   </FormControl>
-                  {/* Reverted text color change */}
+                  {/* Use default text-destructive */}
                   <FormMessage />
                 </FormItem>
               )}
@@ -542,18 +547,18 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
               name="location"
               render={({ field }) => (
                 <FormItem>
-                   {/* Reverted text color change */}
-                   <FormLabel>Location / Venue *</FormLabel>
+                   {/* Use default text-foreground */}
+                   <FormLabel className="text-foreground">Location / Venue *</FormLabel>
                   <FormControl>
-                     {/* Reverted background/border/text color changes */}
+                     {/* Use default styling */}
                      <Input
                        placeholder="e.g., Madison Square Garden, AMC Lincoln Square, City Stadium"
-                        className="text-foreground"
+                        className="text-foreground" // Ensure text-foreground
                         {...field} />
                   </FormControl>
-                   {/* Reverted text color change */}
-                   <FormDescription>Be specific about the place.</FormDescription>
-                  {/* Reverted text color change */}
+                   {/* Use default text-muted-foreground */}
+                   <FormDescription className="text-muted-foreground">Be specific about the place.</FormDescription>
+                  {/* Use default text-destructive */}
                   <FormMessage />
                 </FormItem>
               )}
@@ -567,18 +572,18 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                name="location"
                render={({ field }) => (
                  <FormItem>
-                    {/* Reverted text color change */}
-                    <FormLabel>Platform / Gate / Terminal (Optional)</FormLabel>
+                    {/* Use default text-foreground */}
+                    <FormLabel className="text-foreground">Platform / Gate / Terminal (Optional)</FormLabel>
                    <FormControl>
-                      {/* Reverted background/border/text color changes */}
+                      {/* Use default styling */}
                       <Input
                         placeholder="e.g., Grand Central Terminal, Platform 5, Gate B3"
-                         className="text-foreground"
+                         className="text-foreground" // Ensure text-foreground
                          {...field} />
                    </FormControl>
-                   {/* Reverted text color change */}
-                   <FormDescription>Add specific departure point details if known.</FormDescription>
-                   {/* Reverted text color change */}
+                   {/* Use default text-muted-foreground */}
+                   <FormDescription className="text-muted-foreground">Add specific departure point details if known.</FormDescription>
+                   {/* Use default text-destructive */}
                    <FormMessage />
                  </FormItem>
                )}
@@ -587,7 +592,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
 
 
         {/* Submit Button */}
-         {/* Reverted background/text color changes */}
+         {/* Use default styling */}
          <Button
             type="submit"
             className="w-full gap-2"
@@ -601,7 +606,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             'Post Ticket for Sale'
           )}
         </Button>
-         {/* Reverted text color change */}
+         {/* Use default text-muted-foreground */}
          <p className="text-xs text-muted-foreground text-center">Fields marked with * are required.</p>
       </form>
     </Form>

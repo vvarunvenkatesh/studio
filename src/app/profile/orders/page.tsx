@@ -80,44 +80,55 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
 
   return (
     // Use default bg-card
-    <Card className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 bg-card shadow-sm"> {/* Reverted bg-card */}
+    <Card className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 bg-card shadow-sm"> {/* Use default bg-card */}
        <div className="flex-shrink-0 flex items-center justify-center sm:justify-start mb-2 sm:mb-0">
+          {/* Use default text-primary */}
           <CategorySpecificIcon className="h-8 w-8 text-primary" />
        </div>
 
        <div className="flex-grow grid gap-1.5 text-sm">
           <div className="flex justify-between items-start">
-             <h3 className="font-semibold capitalize text-card-foreground">{order.type} Ticket</h3>
+             {/* Use default text-foreground */}
+             <h3 className="font-semibold capitalize text-foreground">{order.type} Ticket</h3>
+             {/* Use default badge style */}
              <Badge variant="secondary" className="text-xs whitespace-nowrap">ID: {order.id}</Badge>
           </div>
+          {/* Use default text-muted-foreground */}
           <p className="text-muted-foreground text-xs line-clamp-2">{order.description}</p>
 
           {/* Details Section */}
-          <div className="mt-2 space-y-1 text-xs text-card-foreground">
+          {/* Use default text-foreground */}
+          <div className="mt-2 space-y-1 text-xs text-foreground">
              {(order.type === 'train' || order.type === 'bus') && order.fromCity && order.toCity && (
                <div className="flex items-center font-medium">
                  <span className="truncate">{order.fromCity}</span>
+                 {/* Use default text-muted-foreground */}
                  <ArrowRight className="mx-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
                  <span className="truncate">{order.toCity}</span>
                </div>
              )}
              {(order.type === 'event' || order.type === 'movie' || order.type === 'sports') && order.location && (
                <div className="flex items-center">
+                 {/* Use default text-muted-foreground */}
                  <MapPin className="mr-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
                  <span className="truncate">{order.location}</span>
                </div>
              )}
               {(order.type === 'train' || order.type === 'bus') && order.location && (!order.fromCity || !order.toCity) && (
+                // Use default text-muted-foreground
                 <div className="flex items-center text-xs text-muted-foreground">
+                  {/* Use default text-muted-foreground */}
                   <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
                   <span className="truncate">{order.location}</span>
                 </div>
               )}
              <div className="flex items-center">
+               {/* Use default text-muted-foreground */}
                <Calendar className="mr-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
                <span>{formattedDate}</span>
              </div>
              <div className="flex items-center">
+               {/* Use default text-muted-foreground */}
                <Clock className="mr-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
                <span>{order.time}</span>
              </div>
@@ -126,6 +137,7 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
 
        {/* Price, Download, and Delete */}
        <div className="flex sm:flex-col items-end sm:items-center justify-between sm:justify-start mt-2 sm:mt-0 sm:ml-4 gap-2">
+          {/* Use default text-primary */}
           <div className="flex items-center font-semibold text-lg text-primary">
              <IndianRupeeIcon className="mr-1 h-5 w-5" /> {/* Changed to IndianRupeeIcon */}
              {order.price.toFixed(2)}
@@ -141,7 +153,8 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
                Download
              </Button>
            ) : (
-             <Badge variant="outline" className="mt-0 sm:mt-2 text-xs text-muted-foreground">No File</Badge> // Indicate no file
+             // Use default outline badge with muted text
+             <Badge variant="outline" className="mt-0 sm:mt-2 text-xs text-muted-foreground">No File</Badge>
            )}
             {/* Delete Button */}
             <AlertDialog>
@@ -279,16 +292,19 @@ export default function ProfileOrdersPage() {
 
   return (
     // Use default bg-background
-    <Card className="w-full bg-background"> {/* Reverted bg-background */}
+    <Card className="w-full bg-background"> {/* Use default bg-background */}
       <CardHeader>
+        {/* Use default text-foreground */}
         <CardTitle className='text-foreground'>My Orders</CardTitle>
+        {/* Use default text-muted-foreground */}
         <CardDescription className='text-muted-foreground'>View your past ticket purchases.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-           // You can add a loading skeleton here
+           // Use default text-muted-foreground
            <div className="text-center text-muted-foreground py-10">Loading orders...</div>
         ) : orders.length === 0 ? (
+          // Use default background/border/text color
           <div className="flex flex-col items-center justify-center h-40 border border-dashed rounded-lg text-center text-muted-foreground bg-muted/30">
              <ShoppingBag className="h-10 w-10 mb-2" />
             <p>You haven't purchased any tickets yet.</p>
@@ -302,12 +318,10 @@ export default function ProfileOrdersPage() {
           </div>
         )}
       </CardContent>
+       {/* Use default text-muted-foreground */}
        <CardFooter className="text-xs text-muted-foreground pt-4 border-t">
            Order history is stored locally in your browser. Clearing browser data may remove this history.
        </CardFooter>
     </Card>
   );
 }
-
-
-

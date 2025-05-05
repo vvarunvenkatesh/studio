@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Changed Rupee to IndianRupeeIcon
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Use IndianRupeeIcon
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
@@ -216,8 +216,8 @@ export function TicketCard({
     // Apply specific background and text color using inline style for #FFCE54
     <Badge
       variant="outline"
-      className="text-xs text-black gap-1.5 border-amber-500" // Use black text for contrast, border optional
-      style={{ backgroundColor: '#FFCE54' }}
+      className="text-xs text-black gap-1.5 border-amber-500" // Use black text for contrast
+      style={{ backgroundColor: '#FFCE54' }} // Apply yellow background
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -225,26 +225,22 @@ export function TicketCard({
   );
 
 
-  // Hide card completely if it's sold and in browse mode - Removed to show sold tickets with download option
-  // if (isSold && variant === 'browse') {
-  //     return null;
-  // }
-
-
   return (
-    // Revert conditional background styling based on status/variant
+    // Use default bg-card
     <Card className={cn(
-        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full bg-card", // Reverted bg-card
+        "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full bg-card", // Use default bg-card
         className // Apply the className prop here
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between mb-1">
-           {/* Use default text-card-foreground */}
-           <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2 text-card-foreground">
+           {/* Use default text-foreground */}
+           <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2 text-foreground">
+             {/* Use default text-primary */}
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
              <span className="truncate">{currentTicket.type} Ticket</span>
            </CardTitle>
            {/* Added margin-right to badge to avoid overlap with potential Cancel button in manage variant */}
+           {/* Use default badge style */}
            <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
         </div>
          {/* Use default text-muted-foreground */}
@@ -252,38 +248,45 @@ export function TicketCard({
              {currentTicket.description}
          </CardDescription>
       </CardHeader>
-      {/* Use default text-card-foreground */}
-      <CardContent className="grid gap-1.5 text-sm pt-2 flex-grow text-card-foreground"> {/* Added flex-grow and text-foreground */}
+      {/* Use default text-foreground */}
+      <CardContent className="grid gap-1.5 text-sm pt-2 flex-grow text-foreground"> {/* Added flex-grow and text-foreground */}
          {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.fromCity && currentTicket.toCity && (
              <div className="flex items-center font-medium">
                 <span className="truncate">{currentTicket.fromCity}</span>
+                {/* Use default text-muted-foreground */}
                 <ArrowRight className="mx-1 h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">{currentTicket.toCity}</span>
              </div>
          )}
           {(currentTicket.type === 'event' || currentTicket.type === 'movie' || currentTicket.type === 'sports') && currentTicket.location && (
              <div className="flex items-center">
+                {/* Use default text-muted-foreground */}
                 <MapPin className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">{currentTicket.location}</span>
              </div>
          )}
          {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.location && (!currentTicket.fromCity || !currentTicket.toCity) && (
+             // Use default text-muted-foreground
              <div className="flex items-center text-xs text-muted-foreground">
+                {/* Use default text-muted-foreground */}
                 <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
                 <span className="truncate">{currentTicket.location}</span>
              </div>
           )}
 
          <div className="flex items-center">
+            {/* Use default text-muted-foreground */}
             <Calendar className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{formattedDate}</span>
          </div>
          <div className="flex items-center">
+            {/* Use default text-muted-foreground */}
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{currentTicket.time}</span>
          </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4 mt-auto">
+         {/* Use default text-primary */}
          <div className="flex items-center font-semibold text-lg text-primary">
              <IndianRupeeIcon className="mr-1 h-5 w-5" />
              {currentTicket.price.toFixed(2)}
@@ -297,7 +300,8 @@ export function TicketCard({
                      size="sm"
                      onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
                      aria-label="Download original ticket"
-                     className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90" // Same style as Buy button
+                     // Use default primary button style
+                     className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                  >
                      <Download className="mr-2 h-4 w-4" />
                      Download

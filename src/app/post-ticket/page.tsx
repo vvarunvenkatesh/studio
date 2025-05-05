@@ -104,23 +104,22 @@ export default function PostTicketPage() {
       "flex min-h-screen flex-col pb-16 md:pb-0", // Added padding bottom for bottom nav
       ticketType === 'movie' ? 'bg-movie-poster' : 'bg-background' // Changed default to background
     )}>
-      {/* Header background should remain consistent, maybe slightly transparent for movie poster */}
-       {/* Reverted conditional background for Header */}
+      {/* Header background should remain consistent */}
        <Header />
       {/* Remove explicit bottom padding pb-20/pb-12 */}
       <main className="flex-1 container py-8 md:py-12 relative z-10"> {/* Ensure content is above pseudo-element */}
         <div className="max-w-3xl mx-auto">
-           {/* Reverted conditional text color for title */}
+           {/* Use default text-foreground for title */}
             <h1 className="text-3xl font-bold mb-6 text-center md:text-left text-foreground">Post a New Ticket</h1>
            <PostTicketForm onTypeChange={handleTypeChange} /> {/* Pass the callback */}
         </div>
 
          {/* Display User's Active Posted Tickets */}
          <div className="max-w-5xl mx-auto mt-12 md:mt-16">
-             {/* Reverted conditional text color for title */}
+             {/* Use default text-foreground for title */}
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Your Active Listings</h2>
              {isLoading ? (
-                 // Reverted conditional text color
+                 // Use default text-muted-foreground
                  <p className="text-center text-muted-foreground">Loading your listings...</p>
              ) : postedTickets.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -135,12 +134,12 @@ export default function PostTicketPage() {
                             onCancelListing={handleDeleteTicket}
                             // Pass the loading state for this specific ticket
                             isCancelling={isDeleting === ticket.id}
-                            className="ml-2.5" // Reverted bg-card
+                            className="ml-2.5" // Keep existing margin
                         />
                     ))}
                  </div>
              ) : (
-                // Reverted conditional background/border/text color
+                // Use default background/border/text color
                 <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8 bg-muted/30">
                     <TicketIcon className="mx-auto h-12 w-12 mb-4" />
                     <p>You have no active tickets listed for sale.</p>

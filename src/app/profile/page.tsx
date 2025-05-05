@@ -42,6 +42,16 @@ export default function ProfileBasicInfoPage() {
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+        // Basic validation (e.g., file type, size) can be added here
+        if (file.size > 2 * 1024 * 1024) { // Example: Limit to 2MB
+             toast({ title: "Image Too Large", description: "Please select an image smaller than 2MB.", variant: "destructive" });
+             return;
+        }
+        if (!file.type.startsWith('image/')) {
+             toast({ title: "Invalid File Type", description: "Please select an image file (JPEG, PNG, GIF, etc.).", variant: "destructive" });
+             return;
+        }
+
         setSelectedFile(file);
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -118,16 +128,18 @@ export default function ProfileBasicInfoPage() {
   return (
     // Removed mx-auto to align card left within the Tabs content area
     // Use default bg-card
-    <Card className="w-full max-w-2xl bg-card"> {/* Reverted bg-card */}
+    <Card className="w-full max-w-2xl bg-card"> {/* Use default bg-card */}
       <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
          <div className="relative group">
             <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
                 <AvatarImage src={profileImage || undefined} alt="User profile picture" data-ai-hint="user avatar" />
                 <AvatarFallback>
+                    {/* Use default text-muted-foreground */}
                     <User className="h-10 w-10 text-muted-foreground" />
                 </AvatarFallback>
             </Avatar>
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={handleAvatarClick}>
+                 {/* Icon color remains white for visibility on dark overlay */}
                  <Camera className="h-6 w-6 text-white" />
             </div>
             <input
@@ -139,8 +151,8 @@ export default function ProfileBasicInfoPage() {
             />
          </div>
          <div className="text-center sm:text-left">
-            {/* Use default text-card-foreground */}
-            <CardTitle className="text-card-foreground">Basic Information</CardTitle>
+            {/* Use default text-foreground */}
+            <CardTitle className="text-foreground">Basic Information</CardTitle>
             {/* Use default text-muted-foreground */}
             <CardDescription className="text-muted-foreground">View and manage your profile details.</CardDescription>
               {selectedFile && (
@@ -155,42 +167,42 @@ export default function ProfileBasicInfoPage() {
          {/* Changed grid to single column for better centering appearance */}
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-1">
-             {/* Use default text-card-foreground */}
-            <Label htmlFor="name" className="text-card-foreground">Name</Label>
+             {/* Use default text-foreground */}
+            <Label htmlFor="name" className="text-foreground">Name</Label>
             {/* In a real app, make these editable with a form */}
-            <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-card-foreground"/> {/* Ensure text-card-foreground */}
+            <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
           </div>
           <div className="space-y-1">
-             {/* Use default text-card-foreground */}
-            <Label htmlFor="email" className="text-card-foreground">Email Address</Label>
-            <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-card-foreground"/> {/* Ensure text-card-foreground */}
+             {/* Use default text-foreground */}
+            <Label htmlFor="email" className="text-foreground">Email Address</Label>
+            <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
           </div>
         </div>
          {/* Changed grid to single column for better centering appearance */}
         <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
-                {/* Use default text-card-foreground */}
-                <Label htmlFor="contact" className="text-card-foreground">Contact Number</Label>
-                <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-card-foreground"/> {/* Ensure text-card-foreground */}
+                {/* Use default text-foreground */}
+                <Label htmlFor="contact" className="text-foreground">Contact Number</Label>
+                <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground"/> {/* Ensure text-foreground */}
             </div>
             <div className="space-y-1">
-                {/* Use default text-card-foreground */}
-                <Label className="text-card-foreground">Gender</Label>
+                {/* Use default text-foreground */}
+                <Label className="text-foreground">Gender</Label>
                 <RadioGroup defaultValue={userData.gender} className="flex items-center space-x-4 pt-2" disabled>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="male" id="male" />
-                         {/* Use default text-card-foreground */}
-                        <Label htmlFor="male" className="text-card-foreground">Male</Label>
+                         {/* Use default text-foreground */}
+                        <Label htmlFor="male" className="text-foreground">Male</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="female" id="female" />
-                         {/* Use default text-card-foreground */}
-                        <Label htmlFor="female" className="text-card-foreground">Female</Label>
+                         {/* Use default text-foreground */}
+                        <Label htmlFor="female" className="text-foreground">Female</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="other" id="other" />
-                         {/* Use default text-card-foreground */}
-                        <Label htmlFor="other" className="text-card-foreground">Other</Label>
+                         {/* Use default text-foreground */}
+                        <Label htmlFor="other" className="text-foreground">Other</Label>
                     </div>
                 </RadioGroup>
             </div>
@@ -209,6 +221,3 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
-
-
-
