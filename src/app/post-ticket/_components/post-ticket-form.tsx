@@ -250,11 +250,19 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
 
     } catch (error) {
       console.error('Error posting ticket:', error);
-      toast({
-        title: 'Error Posting Ticket',
-        description: 'Something went wrong while posting your ticket. Please check the details and try again.',
-        variant: 'destructive',
-      });
+      if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
+          toast({
+              title: 'Storage Limit Reached',
+              description: 'Could not post ticket because browser storage is full. Please clear some space or try removing the uploaded file.',
+              variant: 'destructive',
+          });
+      } else {
+          toast({
+              title: 'Error Posting Ticket',
+              description: 'Something went wrong while posting your ticket. Please check the details and try again.',
+              variant: 'destructive',
+          });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -612,3 +620,4 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     </Form>
   );
 }
+

@@ -67,14 +67,18 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
             try {
                 // Add migration for missing sellerId
                 let parsedData = JSON.parse(stored);
-                if (key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) {
-                   if (Array.isArray(parsedData)) {
+                if (Array.isArray(parsedData)) {
+                   if (key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) {
                       parsedData = parsedData.map((ticket: Partial<Ticket>) => ({
                          ...ticket,
                          // Assign a default sellerId if missing (e.g., 'unknown' or derive)
                          sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
                          status: ticket.status || 'available', // Ensure status defaults to available
                       }));
+                   }
+                   // Specifically remove originalTicketDataUri for userPostedTickets on load to clean up old data
+                   if (key === userPostedTicketsKey) {
+                       parsedData = parsedData.map(({ originalTicketDataUri, ...ticket }: Partial<Ticket> & {originalTicketDataUri?: any}) => ticket);
                    }
                 }
                 return parsedData as T;
@@ -106,6 +110,10 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
             }));
         } catch (e) {
              console.error(`Failed to save ${key} to localStorage`, e);
+             // Re-throw specific errors like QuotaExceededError if needed by calling code
+             if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22)) {
+                 throw e; // Or handle it more gracefully, e.g., show a toast
+             }
         }
     }
 };
@@ -226,20 +234,39 @@ const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
 };
 
 
-const getUserPostedTickets = (): Ticket[] => getUniqueById(loadFromLocalStorage<Ticket[]>(userPostedTicketsKey, []));
-const saveUserPostedTickets = (postedTickets: Ticket[]) => saveToLocalStorage(userPostedTicketsKey, getUniqueById(postedTickets)); // Ensure uniqueness on save
-const addUserPostedTicket = (ticket: Ticket) => saveUserPostedTickets([...getUserPostedTickets(), ticket]);
+const getUserPostedTickets = (): Ticket[] => {
+    // Loads unique tickets and removes originalTicketDataUri during load
+    return getUniqueById(loadFromLocalStorage<Ticket[]>(userPostedTicketsKey, []));
+};
+
+// Save user's posted tickets, *excluding* the originalTicketDataUri to prevent quota errors
+const saveUserPostedTickets = (postedTickets: Ticket[]) => {
+    const uniqueTickets = getUniqueById(postedTickets);
+    // Create a version of the tickets without the large data URI
+    const ticketsToSave = uniqueTickets.map(({ originalTicketDataUri, ...ticket }) => ticket);
+    saveToLocalStorage(userPostedTicketsKey, ticketsToSave); // Ensure uniqueness and smaller size on save
+};
+
+const addUserPostedTicket = (ticket: Ticket) => {
+    // The ticket passed here might have the URI, but saveUserPostedTickets will strip it before saving
+    saveUserPostedTickets([...getUserPostedTickets(), ticket]);
+};
+
 const removeUserPostedTicket = (ticketId: string) => {
     const currentPosted = getUserPostedTickets();
+    // Filtering inherently preserves the state (without URIs), saveUserPostedTickets handles the rest
     saveUserPostedTickets(currentPosted.filter(t => t.id !== ticketId));
 };
+
 const updateUserPostedTicket = (ticketId: string, updatedData: Partial<Ticket>) => {
     const currentPosted = getUserPostedTickets();
+    // Map and update, then let saveUserPostedTickets handle stripping URI and saving
     saveUserPostedTickets(currentPosted.map(t => t.id === ticketId ? { ...t, ...updatedData } : t));
 };
 
 const getUserOrders = (): Ticket[] => getUniqueById(loadFromLocalStorage<Ticket[]>(userOrdersKey, []));
-const saveUserOrders = (orders: Ticket[]) => saveToLocalStorage(userOrdersKey, getUniqueById(orders)); // Ensure uniqueness on save
+// Save user orders *including* the originalTicketDataUri for download purposes
+const saveUserOrders = (orders: Ticket[]) => saveToLocalStorage(userOrdersKey, getUniqueById(orders));
 const addUserOrder = (ticket: Ticket) => saveUserOrders([...getUserOrders(), ticket]);
 
 
@@ -311,9 +338,11 @@ export async function getAvailableTickets(filters?: {
 /**
  * Asynchronously posts a new ticket for sale.
  * Adds the ticket to the main marketplace list and the user's posted list in localStorage.
+ * The data URI is stored in the main list but stripped from the user's posted list to save space.
  *
- * @param ticketData The data for the ticket to be posted.
+ * @param ticketData The data for the ticket to be posted, including the optional data URI.
  * @returns A promise that resolves to the created Ticket object.
+ * @throws Will re-throw QuotaExceededError if saving to localStorage fails.
  */
 export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId'> & { originalTicketDataUri?: string }): Promise<Ticket> {
   await new Promise(resolve => setTimeout(resolve, 100));
@@ -332,8 +361,25 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
   tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
 
   tickets.push(newTicket);
-  saveToLocalStorage(marketplaceTicketsKey, tickets); // Save updated marketplace list
-  addUserPostedTicket(newTicket); // Add to user's posted list
+  try {
+    saveToLocalStorage(marketplaceTicketsKey, tickets); // Save updated marketplace list (includes URI)
+    addUserPostedTicket(newTicket); // Add to user's posted list (strips URI before saving)
+  } catch (error) {
+    // Handle potential QuotaExceededError from saveToLocalStorage
+    if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
+      console.error('LocalStorage quota exceeded while posting ticket.');
+      // Remove the newly added ticket from the in-memory list if save failed
+      tickets.pop();
+      // Rethrow or handle the error (e.g., show a toast to the user)
+      throw error;
+    } else {
+      // Handle other potential errors
+      console.error('An unexpected error occurred while posting ticket:', error);
+      tickets.pop(); // Revert in-memory change
+      throw error; // Rethrow
+    }
+  }
+
 
   console.log('Posted Ticket:', newTicket);
   return newTicket;
@@ -342,7 +388,7 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
 /**
  * Asynchronously simulates purchasing a ticket.
  * Marks the ticket status as 'sold' in the marketplace and user's posted lists.
- * Adds the purchased ticket to the user's order history, ensuring uniqueness.
+ * Adds the purchased ticket (including data URI) to the user's order history.
  *
  * @param ticketId The ID of the ticket to purchase.
  * @returns A promise that resolves to an object indicating success or failure, including the ticket data.
@@ -375,8 +421,8 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
   // Mark as sold
   ticketToUpdate.status = 'sold';
   saveToLocalStorage(marketplaceTicketsKey, tickets); // Save updated marketplace list
-  updateUserPostedTicket(ticketId, { status: 'sold' }); // Update in user's posted list
-  addUserOrder(ticketToUpdate); // Add to user's order history (will ensure uniqueness)
+  updateUserPostedTicket(ticketId, { status: 'sold' }); // Update in user's posted list (still no URI)
+  addUserOrder(ticketToUpdate); // Add to user's order history (includes URI)
 
   console.log(`Ticket ${ticketId} purchased successfully.`);
   return { success: true, message: `Ticket ${ticketId} purchased successfully!`, ticket: ticketToUpdate };
