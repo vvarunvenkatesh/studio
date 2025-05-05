@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils'; // Import cn utility
 import { useIsMobile } from '@/hooks/use-mobile'; // Import the hook
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // Import Sheet for mobile menu
+import { Label } from '@/components/ui/label'; // Import Label component
 
 interface HeaderProps {
   className?: string; // Add className prop
@@ -108,7 +109,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
         {isMobile ? (
           <>
             {/* Mobile View */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="p-2">
                   <Menu className="h-6 w-6"/>
@@ -116,7 +117,7 @@ export function Header({ className }: HeaderProps) { // Destructure className
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-full sm:w-64">
-                {/* Menu Content */}
+                 {/* Menu Content */}
                  <div className="py-4 flex flex-col h-full">
                      <div className="flex-grow space-y-2">
                           <Button asChild variant="ghost" className="w-full justify-start">
@@ -173,8 +174,25 @@ export function Header({ className }: HeaderProps) { // Destructure className
                   </span>
              </div>
 
-            {/* Spacer to push profile/login to the right */}
-             <div className="w-10 h-10"></div> {/* Adjust width as needed */}
+            {/* Profile/Location Section - Right side */}
+             <div className="flex items-center gap-2"> {/* Reduced gap for mobile */}
+                   {/* Location Selector */}
+                    <Select value={selectedLocation} onValueChange={handleLocationChange}>
+                        <SelectTrigger className="w-auto h-9 px-2 py-1 text-xs border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1"> {/* Adjusted size and padding */}
+                            <MapPin className="h-4 w-4 flex-shrink-0" />
+                            <SelectValue placeholder="Loc" /> {/* Shortened placeholder */}
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableLocations.map(location => (
+                                <SelectItem key={location} value={location}>
+                                    {location}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+               {/* Profile Avatar/Login Button */}
+               {/* No changes needed here for mobile */}
+              </div>
 
           </>
         ) : (
