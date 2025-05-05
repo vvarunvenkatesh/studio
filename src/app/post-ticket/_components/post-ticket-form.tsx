@@ -27,12 +27,13 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Sparkles, Loader2, Clock, Upload, FileCheck } from 'lucide-react'; // Added Upload, FileCheck
+import { CalendarIcon, Sparkles, Loader2, Clock, Upload, FileCheck, LogIn } from 'lucide-react'; // Added LogIn icon
 import { format, startOfToday } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { checkTicketDescription } from '@/ai/flows/check-ticket-description';
 import { postTicket } from '@/services/ticket-marketplace';
 import { useRouter } from 'next/navigation';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"; // Import AlertDialog components
 
 // Define the validation schema using Zod
 const formSchema = z.object({
@@ -83,10 +84,31 @@ interface PostTicketFormProps {
 export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCheckingGrammar, setIsCheckingGrammar] = React.useState(false);
   const [selectedFileName, setSelectedFileName] = React.useState<string | null>(null); // State for selected file name
   const fileInputRef = React.useRef<HTMLInputElement>(null); // Ref for file input
+
+  React.useEffect(() => {
+      // Check login status on mount
+      if (typeof window !== 'undefined') {
+          setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+      }
+
+      // Listener for login status changes
+      const handleStorageChange = (event: StorageEvent) => {
+          if (event.key === 'isLoggedIn') {
+              setIsLoggedIn(event.newValue === 'true');
+          }
+      };
+      window.addEventListener('storage', handleStorageChange);
+      return () => {
+          window.removeEventListener('storage', handleStorageChange);
+      };
+  }, []);
+
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -212,8 +234,19 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     fileInputRef.current?.click();
   };
 
+  // Redirect to login page
+  const redirectToLogin = () => {
+    router.push('/login');
+  };
+
 
   async function onSubmit(values: FormData) {
+    // Check if user is logged in before proceeding
+    if (!isLoggedIn) {
+        setShowLoginDialog(true);
+        return;
+    }
+
     setIsSubmitting(true);
     try {
       // Combine date and time into a single ISO string or structure if your backend expects it
@@ -245,7 +278,8 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
 
       // Redirect after a short delay to allow toast visibility
       setTimeout(() => {
-         router.push('/');
+         // Redirect to the browse page for the category of the posted ticket
+          router.push(`/tickets?category=${createdTicket.type}`);
       }, 1500);
 
     } catch (error) {
@@ -269,6 +303,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   }
 
   return (
+    <>
     <Form {...form}>
        {/* Use default bg-card */}
        <form
@@ -618,6 +653,25 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
          <p className="text-xs text-muted-foreground text-center">Fields marked with * are required.</p>
       </form>
     </Form>
+
+    {/* Login Required Dialog */}
+    <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Login Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You need to be logged in to post a ticket. Please log in or create an account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={redirectToLogin} className="gap-2">
+              <LogIn className="h-4 w-4" /> Go to Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

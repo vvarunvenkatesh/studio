@@ -7,11 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass } from 'lucide-react'; // Use IndianRupeeIcon
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn } from 'lucide-react'; // Use IndianRupeeIcon, added LogIn
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { purchaseTicket } from '@/services/ticket-marketplace';
 import { cn } from '@/lib/utils'; // Import cn
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -42,10 +43,32 @@ export function TicketCard({
     isSeller = false // Default isSeller to false
 }: TicketCardProps) {
   const { toast } = useToast();
+  const router = useRouter(); // Get router instance
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isPurchasing, setIsPurchasing] = React.useState(false);
   // Use state to hold the full ticket data, including the data URI if purchased
   const [currentTicket, setCurrentTicket] = React.useState<Ticket>(ticket);
   const [isSold, setIsSold] = React.useState(ticket.status === 'sold');
+
+  React.useEffect(() => {
+      // Check login status on mount
+      if (typeof window !== 'undefined') {
+          setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+      }
+
+      // Listener for login status changes
+      const handleStorageChange = (event: StorageEvent) => {
+          if (event.key === 'isLoggedIn') {
+              setIsLoggedIn(event.newValue === 'true');
+          }
+      };
+      window.addEventListener('storage', handleStorageChange);
+      return () => {
+          window.removeEventListener('storage', handleStorageChange);
+      };
+  }, []);
+
 
   // Update local state if the initial ticket prop changes (e.g., parent re-renders with new data)
   React.useEffect(() => {
@@ -57,8 +80,19 @@ export function TicketCard({
   const formattedDate = format(new Date(currentTicket.date), 'PPP'); // Format date nicely
   const CategorySpecificIcon = categoryIconMap[currentTicket.type] || TicketIcon; // Get specific icon or default
 
+  // Redirect to login page
+  const redirectToLogin = () => {
+    router.push('/login');
+  };
+
 
   const handlePurchase = async () => {
+    // Check if user is logged in before proceeding
+    if (!isLoggedIn) {
+        setShowLoginDialog(true);
+        return;
+    }
+
     if (isSold || isSeller) return; // Prevent buying if already sold locally or if user is the seller
 
     setIsPurchasing(true);
@@ -226,7 +260,8 @@ export function TicketCard({
 
 
   return (
-    // Use default bg-card
+    <>
+    {/* Use default bg-card */}
     <Card className={cn(
         "flex flex-col justify-between shadow-md hover:shadow-lg transition-shadow duration-200 h-full bg-card", // Use default bg-card
         className // Apply the className prop here
@@ -311,14 +346,14 @@ export function TicketCard({
              )
          ) : isSeller ? (
              // 2. If not sold AND user is the seller:
-             // - If 'manage' variant, show Cancel button.
-             // - If 'browse' variant, show Pending indicator.
+             //    - If 'manage' variant (on post-ticket page), show Cancel button.
+             //    - If 'browse' variant (on tickets page), show Pending indicator.
              variant === 'manage' ? renderCancelButton() : renderPendingIndicator()
          ) : (
-             // 3. If not sold AND user is NOT the seller: Show "Buy Ticket" button
+             // 3. If not sold AND user is NOT the seller: Show "Buy Ticket" button (triggers login check if needed)
              <Button
                  size="sm"
-                 onClick={handlePurchase}
+                 onClick={handlePurchase} // This now checks login first
                  disabled={isPurchasing}
                  aria-label={`Buy ${currentTicket.type} ticket for ₹${currentTicket.price.toFixed(2)}`}
                  className="gap-2" // Uses default button style
@@ -333,6 +368,25 @@ export function TicketCard({
          )}
       </CardFooter>
     </Card>
+
+     {/* Login Required Dialog */}
+     <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Login Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You need to be logged in to purchase a ticket. Please log in or create an account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={redirectToLogin} className="gap-2">
+              <LogIn className="h-4 w-4" /> Go to Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -365,3 +419,4 @@ const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
         return true;
     });
 };
+
