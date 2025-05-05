@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import {Button} from '@/components/ui/button';
-import {User, MapPin, Menu} from 'lucide-react';
+import {User, MapPin, Menu} from 'lucide-react'; // Keep MapPin
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   Select,
@@ -15,7 +15,8 @@ import {
 import {cn} from '@/lib/utils';
 import {useIsMobile} from '@/hooks/use-mobile';
 import {Sheet, SheetContent, SheetTrigger} from '@/components/ui/sheet';
-import {Label} from '@/components/ui/label';
+import {Label} from '@/components/ui/label'; // Import Label
+import { DialogTitle } from "@/components/ui/dialog"; // Import DialogTitle
 
 interface HeaderProps {
   className?: string;
@@ -102,9 +103,7 @@ export function Header({className}: HeaderProps) {
   };
 
   return (
-    <header
-      className={cn('sticky top-0 z-40 w-full border-b bg-background', className)}
-    >
+    <header className={cn("sticky top-0 z-40 w-full border-b bg-background", className)}>
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {isMobile ? (
           <>
@@ -119,6 +118,8 @@ export function Header({className}: HeaderProps) {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-full sm:w-64">
+                  {/* Add DialogTitle for accessibility */}
+                   <DialogTitle className="sr-only">Navigation Menu</DialogTitle>
                   <div className="py-4 flex flex-col h-full">
                     <div className="flex-grow space-y-2">
                       <Button asChild variant="ghost" className="w-full justify-start">
@@ -171,21 +172,21 @@ export function Header({className}: HeaderProps) {
                   className="whitespace-nowrap flex items-baseline justify-center gap-1"
                 >
                   <span className="text-3xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast
-                    <span className="text-destructive">M</span>ini
-                    <span className="text-destructive">T</span>
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                   </span>
                 </Link>
                 <span className="text-xs text-foreground mt-[-4px] opacity-80">
                   Ticket Reselling Platform
                 </span>
               </div>
-                 <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                <SelectTrigger
-                  className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1"
-                >
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <SelectValue placeholder="Select Location" />
+
+              {/* Mobile Location Button */}
+               <Select value={selectedLocation} onValueChange={handleLocationChange}>
+                <SelectTrigger asChild className="w-auto h-auto p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0">
+                   <Button variant="ghost" size="icon" className="p-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+                     <MapPin className="h-6 w-6 flex-shrink-0" />
+                     <span className="sr-only">Select Location</span>
+                   </Button>
                 </SelectTrigger>
                 <SelectContent>
                   {availableLocations.map((location) => (
@@ -195,20 +196,17 @@ export function Header({className}: HeaderProps) {
                   ))}
                 </SelectContent>
               </Select>
-              {/* Profile or Login/Signup */}
-              
+
             </div>
           </>
         ) : (
           <>
             {/* Desktop View */}
             <div className="flex items-center">
-              <Button
-                asChild
-                size="sm"
-                className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors"
-              >
-                <Link href="/post-ticket">Post Ticket</Link>
+              <Button asChild size="sm" className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
+                <Link href="/post-ticket">
+                  Post Ticket
+                </Link>
               </Button>
             </div>
 
@@ -218,9 +216,7 @@ export function Header({className}: HeaderProps) {
                 className="whitespace-nowrap flex items-baseline justify-center gap-1"
               >
                 <span className="text-3xl font-bold text-foreground">
-                  <span className="text-destructive">L</span>ast
-                  <span className="text-destructive">M</span>ini
-                  <span className="text-destructive">T</span>
+                  <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
                 </span>
               </Link>
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
@@ -230,9 +226,7 @@ export function Header({className}: HeaderProps) {
 
             <div className="flex items-center gap-3 md:gap-4">
               <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                <SelectTrigger
-                  className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1"
-                >
+                <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
                   <SelectValue placeholder="Select Location" />
                 </SelectTrigger>
@@ -247,7 +241,12 @@ export function Header({className}: HeaderProps) {
 
               {isLoggedIn ? (
                 <Link href="/profile" className="ml-1 md:ml-2">
-                 <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <Avatar className="h-8 w-8 cursor-pointer">
+                    <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
+                    <AvatarFallback>
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    </AvatarFallback>
+                  </Avatar>
                 </Link>
               ) : (
                 <Button
@@ -256,7 +255,9 @@ export function Header({className}: HeaderProps) {
                   size="sm"
                   className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent"
                 >
-                  <Link href="/login">Login/Signup</Link>
+                  <Link href="/login">
+                    Login/Signup
+                  </Link>
                 </Button>
               )}
             </div>
@@ -266,3 +267,4 @@ export function Header({className}: HeaderProps) {
     </header>
   );
 }
+    
