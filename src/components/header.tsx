@@ -138,7 +138,7 @@ export function Header({className}: HeaderProps) {
                            setMobileMenuOpen(false); // Close menu on selection
                          }}>
                            <SelectTrigger className="w-full h-9 px-3 py-1 text-sm border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
-                               <MapPin className="h-4 w-4 flex-shrink-0" />
+                               {/* No MapPin icon needed here as it's labeled */}
                                <SelectValue placeholder="Select Location" />
                            </SelectTrigger>
                            <SelectContent>
@@ -172,8 +172,6 @@ export function Header({className}: HeaderProps) {
                 <Link
                   href="/"
                   className="whitespace-nowrap flex items-baseline justify-center gap-1"
-                  passHref // Removed passHref as it's not needed for basic Link functionality here
-                  // Removed aria-disabled={true} as it shouldn't be disabled
                 >
                   <span className="text-3xl font-bold text-foreground">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
@@ -184,11 +182,11 @@ export function Header({className}: HeaderProps) {
                 </span>
               </div>
 
-              {/* Mobile Location Button */}
+              {/* Mobile Location Button (Icon Only) */}
                <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                 {/* Remove asChild from Trigger */}
+                 {/* Remove extra padding, border, use utility to hide the default chevron */}
                 <SelectTrigger
-                   className="w-auto h-auto p-2 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-foreground hover:bg-accent hover:text-accent-foreground"
+                   className="w-auto h-auto p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-foreground hover:bg-accent hover:text-accent-foreground [&>svg:last-child]:hidden"
                    aria-label="Select Location"
                  >
                    <MapPin className="h-6 w-6 flex-shrink-0" />
@@ -258,7 +256,7 @@ export function Header({className}: HeaderProps) {
                   asChild
                   variant="outline"
                   size="sm"
-                  className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent"
+                  className="border-foreground bg-background text-foreground hover:bg-[#FF2459]/10 hover:text-accent-foreground hover:border-accent"
                 >
                   <Link href="/login">
                     Login/Signup
@@ -272,3 +270,4 @@ export function Header({className}: HeaderProps) {
     </header>
   );
 }
+
