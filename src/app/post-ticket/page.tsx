@@ -1,95 +1,96 @@
 
-'use client'; // Make this a client component to use state
+'use client';
 
 import * as React from 'react';
 import { Header } from '@/components/header';
 import { PostTicketForm } from './_components/post-ticket-form';
-import { cn } from '@/lib/utils'; // Import cn utility
+import { cn } from '@/lib/utils';
 import type { Ticket } from '@/services/ticket-marketplace';
-import { TicketCard } from '@/components/ticket-card'; // Import TicketCard
-import { Ticket as TicketIcon, Loader2 } from 'lucide-react'; // Import TicketIcon, Loader2
-import { deleteTicket } from '@/services/ticket-marketplace'; // Import deleteTicket service
-import { useToast } from '@/hooks/use-toast'; // Import useToast
-// AlertDialog components are needed for confirmation within TicketCard
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Button } from '@/components/ui/button'; // Import Button
+import { TicketCard } from '@/components/ticket-card';
+import { Ticket as TicketIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getSimulatedCurrentUserId } from '@/services/ticket-marketplace'; // Import helper
 
 export default function PostTicketPage() {
-  // State to track the selected ticket type
   const [ticketType, setTicketType] = React.useState<string | undefined>(undefined);
   const [postedTickets, setPostedTickets] = React.useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isDeleting, setIsDeleting] = React.useState<string | null>(null); // Track which ticket is being deleted
-  const { toast } = useToast(); // Get toast
+  const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
+  const { toast } = useToast();
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
 
-  // Callback function for the form to update the type
+  React.useEffect(() => {
+    setCurrentUserId(getSimulatedCurrentUserId());
+  }, []);
+
   const handleTypeChange = (type: string | undefined) => {
     setTicketType(type);
   };
 
   const loadPostedTickets = React.useCallback(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && currentUserId && currentUserId !== 'anonymousUser') {
         setIsLoading(true);
         try {
-            const stored = localStorage.getItem('userPostedTickets');
-            const tickets: Ticket[] = stored ? JSON.parse(stored) : [];
-            // Filter only tickets with status 'available'
-            const availableTickets = tickets.filter(ticket => ticket.status === 'available');
-            setPostedTickets(availableTickets.reverse()); // Show newest first
+            const allMarketplaceTicketsString = localStorage.getItem('marketplaceTickets');
+            const allMarketplaceTickets: Ticket[] = allMarketplaceTicketsString ? JSON.parse(allMarketplaceTicketsString) : [];
+            // Filter for tickets posted by the current user and are still available
+            const userActiveListings = allMarketplaceTickets.filter(
+                ticket => ticket.sellerId === currentUserId && ticket.status === 'available'
+            );
+            setPostedTickets(userActiveListings.reverse());
         } catch (e) {
-            console.error("Failed to load user's posted tickets:", e);
+            console.error("Failed to load user's active listings:", e);
             setPostedTickets([]);
         } finally {
             setIsLoading(false);
         }
     } else {
+      setPostedTickets([]); // Clear if not logged in or no currentUserId
       setIsLoading(false);
     }
-  }, []); // Memoize load function
+  }, [currentUserId]);
 
 
   React.useEffect(() => {
-    loadPostedTickets(); // Load initially
-
-    // Listen for changes in localStorage for both marketplace and user-posted tickets
+    loadPostedTickets();
     const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'userPostedTickets' || event.key === 'marketplaceTickets') {
-           loadPostedTickets(); // Reload if either changes
+        if (event.key === 'marketplaceTickets' || event.key === 'userPostedTickets' || event.key === 'isLoggedIn' || event.key === 'userId') {
+           setCurrentUserId(getSimulatedCurrentUserId()); // Re-check user on login/logout
+           loadPostedTickets();
         }
     };
-
     window.addEventListener('storage', handleStorageChange);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [loadPostedTickets]); // Depend on memoized load function
+  }, [loadPostedTickets]);
 
-  // Handle deleting/cancelling a ticket listing
-  // This function is passed down to the TicketCard component
   const handleDeleteTicket = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-        const result = await deleteTicket(ticketId);
-        if (result.success) {
-            toast({
-                title: 'Listing Cancelled',
-                description: 'Your ticket listing has been removed.',
-            });
-            // Optimistically update the UI or rely on storage event listener
-             loadPostedTickets(); // Force reload after successful deletion
-        } else {
-            toast({
-                title: 'Cancellation Failed',
-                description: result.message || 'Could not cancel the ticket listing.',
-                variant: 'destructive',
-            });
+        // Call the API endpoint to delete the ticket
+        const response = await fetch(`/api/tickets/${ticketId}`, {
+            method: 'DELETE',
+            // Add authorization headers if your API requires them
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Could not cancel the ticket listing.');
         }
-    } catch (error) {
+        const result = await response.json();
+
+        toast({
+            title: 'Listing Cancelled',
+            description: result.message || 'Your ticket listing has been removed.',
+        });
+        // Refresh the list of posted tickets
+        loadPostedTickets();
+    } catch (error: any) {
         console.error('Error cancelling ticket listing:', error);
         toast({
             title: 'Error',
-            description: 'An error occurred while cancelling the listing.',
+            description: error.message || 'An error occurred while cancelling the listing.',
             variant: 'destructive',
         });
     } finally {
@@ -99,27 +100,19 @@ export default function PostTicketPage() {
 
 
   return (
-    // Use cn to conditionally apply the movie poster background
     <div className={cn(
-      "flex min-h-screen flex-col pb-16 md:pb-0", // Added padding bottom for bottom nav
-      ticketType === 'movie' ? 'bg-movie-poster' : 'bg-background' // Changed default to background
+      "flex min-h-screen flex-col pb-16 md:pb-0",
+      ticketType === 'movie' ? 'bg-movie-poster' : 'bg-background'
     )}>
-      {/* Header background should remain consistent */}
        <Header />
-      {/* Remove explicit bottom padding pb-20/pb-12 */}
-      <main className="flex-1 container py-8 md:py-12 relative z-10"> {/* Ensure content is above pseudo-element */}
+      <main className="flex-1 container py-8 md:py-12 relative z-10">
         <div className="max-w-3xl mx-auto">
-           {/* Use default text-foreground for title */}
             <h1 className="text-3xl font-bold mb-6 text-center md:text-left text-foreground">Post a New Ticket</h1>
-           <PostTicketForm onTypeChange={handleTypeChange} /> {/* Pass the callback */}
+           <PostTicketForm onTypeChange={handleTypeChange} />
         </div>
-
-         {/* Display User's Active Posted Tickets */}
          <div className="max-w-5xl mx-auto mt-12 md:mt-16">
-             {/* Use default text-foreground for title */}
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Your Active Listings</h2>
              {isLoading ? (
-                 // Use default text-muted-foreground
                  <p className="text-center text-muted-foreground">Loading your listings...</p>
              ) : postedTickets.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -127,27 +120,22 @@ export default function PostTicketPage() {
                        <TicketCard
                             key={ticket.id}
                             ticket={ticket}
-                            variant="manage" // Specify the manage variant
-                            // User is always the seller on this page
-                            isSeller={true}
-                            // Pass the cancel handler function
+                            variant="manage"
+                            isSeller={true} // On this page, the user is always the seller of these tickets
                             onCancelListing={handleDeleteTicket}
-                            // Pass the loading state for this specific ticket
                             isCancelling={isDeleting === ticket.id}
-                            className="ml-2.5" // Keep existing margin
+                            className="ml-0 md:ml-2.5" // Adjusted margin for mobile
                         />
                     ))}
                  </div>
              ) : (
-                // Use default background/border/text color
                 <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8 bg-muted/30">
                     <TicketIcon className="mx-auto h-12 w-12 mb-4" />
-                    <p>You have no active tickets listed for sale.</p>
+                    <p>{currentUserId && currentUserId !== 'anonymousUser' ? "You have no active tickets listed for sale." : "Please log in to see your active listings."}</p>
                  </div>
              )}
          </div>
       </main>
-       {/* Footer removed */}
     </div>
   );
 }

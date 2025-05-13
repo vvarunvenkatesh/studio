@@ -2,26 +2,24 @@
 'use client';
 
 import * as React from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation'; // Added usePathname
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Header } from '@/components/header';
 import { TicketCard } from '@/components/ticket-card';
-import { getAvailableTickets, deleteTicket, type Ticket } from '@/services/ticket-marketplace'; // Import deleteTicket
+import type { Ticket } from '@/services/ticket-marketplace'; // Keep type
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { Search, X, TicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon, IndianRupeeIcon } from 'lucide-react';
-import type { Ticket as TicketType } from '@/services/ticket-marketplace';
+import { Card } from '@/components/ui/card'; // Removed CardContent as it's not directly used here
+import { Search, X, TicketIcon as DefaultTicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon, IndianRupeeIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast'; // Import useToast
-import { DateRangePicker } from '@/components/ui/date-range-picker'; // Import DateRangePicker
-import { Label } from '@/components/ui/label'; // Import Label
+import { useToast } from '@/hooks/use-toast';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { Label } from '@/components/ui/label';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
+import { getSimulatedCurrentUserId } from '@/services/ticket-marketplace'; // Import helper
 
-// Mapping for category icons and display names
-const categoryMap: Record<TicketType['type'], { icon: React.ElementType; name: string }> = {
+const categoryMap: Record<Ticket['type'], { icon: React.ElementType; name: string }> = {
     bus: { icon: Bus, name: 'Bus' },
     train: { icon: Train, name: 'Train' },
     movie: { icon: Film, name: 'Movie' },
@@ -29,7 +27,6 @@ const categoryMap: Record<TicketType['type'], { icon: React.ElementType; name: s
     sports: { icon: TicketCategoryIcon, name: 'Sports' },
 };
 
-// Helper to parse price range from URL
 const parsePriceRange = (priceParam: string | null): [number | undefined, number | undefined] => {
     if (!priceParam) return [undefined, undefined];
     const parts = priceParam.split('-');
@@ -38,10 +35,9 @@ const parsePriceRange = (priceParam: string | null): [number | undefined, number
     return [isNaN(min) ? undefined : min, isNaN(max) ? undefined : max];
 };
 
-// Helper to parse date range from URL
 const parseDateRange = (dateParam: string | null): DateRange | undefined => {
     if (!dateParam) return undefined;
-    const parts = dateParam.split('_'); // Using underscore as separator
+    const parts = dateParam.split('_');
     const from = parts[0] ? new Date(parts[0]) : undefined;
     const to = parts[1] ? new Date(parts[1]) : undefined;
     if (from && !isNaN(from.getTime())) {
@@ -53,42 +49,28 @@ const parseDateRange = (dateParam: string | null): DateRange | undefined => {
 export default function TicketsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname(); // Use pathname for current page path
-  const { toast } = useToast(); // Get toast hook
+  const pathname = usePathname();
+  const { toast } = useToast();
   const [tickets, setTickets] = React.useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = React.useState<string | null>(null); // Track deleting state
+  const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
 
-  // Filter state for input fields and pickers
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
   const [toCityFilter, setToCityFilter] = React.useState(searchParams.get('to') || '');
   const [priceRange, setPriceRange] = React.useState<[number | undefined, number | undefined]>(parsePriceRange(searchParams.get('price')));
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(parseDateRange(searchParams.get('date')));
-
-  const currentCategory = searchParams.get('category') as TicketType['type'] | null;
-  const currentFrom = searchParams.get('from');
-  const currentTo = searchParams.get('to');
-  const currentPrice = searchParams.get('price');
-  const currentDate = searchParams.get('date');
-
-  // Simulate current user ID - Replace with actual authentication logic
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
 
-  // Get user ID from localStorage (or your auth system)
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Simple simulation: Assume 'currentUser' ID if logged in
-      const loggedInStatus = localStorage.getItem('isLoggedIn');
-      if (loggedInStatus === 'true') {
-        setCurrentUserId('currentUser'); // Replace with actual user ID retrieval
-      } else {
-        setCurrentUserId(null);
-      }
-    }
+    setCurrentUserId(getSimulatedCurrentUserId());
   }, []);
 
+
   const pageTitle = React.useMemo(() => {
+    const currentCategory = searchParams.get('category') as Ticket['type'] | null;
+    const currentFrom = searchParams.get('from');
+    const currentTo = searchParams.get('to');
     if (currentCategory && categoryMap[currentCategory]) {
       let title = `${categoryMap[currentCategory].name} Tickets`;
       if (currentFrom) title += ` from ${currentFrom}`;
@@ -102,109 +84,87 @@ export default function TicketsPage() {
       return title;
     }
     return 'Available Tickets';
-  }, [currentCategory, currentFrom, currentTo]);
+  }, [searchParams]);
 
   const loadTickets = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    const query = new URLSearchParams(searchParams); // Use current searchParams
+
+    // Set input states based on URL params (already done by their useState initializers)
+    // Update query object for API call
+    if (query.get('from')) setFromCityFilter(query.get('from')!); else query.delete('from');
+    if (query.get('to')) setToCityFilter(query.get('to')!); else query.delete('to');
+
+    const priceParam = query.get('price');
+    const [minPriceState, maxPriceState] = parsePriceRange(priceParam);
+    setPriceRange([minPriceState, maxPriceState]);
+    if (minPriceState !== undefined) query.set('minPrice', String(minPriceState)); else query.delete('minPrice');
+    if (maxPriceState !== undefined) query.set('maxPrice', String(maxPriceState)); else query.delete('maxPrice');
+    query.delete('price'); // Remove combined price param if individual ones are set
+
+    const dateParam = query.get('date');
+    const dateRangeState = parseDateRange(dateParam);
+    setDateRange(dateRangeState);
+    if (dateRangeState?.from) query.set('startDate', format(dateRangeState.from, 'yyyy-MM-dd')); else query.delete('startDate');
+    if (dateRangeState?.to) query.set('endDate', format(dateRangeState.to, 'yyyy-MM-dd')); else query.delete('endDate');
+    query.delete('date'); // Remove combined date param
+
     try {
-      const filters: {
-          category?: Ticket['type'];
-          fromCity?: string;
-          toCity?: string;
-          minPrice?: number;
-          maxPrice?: number;
-          startDate?: string;
-          endDate?: string;
-       } = {};
-      const category = searchParams.get('category') as Ticket['type'] | null;
-      const fromCity = searchParams.get('from');
-      const toCity = searchParams.get('to');
-      const priceParam = searchParams.get('price');
-      const dateParam = searchParams.get('date');
-
-      // Set input states based on URL params
-      setFromCityFilter(fromCity || '');
-      setToCityFilter(toCity || '');
-      const [minPriceState, maxPriceState] = parsePriceRange(priceParam);
-      setPriceRange([minPriceState, maxPriceState]);
-      const dateRangeState = parseDateRange(dateParam);
-      setDateRange(dateRangeState);
-
-
-      if (category && category !== 'all') filters.category = category;
-      if (fromCity) filters.fromCity = fromCity;
-      if (toCity) filters.toCity = toCity;
-      if (minPriceState !== undefined) filters.minPrice = minPriceState;
-      if (maxPriceState !== undefined) filters.maxPrice = maxPriceState;
-      if (dateRangeState?.from) filters.startDate = format(dateRangeState.from, 'yyyy-MM-dd');
-      if (dateRangeState?.to) filters.endDate = format(dateRangeState.to, 'yyyy-MM-dd');
-
-
-      const fetchedTickets = await getAvailableTickets(filters); // getAvailableTickets now only returns available ones
-      setTickets(fetchedTickets);
-    } catch (err) {
+      const response = await fetch(`/api/tickets?${query.toString()}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch tickets');
+      }
+      const fetchedTickets: Ticket[] = await response.json();
+      setTickets(fetchedTickets.filter(ticket => ticket.status === 'available'));
+    } catch (err: any) {
       console.error("Failed to fetch tickets:", err);
-      setError("Failed to load tickets. Please try refreshing the page.");
+      setError(err.message || "Failed to load tickets. Please try refreshing the page.");
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams]); // Depend on searchParams
+  }, [searchParams]);
 
   React.useEffect(() => {
-    loadTickets(); // Load initially
-
-    // Listen for storage changes to reload tickets
+    loadTickets();
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'marketplaceTickets' || event.key === 'userPostedTickets') {
-        loadTickets(); // Reload if marketplace or user's posted tickets change
+      if (event.key === 'marketplaceTickets' || event.key === 'userPostedTickets' || event.key === 'userOrders') {
+        loadTickets();
       }
     };
-
     window.addEventListener('storage', handleStorageChange);
-
-    // Cleanup listener on component unmount
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
+  }, [loadTickets]);
 
-  }, [loadTickets]); // Depend on the memoized loadTickets function
-
-  // Callback function to handle purchased ticket state update
-  // Updates the ticket status in the current list instead of removing it
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
     setTickets(prevTickets =>
-      prevTickets.map(ticket =>
-        ticket.id === purchasedTicketId ? { ...ticket, status: 'sold' } : ticket
-      ).filter(ticket => ticket.status !== 'sold') // Filter out sold tickets after update
+      prevTickets.filter(ticket => ticket.id !== purchasedTicketId)
     );
-    console.log("Ticket purchased and status updated in browse view:", purchasedTicketId);
+    // No need to update local ticket status, as it's removed.
+    // The My Orders page will fetch independently or via storage event.
   };
 
-  // Handle cancelling a ticket listing
   const handleCancelListing = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-      const result = await deleteTicket(ticketId);
-      if (result.success) {
-        toast({
-          title: 'Listing Cancelled',
-          description: 'Your ticket listing has been removed.',
-        });
-        // Reload tickets after successful deletion (or filter locally)
-        setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== ticketId));
-      } else {
-        toast({
-          title: 'Cancellation Failed',
-          description: result.message || 'Could not cancel the ticket listing.',
-          variant: 'destructive',
-        });
+      const response = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Could not cancel the ticket listing.');
       }
-    } catch (error) {
+      toast({
+        title: 'Listing Cancelled',
+        description: 'Your ticket listing has been removed.',
+      });
+      setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== ticketId));
+    } catch (error: any) {
       console.error('Error cancelling ticket listing:', error);
       toast({
         title: 'Error',
-        description: 'An error occurred while cancelling the listing.',
+        description: error.message || 'An error occurred while cancelling the listing.',
         variant: 'destructive',
       });
     } finally {
@@ -213,41 +173,28 @@ export default function TicketsPage() {
   };
 
   const handleFilterChange = () => {
-    const query = new URLSearchParams(searchParams); // Use existing params as base
+    const query = new URLSearchParams(); // Start fresh for clarity
 
-    // Update or remove from/to params
+    const category = searchParams.get('category'); // Preserve category
+    if (category) query.set('category', category);
+
     if (fromCityFilter) query.set('from', fromCityFilter);
-    else query.delete('from');
-
     if (toCityFilter) query.set('to', toCityFilter);
-    else query.delete('to');
 
-    // Update or remove price param
     const [minPrice, maxPrice] = priceRange;
     if (minPrice !== undefined || maxPrice !== undefined) {
-        query.set('price', `${minPrice ?? ''}-${maxPrice ?? ''}`);
-    } else {
-        query.delete('price');
+        const priceParts = [];
+        if (minPrice !== undefined) priceParts.push(String(minPrice));
+        if (maxPrice !== undefined) priceParts.push(String(maxPrice));
+        query.set('price', priceParts.join('-'));
     }
 
-    // Update or remove date param
     if (dateRange?.from) {
         const fromStr = format(dateRange.from, 'yyyy-MM-dd');
         const toStr = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
-        query.set('date', `${fromStr}_${toStr}`); // Use underscore separator
-    } else {
-        query.delete('date');
+        query.set('date', `${fromStr}_${toStr}`);
     }
-
-    // Keep category if it exists
-    const category = searchParams.get('category');
-    if (category) {
-      query.set('category', category);
-    } else {
-        query.delete('category'); // Remove category if not explicitly set
-    }
-
-    router.push(`${pathname}?${query.toString()}`); // Use pathname here
+    router.push(`${pathname}?${query.toString()}`);
   };
 
   const clearFilters = () => {
@@ -255,26 +202,14 @@ export default function TicketsPage() {
     setToCityFilter('');
     setPriceRange([undefined, undefined]);
     setDateRange(undefined);
-
-    const query = new URLSearchParams(searchParams);
-    query.delete('from');
-    query.delete('to');
-    query.delete('price');
-    query.delete('date');
-    // Keep category filter when clearing others
     const category = searchParams.get('category');
-    if (category) {
-      query.set('category', category);
-    } else {
-        query.delete('category'); // If no category was present, ensure it's cleared
-    }
-
-    router.push(`${pathname}?${query.toString()}`); // Use pathname here
+    const query = new URLSearchParams();
+    if (category) query.set('category', category);
+    router.push(`${pathname}?${query.toString()}`);
   };
 
   const renderSkeletons = () => (
     Array.from({ length: 8 }).map((_, index) => (
-      // Use default skeleton colors
       <div key={index} className="flex flex-col space-y-3 ml-2.5">
         <Skeleton className="h-[125px] w-full rounded-xl bg-muted" />
         <div className="space-y-2">
@@ -293,19 +228,14 @@ export default function TicketsPage() {
   const hasActiveFilters = fromCityFilter || toCityFilter || priceRange[0] !== undefined || priceRange[1] !== undefined || dateRange?.from;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-16 md:pb-0"> {/* Added padding bottom */}
+    <div className="flex min-h-screen flex-col bg-background pb-16 md:pb-0">
       <Header />
       <main className="flex-1 container py-8">
-        {/* Use default text-foreground */}
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
-        {/* Centered filter card - Use default bg-muted/30 */}
         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-
-            {/* From City */}
             <div className="w-full">
-              {/* Use default text-muted-foreground */}
               <Label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From City</Label>
               <Input
                 id="fromCityFilter"
@@ -313,14 +243,10 @@ export default function TicketsPage() {
                 placeholder="Departure City"
                 value={fromCityFilter}
                 onChange={(e) => setFromCityFilter(e.target.value)}
-                // Use default bg-background and text-foreground
                 className="bg-background text-foreground"
               />
             </div>
-
-            {/* To City */}
             <div className="w-full">
-              {/* Use default text-muted-foreground */}
               <Label htmlFor="toCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">To City</Label>
               <Input
                 id="toCityFilter"
@@ -328,28 +254,20 @@ export default function TicketsPage() {
                 placeholder="Destination City"
                 value={toCityFilter}
                 onChange={(e) => setToCityFilter(e.target.value)}
-                // Use default bg-background and text-foreground
                 className="bg-background text-foreground"
               />
             </div>
-
-             {/* Date Range */}
              <div className="w-full">
-                 {/* Use default text-muted-foreground */}
                 <Label htmlFor="dateRangeFilter" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</Label>
                 <DateRangePicker
                     id="dateRangeFilter"
                     date={dateRange}
-                    onDateChange={setDateRange} // Pass the state setter
-                    // No need for onDateSelect prop here as default behavior handles closing
-                    // Use default bg-background and text-foreground
+                    onDateChange={setDateRange}
                     className="bg-background text-foreground [&>button]:text-foreground"
+                    onDateSelect={() => { /* Now handled by onDateChange and internal state */ }}
                  />
              </div>
-
-             {/* Price Range */}
              <div className="w-full">
-                 {/* Use default text-muted-foreground */}
                 <Label htmlFor="minPriceFilter" className="block text-sm font-medium text-muted-foreground mb-1">Price Range (₹)</Label>
                 <div className="flex items-center gap-2">
                     <Input
@@ -358,11 +276,9 @@ export default function TicketsPage() {
                        placeholder="Min"
                        value={priceRange[0] ?? ''}
                        onChange={(e) => setPriceRange([e.target.value ? parseInt(e.target.value) : undefined, priceRange[1]])}
-                       // Use default bg-background and text-foreground
                        className="bg-background text-foreground"
                        min="0"
                      />
-                     {/* Use default text-muted-foreground */}
                     <span className="text-muted-foreground">-</span>
                      <Input
                        id="maxPriceFilter"
@@ -370,22 +286,16 @@ export default function TicketsPage() {
                        placeholder="Max"
                        value={priceRange[1] ?? ''}
                        onChange={(e) => setPriceRange([priceRange[0], e.target.value ? parseInt(e.target.value) : undefined])}
-                       // Use default bg-background and text-foreground
                        className="bg-background text-foreground"
                        min="0"
                      />
                 </div>
              </div>
-
-
-            {/* Filter Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full">
                 <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2">
                     <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
-
-                {hasActiveFilters && ( // Show clear only if any filters are active
-                    // Use default ghost button style
+                {hasActiveFilters && (
                     <Button variant="ghost" onClick={clearFilters} className="w-full sm:w-auto text-muted-foreground gap-2">
                         <X className="mr-2 h-4 w-4" /> Clear Filters
                     </Button>
@@ -395,49 +305,42 @@ export default function TicketsPage() {
         </Card>
 
         {error && (
-          // Use default destructive color
           <div className="text-center text-destructive mt-10">
             <p>{error}</p>
           </div>
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 md:px-0">
             {renderSkeletons()}
           </div>
         ) : tickets.length > 0 ? (
           <div className={cn(
-            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 md:px-0"
           )}>
             {tickets.map((ticket) => (
               <TicketCard
                 key={ticket.id}
                 ticket={ticket}
-                variant="browse" // Always browse variant on this page
+                variant="browse"
                 onPurchaseSuccess={handlePurchaseSuccess}
-                // Determine if the current user is the seller for this ticket
                 isSeller={!!currentUserId && ticket.sellerId === currentUserId}
-                // Pass the cancel handler function
                 onCancelListing={handleCancelListing}
-                // Pass the cancelling state for this specific ticket
                 isCancelling={isDeleting === ticket.id}
-                className="ml-2.5" // Keep existing margin class
+                className="ml-0 md:ml-2.5" // Adjusted margin for mobile
               />
             ))}
           </div>
         ) : !error ? (
-          // Use default muted foreground and border/bg colors
           <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8 bg-muted/30">
-            <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            {/* Use default text-foreground */}
+            <DefaultTicketIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2 text-foreground">No Tickets Found</h2>
-            {(hasActiveFilters) ? ( // Check if any filters are active (excluding category)
+            {(hasActiveFilters) ? (
               <p className="text-muted-foreground">No tickets match your current filters. Try broadening your search!</p>
             ) : (
               <p className="text-muted-foreground">It looks like no tickets are listed currently for this category. Check back later!</p>
             )}
-            {hasActiveFilters && ( // Only show clear if any filters are active
-              // Use default link button style
+            {hasActiveFilters && (
               <Button variant="link" onClick={clearFilters} className="mt-2">
                 Clear Filters
               </Button>
