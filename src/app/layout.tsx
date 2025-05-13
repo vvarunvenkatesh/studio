@@ -27,7 +27,8 @@ export default function RootLayout({
       {/* Apply the font class, suppress hydration warning, add flex structure and padding-bottom */}
       <body
          // Apply pb-16 always for bottom nav height, as md:pb-0 might not trigger correctly for all devices/views
-         className={`${inter.variable} font-sans antialiased flex flex-col min-h-screen pb-16`}
+         // Increased to pb-24 on mobile to accommodate both nav bar and sliding tab trigger
+         className={`${inter.variable} font-sans antialiased flex flex-col min-h-screen pb-24 md:pb-8`}
          suppressHydrationWarning={true}
        >
          {/* Wrap children in a div that grows to push footer down */}
