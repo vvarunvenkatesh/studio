@@ -133,9 +133,7 @@ interface CategoryIconProps {
 function CategoryIcon({ icon: Icon, label, href }: CategoryIconProps) {
   return (
     <Link href={href} passHref>
-       {/* Removed ml-2.5, rely on grid gap for spacing */}
       <Card className="text-center p-4 md:p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center justify-center aspect-square bg-card hover:bg-card/90">
-        {/* Use the requested color #9CAF88 */}
         <Icon className="h-10 w-10 md:h-12 md:w-12 text-[#9CAF88] mb-2" />
         <span className="text-sm md:text-base font-medium text-foreground">{label}</span>
       </Card>
@@ -154,13 +152,12 @@ function SearchForm() {
     const query = new URLSearchParams();
     if (fromCity) query.set('from', fromCity);
     if (toCity) query.set('to', toCity);
+    query.set('category', 'transport'); // Add category=transport for bus/train search
     router.push(`/tickets?${query.toString()}`);
   };
 
   return (
-    // Use default bg-muted/30 and border color
     <Card className="p-4 md:p-6 mb-8 md:mb-12 bg-muted/30 border border-dashed max-w-4xl mx-auto">
-        {/* Use default text-foreground */}
         <h2 className="text-xl font-semibold mb-4 text-center text-foreground">Search for Train or Bus Tickets</h2>
        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-4">
         <div className="flex-1 w-full sm:w-auto">
@@ -171,7 +168,6 @@ function SearchForm() {
                 placeholder="From City"
                 value={fromCity}
                 onChange={(e) => setFromCity(e.target.value)}
-                // Use default bg-background and text-foreground
                 className="bg-background text-foreground"
             />
         </div>
@@ -183,7 +179,6 @@ function SearchForm() {
                 placeholder="To City"
                 value={toCity}
                 onChange={(e) => setToCity(e.target.value)}
-                 // Use default bg-background and text-foreground
                 className="bg-background text-foreground"
             />
          </div>
@@ -208,17 +203,14 @@ interface BottomAdCardProps {
 function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCardProps) {
   return (
     <Link href={href} passHref>
-      {/* Use default bg-card */}
-      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card"> {/* Removed ml-2.5 */}
+      <Card className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full flex flex-col bg-card">
         <div className="relative h-40 w-full">
           <Image src={src} alt={alt} fill style={{ objectFit: 'cover' }} data-ai-hint={hint} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"/>
         </div>
         <CardHeader className="pb-2 pt-4">
-          {/* Use default text-foreground */}
           <CardTitle className="text-lg text-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
-          {/* Use default text-muted-foreground */}
           <CardDescription className="text-muted-foreground">{description}</CardDescription>
         </CardContent>
       </Card>
@@ -239,12 +231,8 @@ export default function Home() {
          <div className="mt-8 md:mt-12">
              <SearchForm />
 
-             {/* Use default text-foreground */}
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
-              {/* Adjusted grid columns and removed max-width, letting container handle padding */}
-              {/* Using grid-cols-2 for mobile, grid-cols-3 for sm, grid-cols-5 for md */}
-              {/* Added px-4 for horizontal padding */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 mx-auto px-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 mx-auto px-4 md:px-0">
                 <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
                 <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
                 <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
@@ -252,13 +240,9 @@ export default function Home() {
                 <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" />
              </div>
 
-              {/* Bottom Advertisements Section - Centered */}
-              {/* Removed max-width here too, rely on container */}
               <div className="mx-auto">
-                 {/* Use default text-foreground */}
                  <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
-                 {/* Centered grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 px-4 md:px-0">
                     <BottomAdCard
                         src="https://picsum.photos/400/300?random=10"
                         alt="Travel Deal"
@@ -288,8 +272,6 @@ export default function Home() {
          </div>
 
       </main>
-
-       {/* Removed pb-16 as BottomNavigation handles padding */}
     </div>
   );
 }

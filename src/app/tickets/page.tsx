@@ -69,11 +69,19 @@ export default function TicketsPage() {
 
 
   const pageTitle = React.useMemo(() => {
-    const currentCategory = searchParams.get('category') as Ticket['type'] | null;
+    const currentCategory = searchParams.get('category'); // Keep as string
     const currentFrom = searchParams.get('from');
     const currentTo = searchParams.get('to');
-    if (currentCategory && categoryMap[currentCategory]) {
-      let title = `${categoryMap[currentCategory].name} Tickets`;
+
+    if (currentCategory === 'transport') {
+        let title = "Train & Bus Tickets";
+        if (currentFrom) title += ` from ${currentFrom}`;
+        if (currentTo) title += ` to ${currentTo}`;
+        return title;
+    }
+
+    if (currentCategory && categoryMap[currentCategory as Ticket['type']]) {
+      let title = `${categoryMap[currentCategory as Ticket['type']].name} Tickets`;
       if (currentFrom) title += ` from ${currentFrom}`;
       if (currentTo) title += ` to ${currentTo}`;
       return title;
@@ -206,13 +214,14 @@ export default function TicketsPage() {
     setDateRange(undefined);
     const category = searchParams.get('category');
     const query = new URLSearchParams();
-    if (category) query.set('category', category); // Preserve category if it exists
+    if (category && category !== 'transport') query.set('category', category); // Preserve category if it exists and is not 'transport'
+    else if (category === 'transport') query.set('category', 'transport'); // Keep transport if it was the active filter
     router.push(`${pathname}?${query.toString()}`);
   };
 
   const renderSkeletons = () => (
     Array.from({ length: 8 }).map((_, index) => (
-      <div key={index} className="flex flex-col space-y-3 ml-0 md:ml-2.5">
+      <div key={index} className="flex flex-col space-y-3">
         <Skeleton className="h-[125px] w-full rounded-xl bg-muted" />
         <div className="space-y-2">
           <Skeleton className="h-4 w-3/4 bg-muted" />
@@ -329,7 +338,7 @@ export default function TicketsPage() {
                 isSeller={!!currentUserId && ticket.sellerId === currentUserId && currentUserId !== 'anonymousUser'}
                 onCancelListing={handleCancelListing}
                 isCancelling={isDeleting === ticket.id}
-                className="ml-0 md:ml-2.5"
+                className="ml-0"
               />
             ))}
           </div>

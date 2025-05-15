@@ -121,7 +121,7 @@ const getDefaultTickets = (): Ticket[] => [
         id: '1',
         type: 'train',
         description: 'Express train, window seat',
-        price: 50,
+        price: 500,
         date: '2024-09-15',
         time: '09:30',
         location: 'Platform 5',
@@ -135,7 +135,7 @@ const getDefaultTickets = (): Ticket[] => [
         id: '2',
         type: 'event',
         description: 'Concert ticket - Rock Band Live, General Admission',
-        price: 75,
+        price: 750,
         date: '2024-10-22',
         time: '20:00',
         location: 'Boston Arena',
@@ -146,7 +146,7 @@ const getDefaultTickets = (): Ticket[] => [
         id: '3',
         type: 'movie',
         description: 'Movie Premiere - Sci-Fi Adventure, Seat J12',
-        price: 25,
+        price: 250,
         date: '2024-09-10',
         time: '19:00',
         location: 'Downtown Cinema',
@@ -157,7 +157,7 @@ const getDefaultTickets = (): Ticket[] => [
         id: '4',
         type: 'bus',
         description: 'Comfort Coach, aisle seat',
-        price: 35,
+        price: 350,
         date: '2024-09-05',
         time: '14:00',
         location: 'Gate 3B',
@@ -170,7 +170,7 @@ const getDefaultTickets = (): Ticket[] => [
         id: '5',
         type: 'train',
         description: 'Sleeper car, lower berth',
-        price: 120,
+        price: 1200,
         date: '2024-09-20',
         time: '22:00',
         location: 'Track 12',
@@ -183,7 +183,7 @@ const getDefaultTickets = (): Ticket[] => [
         id: '6',
         type: 'sports',
         description: 'Basketball Game - Section 102, Row 5, Seat 3',
-        price: 90,
+        price: 900,
         date: '2024-11-05',
         time: '19:30',
         location: 'City Stadium',
@@ -236,6 +236,8 @@ const getUserPostedTickets = (): Ticket[] => {
 
 const saveUserPostedTickets = (postedTickets: Ticket[]) => {
     const uniqueTickets = getUniqueById(postedTickets);
+    // Do not save originalTicketDataUri for userPostedTickets to save space.
+    // It's kept in the main marketplaceTickets.
     const ticketsToSave = uniqueTickets.map(({ originalTicketDataUri, ...ticket }) => ticket);
     saveToLocalStorage(userPostedTicketsKey, ticketsToSave);
 };
@@ -270,7 +272,7 @@ const addUserOrder = (ticket: Ticket) => saveUserOrders([...getUserOrders(), tic
  * @returns A promise that resolves to an array of available Ticket objects matching the filters.
  */
 export async function getAvailableTickets(filters?: {
-  category?: Ticket['type'];
+  category?: Ticket['type'] | 'transport' | 'all'; // Allow 'transport' as a special category
   fromCity?: string;
   toCity?: string;
   minPrice?: number;
@@ -287,8 +289,13 @@ export async function getAvailableTickets(filters?: {
   let filteredTickets = tickets.filter(ticket => ticket.status === 'available');
 
   if (filters?.category) {
-    filteredTickets = filteredTickets.filter(ticket => ticket.type === filters.category);
+    if (filters.category === 'transport') {
+      filteredTickets = filteredTickets.filter(ticket => ticket.type === 'train' || ticket.type === 'bus');
+    } else if (filters.category !== 'all') {
+      filteredTickets = filteredTickets.filter(ticket => ticket.type === filters.category);
+    }
   }
+
 
   if (filters?.fromCity) {
     const fromLower = filters.fromCity.toLowerCase();
@@ -308,11 +315,11 @@ export async function getAvailableTickets(filters?: {
   }
 
   if (filters?.startDate) {
-      const start = new Date(filters.startDate + 'T00:00:00');
+      const start = new Date(filters.startDate + 'T00:00:00'); // Ensure comparison starts at the beginning of the day
       filteredTickets = filteredTickets.filter(ticket => new Date(ticket.date + 'T00:00:00') >= start);
   }
   if (filters?.endDate) {
-      const end = new Date(filters.endDate + 'T23:59:59');
+      const end = new Date(filters.endDate + 'T23:59:59'); // Ensure comparison ends at the end of the day
       filteredTickets = filteredTickets.filter(ticket => new Date(ticket.date + 'T00:00:00') <= end);
   }
 
@@ -365,12 +372,12 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
   } catch (error) {
     if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
       console.error('LocalStorage quota exceeded while posting ticket.');
-      tickets.pop();
-      throw error;
+      tickets.pop(); // Remove the ticket from the in-memory array if save failed
+      throw error; // Re-throw to be caught by the form submission handler
     } else {
       console.error('An unexpected error occurred while posting ticket:', error);
-      tickets.pop();
-      throw error;
+      tickets.pop(); // Remove the ticket from the in-memory array
+      throw error; // Re-throw for other errors
     }
   }
 
@@ -472,7 +479,7 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
     const ticketIndex = tickets.findIndex(ticket => ticket.id === ticketId);
 
     if (ticketIndex === -1) {
-        removeUserPostedTicket(ticketId);
+        removeUserPostedTicket(ticketId); // Ensure it's removed from user's list too, if it was there
         return { success: true, message: `Ticket ${ticketId} not found or already deleted from marketplace.` };
     }
 
