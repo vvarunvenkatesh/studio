@@ -10,17 +10,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight } from 'lucide-react'; // Added TicketCategoryIcon alias
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/header'; // Import the Header component
-import { cn } from '@/lib/utils'; // Import cn utility
-import { Label } from '@/components/ui/label'; // Import Label for SearchForm
+import { Header } from '@/components/header';
+import { cn } from '@/lib/utils'; 
+import { Label } from '@/components/ui/label'; 
 
 // Simple Advertisement Slider Component
 const advertisements = [
   { id: 1, src: 'https://picsum.photos/1200/448?random=1', alt: 'concert', hint: 'concert crowd music' },
   { id: 2, src: 'https://picsum.photos/1200/448?random=2', alt: 'train travel', hint: 'train window journey' },
   { id: 3, src: 'https://picsum.photos/1200/448?random=3', alt: 'movie theatre', hint: 'movie theater screen' },
-  { id: 4, src: 'https://picsum.photos/1200/448?random=4', alt: 'bus travel', hint: 'bus road trip' }, // Added another ad
-  { id: 5, src: 'https://picsum.photos/1200/448?random=5', alt: 'sports event', hint: 'stadium sports crowd' }, // Added another ad
+  { id: 4, src: 'https://picsum.photos/1200/448?random=4', alt: 'bus travel', hint: 'bus road trip' }, 
+  { id: 5, src: 'https://picsum.photos/1200/448?random=5', alt: 'sports event', hint: 'stadium sports crowd' }, 
 ];
 
 function AdvertisementSlider() {
@@ -56,33 +56,28 @@ function AdvertisementSlider() {
            clearInterval(intervalRef.current); // Clear interval on unmount
         }
     };
-  }, [goToNext]); // Rerun effect if goToNext changes (it shouldn't, but good practice)
+  }, [goToNext]); 
 
   return (
-    // Increased height classes, removed margins/padding. Full width.
-    // Removed py-6, ensuring it attaches to the header
     <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg group">
       {advertisements.map((ad, index) => (
         <Image
           key={ad.id}
           src={ad.src}
           alt={ad.alt}
-          fill // Use fill instead of layout="fill"
-          sizes="(max-width: 768px) 100vw, 1200px" // Provide sizes for better optimization
-          style={{ objectFit: 'cover' }} // Use style for objectFit
+          fill 
+          sizes="(max-width: 768px) 100vw, 1200px" 
+          style={{ objectFit: 'cover' }} 
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentAd ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           data-ai-hint={ad.hint}
-          priority={index === 0} // Prioritize loading the first image
+          priority={index === 0} 
         />
       ))}
        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
-       {/* Added padding to the text container */}
        <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-20 p-4">
           Last Minute Deals..!
        </div>
 
-       {/* Navigation Arrows */}
-       {/* Previous Button - Use ghost variant */}
         <Button
             variant="ghost"
             size="icon"
@@ -92,7 +87,6 @@ function AdvertisementSlider() {
         >
             <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
         </Button>
-        {/* Next Button - Use ghost variant */}
         <Button
             variant="ghost"
             size="icon"
@@ -103,17 +97,16 @@ function AdvertisementSlider() {
             <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
         </Button>
 
-        {/* Pagination Bubbles - Updated styling */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2 p-2">
             {advertisements.map((_, index) => (
                 <button
                     key={index}
                     onClick={() => goToSlide(index)}
                     className={cn(
-                        "rounded-full transition-all duration-300 ease-in-out", // Common styles
+                        "rounded-full transition-all duration-300 ease-in-out", 
                         index === currentAd
-                            ? 'h-2.5 w-2.5 bg-white' // Active bubble - slightly larger
-                            : 'h-2 w-2 bg-white/50 hover:bg-white/75' // Inactive bubble - smaller
+                            ? 'h-2.5 w-2.5 bg-white' 
+                            : 'h-2 w-2 bg-white/50 hover:bg-white/75' 
                     )}
                     aria-label={`Go to slide ${index + 1}`}
                 />
@@ -152,7 +145,7 @@ function SearchForm() {
     const query = new URLSearchParams();
     if (fromCity) query.set('from', fromCity);
     if (toCity) query.set('to', toCity);
-    query.set('category', 'transport'); // Add category=transport for bus/train search
+    query.set('category', 'transport'); 
     router.push(`/tickets?${query.toString()}`);
   };
 
@@ -232,7 +225,7 @@ export default function Home() {
              <SearchForm />
 
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 mx-auto px-4 md:px-0">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 mx-auto">
                 <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
                 <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
                 <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
@@ -242,7 +235,7 @@ export default function Home() {
 
               <div className="mx-auto">
                  <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 px-4 md:px-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     <BottomAdCard
                         src="https://picsum.photos/400/300?random=10"
                         alt="Travel Deal"
@@ -270,7 +263,6 @@ export default function Home() {
                  </div>
               </div>
          </div>
-
       </main>
     </div>
   );
