@@ -46,10 +46,11 @@ export function BottomNavigation() {
       <div className="flex justify-around items-center h-16 px-2">
         <NavItem href="/" icon={Home} label="Home" />
         {/* <NavItem href="/search" icon={Search} label="Search" />  Optional Search */}
-        <NavItem href="/tickets" icon={Search} label="Browse Tickets" /> {/* Using Search icon for Browse */}
+        {/* Removed Browse Tickets NavItem */}
         <NavItem href="/post-ticket" icon={PlusSquare} label="Post Ticket" />
         <NavItem href="/profile" icon={User} label="Profile" /> {/* Added Profile NavItem */}
       </div>
     </nav>
   );
 }
+
