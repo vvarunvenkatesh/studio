@@ -2,17 +2,15 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
-import { Loader2, Mail, Phone, KeyRound } from 'lucide-react'; // Import icons, added KeyRound for OTP
-import { cn } from '@/lib/utils';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2, Mail, Phone, KeyRound } from 'lucide-react';
 
 export default function LoginPage() {
   const [loginMethod, setLoginMethod] = React.useState<'email' | 'phone'>('email');
@@ -23,22 +21,20 @@ export default function LoginPage() {
   const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams(); // Get search params
+  const searchParams = useSearchParams();
 
   const isValidIdentifier = () => {
     if (loginMethod === 'email') {
-      // Basic email regex
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(identifier);
     } else {
-      // Basic phone regex (simple E.164-ish check)
       const phoneRegex = /^\+?[1-9]\d{1,14}$/;
       return phoneRegex.test(identifier);
     }
   };
 
   const handleSendOtp = async (e?: React.MouseEvent<HTMLButtonElement>) => {
-      if (e) e.preventDefault(); // Prevent default if called from button click
+      if (e) e.preventDefault();
       if (!isValidIdentifier()) {
          toast({
              title: 'Invalid Input',
@@ -49,12 +45,9 @@ export default function LoginPage() {
       }
 
       setIsSendingOtp(true);
-      // Simulate API call to send OTP
       console.log(`Sending OTP to ${loginMethod}: ${identifier}`);
-      // ** NOTE: This is a simulation. Real OTP sending requires backend integration. **
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Simulate success
       setOtpSent(true);
       toast({
         title: 'OTP Sent (Simulation)',
@@ -65,7 +58,7 @@ export default function LoginPage() {
 
   const handleOtpVerification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || otp.length !== 6) { // Assuming OTP is 6 digits
+    if (!otp || otp.length !== 6) {
         toast({
             title: 'Invalid OTP',
             description: 'Please enter a valid 6-digit OTP.',
@@ -75,23 +68,18 @@ export default function LoginPage() {
     }
     setIsVerifyingOtp(true);
 
-    // Simulate API call for OTP verification
     console.log(`Verifying OTP: ${otp} for ${identifier}`);
-    // ** NOTE: This is a simulation. Real OTP verification requires backend integration. **
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Basic validation (replace with actual OTP verification logic)
     let loginSuccess = false;
-    if (otp === '123456') { // Simulate correct OTP
+    if (otp === '123456') {
         loginSuccess = true;
     }
 
     if (loginSuccess) {
-      // Set login flag in localStorage on successful login simulation
       try {
           if (typeof window !== 'undefined') {
             localStorage.setItem('isLoggedIn', 'true');
-             // Trigger storage event for header update
              window.dispatchEvent(new StorageEvent('storage', {
                 key: 'isLoggedIn',
                 newValue: 'true',
@@ -100,17 +88,15 @@ export default function LoginPage() {
           }
       } catch (error) {
          console.error("Failed to set login status in localStorage", error);
-         // Optionally show a different toast or handle the error
       }
 
-      const redirectPath = searchParams.get('redirect'); // Get the redirect path from query params
+      const redirectPath = searchParams.get('redirect');
 
       toast({
         title: 'Login Successful',
         description: redirectPath ? 'Redirecting you back...' : 'Redirecting you to the homepage...',
       });
-      // Redirect to the stored path or homepage after successful login simulation
-      window.location.href = redirectPath || '/'; // Use window.location.href to force a full page reload and navigation
+      window.location.href = redirectPath || '/';
     } else {
       toast({
         title: 'Login Failed',
@@ -121,9 +107,8 @@ export default function LoginPage() {
     }
   };
 
-  // Clear identifier and reset OTP state when switching tabs
   const handleTabChange = (value: string) => {
-    setIdentifier(''); // Clear input when switching method
+    setIdentifier('');
     setOtp('');
     setOtpSent(false);
     setIsSendingOtp(false);
@@ -132,37 +117,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
-      {/* Background Wallpaper */}
-      <Image
-        src="https://picsum.photos/1920/1080?random=login"
-        alt="Background"
-        fill
-        style={{ objectFit: 'cover' }}
-        className="-z-10 brightness-50"
-        data-ai-hint="travel landscape journey"
-        priority
-      />
-
-      {/* Login Card - Use default bg-card */}
-      <Card className="w-full max-w-sm bg-card/90 backdrop-blur-sm"> {/* Use default bg-card */}
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-sm bg-card">
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Use text-foreground defined in globals.css */}
                  <span className="text-3xl font-bold text-foreground">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                  </span>
              </Link>
-             {/* Use text-foreground defined in globals.css */}
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
                Ticket Reselling Platform
              </span>
           </CardTitle>
-           {/* Removed description */}
         </CardHeader>
         <CardContent>
-          {/* Tabs for Email/Phone Selection */}
           <Tabs value={loginMethod} onValueChange={handleTabChange} className="w-full mb-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="email" className="gap-2">
@@ -175,9 +144,7 @@ export default function LoginPage() {
           </Tabs>
 
           <form onSubmit={handleOtpVerification} className="space-y-4">
-            {/* Identifier Input (Email or Phone) */}
             <div className="space-y-2">
-              {/* Use default text-foreground */}
               <Label htmlFor={loginMethod} className="text-foreground">{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Label>
               <div className="flex gap-2">
                   <Input
@@ -188,10 +155,8 @@ export default function LoginPage() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     disabled={isSendingOtp || otpSent || isVerifyingOtp}
-                    // Use default text-foreground for input text
-                    className="bg-background/80 text-foreground"
+                    className="bg-background text-foreground"
                   />
-                  {/* Send OTP Button - Show only if OTP not sent yet */}
                   {!otpSent && (
                       <Button
                           type="button"
@@ -212,17 +177,14 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* OTP Input - Show only after OTP is sent */}
             {otpSent && (
               <div className="space-y-2">
                  <div className="flex items-center justify-between">
-                     {/* Use default text-foreground */}
                     <Label htmlFor="otp" className="text-foreground">Enter OTP</Label>
-                     {/* Optional: Add a resend OTP link/button */}
                     <Button
                         variant="link"
                         type="button"
-                        onClick={() => handleSendOtp()} // Reuse send OTP logic
+                        onClick={() => handleSendOtp()}
                         disabled={isSendingOtp || isVerifyingOtp}
                         className="text-sm text-primary hover:underline p-0 h-auto"
                     >
@@ -231,21 +193,19 @@ export default function LoginPage() {
                  </div>
                 <Input
                   id="otp"
-                  type="text" // Use text to allow easier input, add pattern later if needed
-                  inputMode="numeric" // Hint for numeric keyboard on mobile
-                  maxLength={6} // Assuming 6-digit OTP
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
                   placeholder="Enter 6-digit OTP"
                   required
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))} // Allow only digits
+                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
                   disabled={isVerifyingOtp || isSendingOtp}
-                  // Use default text-foreground for input text
-                  className="bg-background/80 text-foreground"
+                  className="bg-background text-foreground"
                 />
               </div>
             )}
 
-            {/* Login/Verify OTP Button - Show only after OTP is sent */}
             {otpSent && (
                 <Button type="submit" className="w-full gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" disabled={isVerifyingOtp || isSendingOtp || otp.length !== 6}>
                   {isVerifyingOtp ? (
@@ -263,7 +223,6 @@ export default function LoginPage() {
             )}
           </form>
         </CardContent>
-         {/* Use default text-muted-foreground */}
         <CardFooter className="text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
           <Link
