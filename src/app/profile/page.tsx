@@ -54,7 +54,7 @@ export default function ProfileBasicInfoPage() {
   const [otpSent, setOtpSent] = React.useState(false);
   const [isSendingOtp, setIsSendingOtp] = React.useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
-  const [otpError, setOtpError] = React.useState(false); // State for OTP error
+  const [otpError, setOtpError] = React.useState(false);
 
   const getAvatarInfoForGender = (gender: string): { url: string; hint: string } => {
     return GENDER_AVATARS[gender as keyof typeof GENDER_AVATARS] || DEFAULT_AVATAR_INFO;
@@ -63,6 +63,10 @@ export default function ProfileBasicInfoPage() {
   const checkUserVerification = (data: UserData) => {
     const verified = !!(data.email && data.contact && data.aadhaarNumber && data.aadhaarNumber.length === 12);
     setIsUserVerified(verified);
+    if (verified && typeof window !== 'undefined') {
+        localStorage.setItem('hasSeenVerificationPrompt', 'true'); // Mark prompt as handled if verified
+    }
+    return verified;
   };
 
   React.useEffect(() => {
@@ -81,12 +85,12 @@ export default function ProfileBasicInfoPage() {
           checkUserVerification(parsedData);
         } catch (e) {
           console.error("Failed to parse user data from localStorage", e);
-          localStorage.setItem('userData', JSON.stringify(userData));
+          localStorage.setItem('userData', JSON.stringify(userData)); // Save default if parsing fails
           setTempName(userData.name);
           checkUserVerification(userData);
         }
       } else {
-        localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem('userData', JSON.stringify(userData)); // Save default if no data found
         setTempName(userData.name);
         checkUserVerification(userData);
       }
@@ -98,12 +102,12 @@ export default function ProfileBasicInfoPage() {
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: avatarInfo.url, storageArea: localStorage }));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
 
   const saveUserDataToLocalStorage = (updatedData: UserData) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('userData', JSON.stringify(updatedData));
-      checkUserVerification(updatedData);
+      const isNowVerified = checkUserVerification(updatedData); // This will also set hasSeenVerificationPrompt if verified
 
       const newAvatarInfo = getAvatarInfoForGender(updatedData.gender);
       if (profileImage !== newAvatarInfo.url) {
@@ -112,6 +116,8 @@ export default function ProfileBasicInfoPage() {
         localStorage.setItem('profileImageUrl', newAvatarInfo.url);
         window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: newAvatarInfo.url, storageArea: localStorage }));
       }
+      // Dispatch a custom event to notify other components (like Header) about user data changes
+      window.dispatchEvent(new CustomEvent('userDataChanged', { detail: updatedData }));
     }
   };
 
@@ -119,7 +125,8 @@ export default function ProfileBasicInfoPage() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('profileImageUrl');
-      localStorage.removeItem('userData'); // Also remove user data on logout
+      localStorage.removeItem('userData');
+      localStorage.removeItem('hasSeenVerificationPrompt'); // Also clear this on logout
       window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
@@ -190,7 +197,7 @@ export default function ProfileBasicInfoPage() {
         }
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        const phoneRegex = /^\d{10}$/; // Ensure 10 digits
+        const phoneRegex = /^\d{10}$/; 
         if (!phoneRegex.test(valueToVerify)) {
             toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
             return;
@@ -206,7 +213,7 @@ export default function ProfileBasicInfoPage() {
 
     if (valueToVerify === originalValue && !(editingField === 'aadhaar' && !userData.aadhaarNumber) ) {
         toast({title: "No Change", description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} is the same as current.`, variant: "default"});
-        setEditingField(null);
+        setEditingField(null); // Close editing mode if no change
         return;
     }
     
@@ -232,7 +239,7 @@ export default function ProfileBasicInfoPage() {
 
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (otp === '123456') {
+    if (otp === '123456') { // Simulated OTP check
       const updatedUserData = { ...userData };
       if (editingField === 'email') {
         updatedUserData.email = tempValue;
@@ -535,4 +542,3 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
-

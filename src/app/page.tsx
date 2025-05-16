@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight } from 'lucide-react'; // Added TicketCategoryIcon alias
+import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight, User, LogIn } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 // Simple Advertisement Slider Component
 const advertisements = [
@@ -145,7 +146,7 @@ function SearchForm() {
     const query = new URLSearchParams();
     if (fromCity) query.set('from', fromCity);
     if (toCity) query.set('to', toCity);
-    query.set('category', 'transport');
+    query.set('category', 'transport'); // Always set category to transport for this form
     router.push(`/tickets?${query.toString()}`);
   };
 
@@ -213,6 +214,47 @@ function BottomAdCard({ src, alt, title, description, href, hint }: BottomAdCard
 
 
 export default function Home() {
+  const router = useRouter();
+  const [showVerificationDialog, setShowVerificationDialog] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const hasSeenPrompt = localStorage.getItem('hasSeenVerificationPrompt') === 'true';
+      const storedUserData = localStorage.getItem('userData');
+      let isProfileFullyVerified = false;
+
+      if (storedUserData) {
+        try {
+          const parsedData = JSON.parse(storedUserData);
+          isProfileFullyVerified = !!(parsedData.email && parsedData.contact && parsedData.aadhaarNumber);
+        } catch (e) {
+          console.error("Failed to parse user data for verification check", e);
+        }
+      }
+
+      if (isLoggedIn && !isProfileFullyVerified && !hasSeenPrompt) {
+        setShowVerificationDialog(true);
+      }
+    }
+  }, []);
+
+  const handleGoToProfile = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hasSeenVerificationPrompt', 'true');
+    }
+    setShowVerificationDialog(false);
+    router.push('/profile');
+  };
+
+  const handleDismissPrompt = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hasSeenVerificationPrompt', 'true');
+    }
+    setShowVerificationDialog(false);
+  };
+
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
        <Header />
@@ -264,6 +306,22 @@ export default function Home() {
               </div>
          </div>
       </main>
+      <AlertDialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Your Profile Verification</AlertDialogTitle>
+            <AlertDialogDescription>
+              Completing your profile (Email, Phone, and Aadhaar) helps build trust with other users and can improve your ticket selling/buying experience. Would you like to complete it now?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDismissPrompt}>Maybe Later</AlertDialogCancel>
+            <AlertDialogAction onClick={handleGoToProfile} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+              <User className="h-4 w-4" /> Go to Profile
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
