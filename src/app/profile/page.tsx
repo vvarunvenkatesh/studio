@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, Edit2, Camera, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save } from 'lucide-react';
+import { User, LogOut, Edit2, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge'; // Import Badge component
+import { Badge } from '@/components/ui/badge';
 
 interface UserData {
   name: string;
@@ -21,10 +21,16 @@ interface UserData {
   aadhaarNumber?: string;
 }
 
+// Define gender-based avatar URLs
+const GENDER_AVATARS: Record<string, { url: string; hint: string }> = {
+  male: { url: 'https://placehold.co/100x100.png', hint: 'male cartoon' },
+  female: { url: 'https://placehold.co/100x100.png', hint: 'female cartoon' },
+  other: { url: 'https://placehold.co/100x100.png', hint: 'neutral avatar' },
+};
+const DEFAULT_AVATAR_INFO = GENDER_AVATARS.other; // Fallback
+
 export default function ProfileBasicInfoPage() {
   const { toast } = useToast();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isSavingImage, setIsSavingImage] = React.useState(false);
 
   const [userData, setUserData] = React.useState<UserData>({
     name: 'Alex Doe',
@@ -34,8 +40,8 @@ export default function ProfileBasicInfoPage() {
     aadhaarNumber: '',
   });
 
-  const [profileImage, setProfileImage] = React.useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [profileImage, setProfileImage] = React.useState<string>(DEFAULT_AVATAR_INFO.url);
+  const [profileImageHint, setProfileImageHint] = React.useState<string>(DEFAULT_AVATAR_INFO.hint);
   const [isUserVerified, setIsUserVerified] = React.useState(false);
 
   // Editing states
@@ -43,11 +49,15 @@ export default function ProfileBasicInfoPage() {
   const [tempName, setTempName] = React.useState(userData.name);
 
   const [editingField, setEditingField] = React.useState<'email' | 'contact' | 'aadhaar' | null>(null);
-  const [tempValue, setTempValue] = React.useState(''); // For email, contact, aadhaar
+  const [tempValue, setTempValue] = React.useState('');
   const [otp, setOtp] = React.useState('');
   const [otpSent, setOtpSent] = React.useState(false);
   const [isSendingOtp, setIsSendingOtp] = React.useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
+
+  const getAvatarInfoForGender = (gender: string): { url: string; hint: string } => {
+    return GENDER_AVATARS[gender as keyof typeof GENDER_AVATARS] || DEFAULT_AVATAR_INFO;
+  };
 
   const checkUserVerification = (data: UserData) => {
     const verified = !!(data.email && data.contact && data.aadhaarNumber);
@@ -56,88 +66,59 @@ export default function ProfileBasicInfoPage() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedImage = localStorage.getItem('profileImageUrl');
-      setProfileImage(storedImage);
-      
       const storedUserData = localStorage.getItem('userData');
+      let currentGender = userData.gender;
+      let currentName = userData.name;
+
       if (storedUserData) {
-          try {
-            const parsedData: UserData = JSON.parse(storedUserData);
-            setUserData(prevData => ({ ...prevData, ...parsedData }));
-            setTempName(parsedData.name || userData.name);
-            checkUserVerification(parsedData);
-          } catch (e) {
-            console.error("Failed to parse user data from localStorage", e);
-            localStorage.setItem('userData', JSON.stringify(userData));
-            setTempName(userData.name);
-            checkUserVerification(userData);
-          }
-      } else {
+        try {
+          const parsedData: UserData = JSON.parse(storedUserData);
+          setUserData(prevData => ({ ...prevData, ...parsedData }));
+          currentName = parsedData.name || userData.name;
+          setTempName(currentName);
+          currentGender = parsedData.gender || userData.gender;
+          checkUserVerification(parsedData);
+        } catch (e) {
+          console.error("Failed to parse user data from localStorage", e);
           localStorage.setItem('userData', JSON.stringify(userData));
           setTempName(userData.name);
           checkUserVerification(userData);
+        }
+      } else {
+        localStorage.setItem('userData', JSON.stringify(userData));
+        setTempName(userData.name);
+        checkUserVerification(userData);
       }
+
+      const avatarInfo = getAvatarInfoForGender(currentGender);
+      setProfileImage(avatarInfo.url);
+      setProfileImageHint(avatarInfo.hint);
+      localStorage.setItem('profileImageUrl', avatarInfo.url);
+      window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: avatarInfo.url, storageArea: localStorage }));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveUserDataToLocalStorage = (updatedData: UserData) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('userData', JSON.stringify(updatedData));
-      checkUserVerification(updatedData); // Re-check verification status after saving
-    }
-  };
+      checkUserVerification(updatedData);
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        toast({ title: "Image Too Large", description: "Please select an image smaller than 2MB.", variant: "destructive" });
-        return;
+      const newAvatarInfo = getAvatarInfoForGender(updatedData.gender);
+      if (profileImage !== newAvatarInfo.url) {
+        setProfileImage(newAvatarInfo.url);
+        setProfileImageHint(newAvatarInfo.hint);
+        localStorage.setItem('profileImageUrl', newAvatarInfo.url);
+        window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: newAvatarInfo.url, storageArea: localStorage }));
       }
-      if (!file.type.startsWith('image/')) {
-        toast({ title: "Invalid File Type", description: "Please select an image file (JPEG, PNG, GIF, etc.).", variant: "destructive" });
-        return;
-      }
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
-  };
-
-  const handleImageSave = async () => {
-    if (!selectedFile || !profileImage) {
-      toast({ title: "No Image Selected", description: "Please select an image file first.", variant: "destructive" });
-      return;
-    }
-    setIsSavingImage(true);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('profileImageUrl', profileImage);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: profileImage, storageArea: localStorage }));
-        toast({ title: "Profile Picture Updated", description: "Your new profile picture has been saved." });
-        setSelectedFile(null); // Clear selected file after save
-      }
-    } catch (error) {
-      console.error("Failed to save profile image:", error);
-      toast({ title: "Save Failed", description: "Could not save the profile picture.", variant: "destructive" });
-    } finally {
-      setIsSavingImage(false);
-    }
-  };
-
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
   };
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('profileImageUrl');
-      localStorage.removeItem('userData'); // Also clear userData on logout
+      localStorage.removeItem('userData');
       window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
@@ -171,7 +152,7 @@ export default function ProfileBasicInfoPage() {
   const handleGenderChange = (value: string) => {
     const updatedUserData = { ...userData, gender: value };
     setUserData(updatedUserData);
-    saveUserDataToLocalStorage(updatedUserData);
+    saveUserDataToLocalStorage(updatedUserData); // This will also update profileImage via its internal logic
     toast({ title: "Gender Updated", description: "Your gender selection has been updated." });
   };
 
@@ -204,7 +185,7 @@ export default function ProfileBasicInfoPage() {
         validationMessage = "Please enter a valid email address.";
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        validationRegex = /^\+?[1-9]\d{1,14}$/; 
+        validationRegex = /^\+?[1-9]\d{1,14}$/;
         validationMessage = "Please enter a valid phone number.";
     } else if (editingField === 'aadhaar') {
         originalValue = userData.aadhaarNumber || '';
@@ -212,7 +193,7 @@ export default function ProfileBasicInfoPage() {
         validationMessage = "Aadhaar number must be 12 digits.";
     }
 
-    if (valueToVerify === originalValue && !(editingField === 'aadhaar' && !userData.aadhaarNumber) ) { 
+    if (valueToVerify === originalValue && !(editingField === 'aadhaar' && !userData.aadhaarNumber) ) {
         toast({title: "No Change", description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} is the same as current.`, variant: "default"});
         setEditingField(null);
         return;
@@ -223,7 +204,7 @@ export default function ProfileBasicInfoPage() {
     }
 
     setIsSendingOtp(true);
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    await new Promise(resolve => setTimeout(resolve, 1500));
     setOtpSent(true);
     toast({
       title: 'OTP Sent (Simulation)',
@@ -239,9 +220,9 @@ export default function ProfileBasicInfoPage() {
       return;
     }
     setIsVerifyingOtp(true);
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (otp === '123456') { 
+    if (otp === '123456') {
       const updatedUserData = { ...userData };
       if (editingField === 'email') {
         updatedUserData.email = tempValue;
@@ -266,32 +247,24 @@ export default function ProfileBasicInfoPage() {
     <Card className="w-full bg-card">
       <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
         <div className="relative group">
-          <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
-            <AvatarImage src={profileImage || undefined} alt="User profile picture" data-ai-hint="user avatar" />
+          <Avatar className="h-20 w-20">
+            <AvatarImage
+              src={profileImage}
+              alt={userData.gender ? `${userData.gender} avatar` : "User avatar"}
+              data-ai-hint={profileImageHint}
+            />
             <AvatarFallback>
               <User className="h-10 w-10 text-muted-foreground" />
             </AvatarFallback>
           </Avatar>
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={handleAvatarClick}>
-            <Camera className="h-6 w-6 text-white" />
-          </div>
-          <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
         </div>
         <div className="text-center sm:text-left">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-foreground">User Profile</CardTitle>
-            {isUserVerified && (
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/30 gap-1.5">
-                <ShieldCheck className="h-4 w-4" />
-                Verified
-              </Badge>
-            )}
-          </div>
-          {selectedFile && (
-            <Button size="sm" onClick={handleImageSave} disabled={isSavingImage} className="mt-2 gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-              {isSavingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {isSavingImage ? 'Saving...' : 'Save Picture'}
-            </Button>
+          <CardTitle className="text-foreground">{userData.name}</CardTitle>
+          {isUserVerified && (
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/30 gap-1.5 mt-1">
+              <ShieldCheck className="h-4 w-4" />
+              Verified
+            </Badge>
           )}
         </div>
       </CardHeader>
@@ -533,3 +506,5 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+
+    
