@@ -119,7 +119,7 @@ export default function ProfileBasicInfoPage() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('profileImageUrl');
-      localStorage.removeItem('userData');
+      localStorage.removeItem('userData'); // Also remove user data on logout
       window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
@@ -142,7 +142,7 @@ export default function ProfileBasicInfoPage() {
     setUserData(updatedUserData);
     saveUserDataToLocalStorage(updatedUserData);
     setIsEditingName(false);
-    toast({ title: "Name Updated", description: "Your name has been saved." });
+    toast({ title: "Name Updated", description: "Your name has been saved.", variant: "success" });
   };
 
   const handleCancelEditName = () => {
@@ -153,15 +153,15 @@ export default function ProfileBasicInfoPage() {
   const handleGenderChange = (value: string) => {
     const updatedUserData = { ...userData, gender: value };
     setUserData(updatedUserData);
-    saveUserDataToLocalStorage(updatedUserData); // This will also update profileImage via its internal logic
-    toast({ title: "Gender Updated", description: "Your gender selection has been updated." });
+    saveUserDataToLocalStorage(updatedUserData);
+    toast({ title: "Gender Updated", description: "Your gender selection has been updated.", variant: "success" });
   };
 
   const handleEditField = (field: 'email' | 'contact' | 'aadhaar') => {
     setEditingField(field);
     setOtp('');
     setOtpSent(false);
-    setOtpError(false); // Reset OTP error
+    setOtpError(false);
     if (field === 'email') setTempValue(userData.email);
     if (field === 'contact') setTempValue(userData.contact);
     if (field === 'aadhaar') setTempValue(userData.aadhaarNumber || '');
@@ -171,12 +171,12 @@ export default function ProfileBasicInfoPage() {
     setEditingField(null);
     setOtp('');
     setOtpSent(false);
-    setOtpError(false); // Reset OTP error
+    setOtpError(false);
   };
 
   const handleSendOtpForUpdate = async () => {
     if (!editingField) return;
-    setOtpError(false); // Reset OTP error on new OTP request
+    setOtpError(false);
 
     let valueToVerify = tempValue;
     let originalValue = '';
@@ -224,11 +224,11 @@ export default function ProfileBasicInfoPage() {
   const handleVerifyOtpForUpdate = async () => {
     if (!editingField || !otp || otp.length !== 6) {
       toast({ title: 'Invalid OTP', description: 'Please enter a valid 6-digit OTP.', variant: 'destructive' });
-      setOtpError(true); // Set error for invalid OTP format
+      setOtpError(true);
       return;
     }
     setIsVerifyingOtp(true);
-    setOtpError(false); // Reset error before verification attempt
+    setOtpError(false);
 
     await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -250,7 +250,7 @@ export default function ProfileBasicInfoPage() {
       setOtpError(false);
     } else {
       toast({ title: 'Verification Failed', description: 'Incorrect OTP. Please try again.', variant: 'destructive' });
-      setOtpError(true); // Set error for incorrect OTP
+      setOtpError(true);
     }
     setIsVerifyingOtp(false);
   };
@@ -535,3 +535,4 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+
