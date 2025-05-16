@@ -118,7 +118,11 @@ export default function ProfileBasicInfoPage() {
             storageArea: localStorage,
          }));
 
-        toast({ title: "Logged Out", description: "You have been successfully logged out." });
+        toast({
+          title: "Logged Out",
+          description: "You have been successfully logged out.",
+          variant: "success", // Use success variant
+        });
         // Redirect to home or login page
          window.location.href = '/'; // Force reload to update header state reliably
      }
@@ -221,3 +225,4 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+
