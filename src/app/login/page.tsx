@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, Mail, Phone, KeyRound } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const [loginMethod, setLoginMethod] = React.useState<'email' | 'phone'>('email');
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [isSendingOtp, setIsSendingOtp] = React.useState(false);
   const [otpSent, setOtpSent] = React.useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
+  const [otpError, setOtpError] = React.useState(false); // New state for OTP error
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,7 +30,7 @@ export default function LoginPage() {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(identifier);
     } else {
-      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+      const phoneRegex = /^\+?[1-9]\d{1,14}$/; // Simple international phone regex
       return phoneRegex.test(identifier);
     }
   };
@@ -45,6 +47,7 @@ export default function LoginPage() {
       }
 
       setIsSendingOtp(true);
+      setOtpError(false); // Reset OTP error on new OTP request
       console.log(`Sending OTP to ${loginMethod}: ${identifier}`);
       await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -64,15 +67,17 @@ export default function LoginPage() {
             description: 'Please enter a valid 6-digit OTP.',
             variant: 'destructive',
         });
+        setOtpError(true); // Set error for invalid OTP format
         return;
     }
     setIsVerifyingOtp(true);
+    setOtpError(false); // Reset error before verification attempt
 
     console.log(`Verifying OTP: ${otp} for ${identifier}`);
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     let loginSuccess = false;
-    if (otp === '123456') {
+    if (otp === '123456') { // Simulated OTP check
         loginSuccess = true;
     }
 
@@ -103,6 +108,7 @@ export default function LoginPage() {
         description: 'Incorrect OTP. Please try again.',
         variant: 'destructive',
       });
+      setOtpError(true); // Set error for incorrect OTP
       setIsVerifyingOtp(false);
     }
   };
@@ -113,6 +119,7 @@ export default function LoginPage() {
     setOtpSent(false);
     setIsSendingOtp(false);
     setIsVerifyingOtp(false);
+    setOtpError(false); // Reset OTP error on tab change
     setLoginMethod(value as 'email' | 'phone');
   };
 
@@ -184,7 +191,7 @@ export default function LoginPage() {
                     <Button
                         variant="link"
                         type="button"
-                        onClick={() => handleSendOtp()}
+                        onClick={() => handleSendOtp()} // Resend OTP
                         disabled={isSendingOtp || isVerifyingOtp}
                         className="text-sm text-primary hover:underline p-0 h-auto"
                     >
@@ -199,9 +206,16 @@ export default function LoginPage() {
                   placeholder="Enter 6-digit OTP"
                   required
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                  onChange={(e) => {
+                    setOtp(e.target.value.replace(/[^0-9]/g, ''));
+                    setOtpError(false); // Clear error on input change
+                  }}
+                  onFocus={() => setOtpError(false)} // Clear error on focus
                   disabled={isVerifyingOtp || isSendingOtp}
-                  className="bg-background text-foreground"
+                  className={cn(
+                    "bg-background text-foreground",
+                    otpError && "border-destructive focus-visible:ring-destructive" // Apply red border if otpError is true
+                  )}
                 />
               </div>
             )}
