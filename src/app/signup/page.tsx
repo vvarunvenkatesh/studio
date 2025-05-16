@@ -77,7 +77,7 @@ export default function SignupPage() {
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
                  {/* Consistent LastMiniT styling - Use text-foreground defined in globals.css */}
                  <span className="text-3xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                  </span>
              </Link>
               {/* Slogan - Use text-foreground defined in globals.css */}

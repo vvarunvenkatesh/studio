@@ -111,7 +111,6 @@ export function Header({className}: HeaderProps) {
         {isMobile ? (
           <>
             {/* Mobile View */}
-            {/* Hamburger Menu (Left) */}
             <div className="flex-shrink-0">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
@@ -121,12 +120,12 @@ export function Header({className}: HeaderProps) {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-full xs:w-3/4 sm:w-64 p-0">
-                  <DialogTitle className="sr-only">Navigation Menu</DialogTitle>
+                 <DialogTitle className="sr-only">Navigation Menu</DialogTitle>
                   <div className="flex flex-col h-full">
                     <div className="p-4 border-b">
                       <Link href="/" className="flex flex-col items-start" onClick={() => setMobileMenuOpen(false)}>
                         <span className="text-xl font-bold text-foreground">
-                          <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                          <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                         </span>
                         <span className="text-xs text-muted-foreground">
                           Ticket Reselling Platform
@@ -145,6 +144,25 @@ export function Header({className}: HeaderProps) {
                           <Link href="/profile">My Profile</Link>
                         </Button>
                       )}
+                       {/* Location Selector in Mobile Menu */}
+                       <div className='p-2'>
+                         <Label className="text-sm font-medium text-muted-foreground mb-1">Location</Label>
+                         <Select value={selectedLocation} onValueChange={(newLocation) => {
+                           handleLocationChange(newLocation);
+                           setMobileMenuOpen(false); // Close menu on selection
+                         }}>
+                           <SelectTrigger className="w-full h-9 px-3 py-1 text-sm border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                             <SelectValue placeholder="Select Location" />
+                           </SelectTrigger>
+                           <SelectContent>
+                             {availableLocations.map((location) => (
+                               <SelectItem key={location} value={location}>
+                                 {location}
+                               </SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+                       </div>
                     </nav>
                     <div className="p-4 border-t mt-auto">
                        {isLoggedIn ? (
@@ -168,7 +186,7 @@ export function Header({className}: HeaderProps) {
               <div className="flex flex-col items-center text-center">
                 <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1" onClick={(e) => e.preventDefault()}>
                   <span className="text-2xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                   </span>
                 </Link>
                 <span className="text-[10px] text-foreground opacity-80 truncate max-w-[150px]">
@@ -181,7 +199,7 @@ export function Header({className}: HeaderProps) {
             <div className="flex-shrink-0">
               <Select value={selectedLocation} onValueChange={handleLocationChange}>
                 <SelectTrigger
-                  className="w-auto h-auto p-1.5 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-foreground hover:bg-accent hover:text-accent-foreground [&>svg:last-child]:hidden"
+                  className="w-auto h-auto p-1.5 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-foreground hover:bg-accent hover:text-accent-foreground"
                   aria-label="Select Location"
                 >
                   <MapPin className="h-5 w-5 flex-shrink-0" />
@@ -201,7 +219,7 @@ export function Header({className}: HeaderProps) {
             {/* Desktop View - Refactored for better centering and right-alignment */}
             {/* Left Section (Post Ticket) */}
             <div className="flex items-center flex-shrink-0">
-              <Button asChild size="sm" className="text-white bg-[#FF2459] hover:bg-[#FF2459]/90 transition-colors">
+              <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                 <Link href="/post-ticket">
                   Post Ticket
                 </Link>
@@ -216,7 +234,7 @@ export function Header({className}: HeaderProps) {
                   className="whitespace-nowrap flex items-baseline justify-center gap-1"
                 >
                   <span className="text-3xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-destructive">T</span>
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                   </span>
                 </Link>
                 <span className="text-xs text-foreground mt-[-4px] opacity-80">
