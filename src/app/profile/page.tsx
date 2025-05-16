@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardDescription as ShadcnCardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, LogOut, Edit2, Camera, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { FormDescription } from '@/components/ui/form'; // Added FormDescription import
+// Removed FormDescription import as it's not needed for this page's structure.
 
 interface UserData {
   name: string;
@@ -257,7 +257,7 @@ export default function ProfileBasicInfoPage() {
   };
 
   return (
-    <Card className="w-full max-w-2xl bg-card">
+    <Card className="w-full bg-card"> {/* Use default bg-card */}
       <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
         <div className="relative group">
           <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
@@ -272,8 +272,8 @@ export default function ProfileBasicInfoPage() {
           <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
         </div>
         <div className="text-center sm:text-left">
+          {/* Use default text-foreground */}
           <CardTitle className="text-foreground">User Profile</CardTitle>
-          {/* Removed CardDescription here */}
           {selectedFile && (
             <Button size="sm" onClick={handleImageSave} disabled={isSavingImage} className="mt-2 gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
               {isSavingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -285,6 +285,7 @@ export default function ProfileBasicInfoPage() {
       <CardContent className="space-y-6 pt-6"> {/* Added pt-6 for spacing */}
         {/* Name Field */}
         <div className="space-y-2">
+          {/* Use default text-foreground */}
           <Label htmlFor="name" className="text-foreground">Name</Label>
           {isEditingName ? (
             <div className="space-y-2">
@@ -292,6 +293,7 @@ export default function ProfileBasicInfoPage() {
                 id="name"
                 value={tempName}
                 onChange={(e) => setTempName(e.target.value)}
+                // Use default text-foreground for input text
                 className="text-foreground"
               />
               <div className="flex gap-2">
@@ -305,6 +307,7 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              {/* Use default text-foreground for read-only input */}
               <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground flex-grow" />
               <Button variant="outline" size="icon" onClick={handleEditName} aria-label="Edit Name">
                 <Edit2 className="h-4 w-4" />
@@ -315,6 +318,7 @@ export default function ProfileBasicInfoPage() {
 
         {/* Email Field */}
         <div className="space-y-2">
+          {/* Use default text-foreground */}
           <Label htmlFor="email" className="text-foreground">Email Address</Label>
           {editingField === 'email' ? (
             <div className="space-y-2">
@@ -323,6 +327,7 @@ export default function ProfileBasicInfoPage() {
                 type="email"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
+                // Use default text-foreground for input text
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
@@ -336,6 +341,7 @@ export default function ProfileBasicInfoPage() {
                  </div>
               ) : (
                 <div className="space-y-2">
+                  {/* Use default text-foreground */}
                   <Label htmlFor="emailOtp" className="text-foreground">Enter OTP for Email</Label>
                   <Input
                     id="emailOtp"
@@ -345,6 +351,7 @@ export default function ProfileBasicInfoPage() {
                     placeholder="6-digit OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                    // Use default text-foreground for input text
                     className="text-foreground"
                     disabled={isVerifyingOtp}
                   />
@@ -360,6 +367,7 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              {/* Use default text-foreground for read-only input */}
               <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground flex-grow" />
               <Button variant="outline" size="icon" onClick={() => handleEditField('email')} aria-label="Edit Email">
                 <Edit2 className="h-4 w-4" />
@@ -370,6 +378,7 @@ export default function ProfileBasicInfoPage() {
 
         {/* Contact Field */}
         <div className="space-y-2">
+          {/* Use default text-foreground */}
           <Label htmlFor="contact" className="text-foreground">Contact Number</Label>
           {editingField === 'contact' ? (
              <div className="space-y-2">
@@ -378,6 +387,7 @@ export default function ProfileBasicInfoPage() {
                 type="tel"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
+                // Use default text-foreground for input text
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
@@ -391,6 +401,7 @@ export default function ProfileBasicInfoPage() {
                  </div>
                 ) : (
                 <div className="space-y-2">
+                  {/* Use default text-foreground */}
                   <Label htmlFor="contactOtp" className="text-foreground">Enter OTP for Contact</Label>
                   <Input
                     id="contactOtp"
@@ -400,6 +411,7 @@ export default function ProfileBasicInfoPage() {
                     placeholder="6-digit OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                    // Use default text-foreground for input text
                     className="text-foreground"
                     disabled={isVerifyingOtp}
                   />
@@ -415,6 +427,7 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              {/* Use default text-foreground for read-only input */}
               <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground flex-grow" />
               <Button variant="outline" size="icon" onClick={() => handleEditField('contact')} aria-label="Edit Contact">
                 <Edit2 className="h-4 w-4" />
@@ -425,6 +438,7 @@ export default function ProfileBasicInfoPage() {
 
         {/* Aadhaar Field */}
         <div className="space-y-2">
+          {/* Use default text-foreground */}
           <Label htmlFor="aadhaar" className="text-foreground">Aadhaar Number</Label>
           {editingField === 'aadhaar' ? (
              <div className="space-y-2">
@@ -435,6 +449,7 @@ export default function ProfileBasicInfoPage() {
                 value={tempValue}
                 maxLength={12}
                 onChange={(e) => setTempValue(e.target.value.replace(/[^0-9]/g, ''))}
+                // Use default text-foreground for input text
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
@@ -448,6 +463,7 @@ export default function ProfileBasicInfoPage() {
                  </div>
                 ) : (
                 <div className="space-y-2">
+                  {/* Use default text-foreground */}
                   <Label htmlFor="aadhaarOtp" className="text-foreground">Enter OTP for Aadhaar</Label>
                   <Input
                     id="aadhaarOtp"
@@ -457,6 +473,7 @@ export default function ProfileBasicInfoPage() {
                     placeholder="6-digit OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                    // Use default text-foreground for input text
                     className="text-foreground"
                     disabled={isVerifyingOtp}
                   />
@@ -472,6 +489,7 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              {/* Use default text-foreground for read-only input */}
               <Input
                 id="aadhaarDisplay"
                 value={userData.aadhaarNumber ? `********${userData.aadhaarNumber.slice(-4)}` : 'Not Provided'}
@@ -483,13 +501,15 @@ export default function ProfileBasicInfoPage() {
               </Button>
             </div>
           )}
-           <FormDescription className="text-xs text-muted-foreground">
+           {/* Use default text-muted-foreground */}
+           <p className="text-xs text-muted-foreground">
              For verification purposes only. Your Aadhaar number will be masked.
-           </FormDescription>
+           </p>
         </div>
 
         {/* Gender Field */}
         <div className="space-y-1">
+          {/* Use default text-foreground */}
           <Label className="text-foreground">Gender</Label>
           <RadioGroup
             value={userData.gender}
@@ -498,14 +518,17 @@ export default function ProfileBasicInfoPage() {
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="male" id="male" />
+              {/* Use default text-foreground */}
               <Label htmlFor="male" className="text-foreground font-normal">Male</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="female" id="female" />
+              {/* Use default text-foreground */}
               <Label htmlFor="female" className="text-foreground font-normal">Female</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="other" id="other" />
+              {/* Use default text-foreground */}
               <Label htmlFor="other" className="text-foreground font-normal">Other</Label>
             </div>
           </RadioGroup>
