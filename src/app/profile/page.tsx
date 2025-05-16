@@ -60,7 +60,7 @@ export default function ProfileBasicInfoPage() {
   };
 
   const checkUserVerification = (data: UserData) => {
-    const verified = !!(data.email && data.contact && data.aadhaarNumber);
+    const verified = !!(data.email && data.contact && data.aadhaarNumber && data.aadhaarNumber.length === 12);
     setIsUserVerified(verified);
   };
 
@@ -176,21 +176,28 @@ export default function ProfileBasicInfoPage() {
 
     let valueToVerify = tempValue;
     let originalValue = '';
-    let validationRegex: RegExp | null = null;
-    let validationMessage = '';
 
     if (editingField === 'email') {
         originalValue = userData.email;
-        validationRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        validationMessage = "Please enter a valid email address.";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(valueToVerify)) {
+            toast({title: `Invalid Email`, description: "Please enter a valid email address (e.g., user@example.com).", variant: "destructive"});
+            return;
+        }
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        validationRegex = /^\+?[1-9]\d{1,14}$/;
-        validationMessage = "Please enter a valid phone number.";
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(valueToVerify)) {
+            toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
+            return;
+        }
     } else if (editingField === 'aadhaar') {
         originalValue = userData.aadhaarNumber || '';
-        validationRegex = /^\d{12}$/;
-        validationMessage = "Aadhaar number must be 12 digits.";
+        const aadhaarRegex = /^\d{12}$/;
+        if (!aadhaarRegex.test(valueToVerify)) {
+            toast({title: `Invalid Aadhaar Number`, description: "Aadhaar number must be 12 digits.", variant: "destructive"});
+            return;
+        }
     }
 
     if (valueToVerify === originalValue && !(editingField === 'aadhaar' && !userData.aadhaarNumber) ) {
@@ -198,11 +205,7 @@ export default function ProfileBasicInfoPage() {
         setEditingField(null);
         return;
     }
-    if (validationRegex && !validationRegex.test(valueToVerify)) {
-        toast({title: `Invalid ${editingField.charAt(0).toUpperCase() + editingField.slice(1)}`, description: validationMessage, variant: "destructive"});
-        return;
-    }
-
+    
     setIsSendingOtp(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setOtpSent(true);
@@ -259,13 +262,15 @@ export default function ProfileBasicInfoPage() {
           </Avatar>
         </div>
         <div className="text-center sm:text-left">
-          <CardTitle className="text-foreground">{userData.name}</CardTitle>
-          {isUserVerified && (
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/30 gap-1.5 mt-1">
-              <ShieldCheck className="h-4 w-4" />
-              Verified
-            </Badge>
-          )}
+          <CardTitle className="text-foreground flex items-center">
+            {userData.name}
+            {isUserVerified && (
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/30 gap-1.5 ml-2">
+                <ShieldCheck className="h-4 w-4" />
+                Verified
+                </Badge>
+            )}
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
@@ -291,7 +296,7 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground flex-grow" />
+              <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground flex-grow cursor-pointer" onClick={handleEditName} />
               <Button variant="outline" size="icon" onClick={handleEditName} aria-label="Edit Name">
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -346,7 +351,7 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground flex-grow" />
+              <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground flex-grow cursor-pointer" onClick={() => handleEditField('email')} />
               <Button variant="outline" size="icon" onClick={() => handleEditField('email')} aria-label="Edit Email">
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -362,8 +367,10 @@ export default function ProfileBasicInfoPage() {
               <Input
                 id="contact"
                 type="tel"
+                placeholder="Enter 10-digit number"
                 value={tempValue}
-                onChange={(e) => setTempValue(e.target.value)}
+                onChange={(e) => setTempValue(e.target.value.replace(/[^0-9]/g, ''))}
+                maxLength={10}
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
@@ -401,7 +408,7 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground flex-grow" />
+              <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground flex-grow cursor-pointer" onClick={() => handleEditField('contact')}/>
               <Button variant="outline" size="icon" onClick={() => handleEditField('contact')} aria-label="Edit Contact">
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -462,7 +469,8 @@ export default function ProfileBasicInfoPage() {
                 id="aadhaarDisplay"
                 value={userData.aadhaarNumber ? `********${userData.aadhaarNumber.slice(-4)}` : 'Not Provided'}
                 readOnly
-                className="bg-muted/50 text-foreground flex-grow"
+                className="bg-muted/50 text-foreground flex-grow cursor-pointer"
+                onClick={() => handleEditField('aadhaar')}
               />
               <Button variant="outline" size="icon" onClick={() => handleEditField('aadhaar')} aria-label={userData.aadhaarNumber ? "Edit Aadhaar" : "Add Aadhaar"}>
                  {userData.aadhaarNumber ? <Edit2 className="h-4 w-4" /> : <Fingerprint className="h-4 w-4" />}
