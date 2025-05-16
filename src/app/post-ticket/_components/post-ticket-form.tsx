@@ -570,7 +570,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
          ) : null}
          <Button
             type="submit"
-            className="w-full gap-2"
+            className="w-full gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
             disabled={isSubmitting || isCheckingGrammar}>
           {isSubmitting ? (
             <>
@@ -594,7 +594,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={redirectToLogin} className="gap-2">
+            <AlertDialogAction onClick={redirectToLogin} className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
               <LogIn className="h-4 w-4" /> Go to Login
             </AlertDialogAction>
           </AlertDialogFooter>

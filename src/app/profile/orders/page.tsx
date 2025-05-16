@@ -147,7 +147,7 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
                size="sm"
                onClick={() => handleDownload(order.originalTicketDataUri, order.id, order.type)}
                aria-label="Download original ticket"
-               className="gap-2 mt-0 sm:mt-2" // Adjust margin for layout
+               className="gap-2 mt-0 sm:mt-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" // Adjust margin for layout
              >
                <Download className="mr-2 h-4 w-4" />
                Download

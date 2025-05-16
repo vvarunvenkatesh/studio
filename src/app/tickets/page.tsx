@@ -303,7 +303,7 @@ export default function TicketsPage() {
                 </div>
              </div>
             <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full">
-                <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2">
+                <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
                     <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
                 {hasActiveFilters && (

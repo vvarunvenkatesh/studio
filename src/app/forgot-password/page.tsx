@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
                   className="bg-background/80 text-foreground"
                 />
               </div>
-              <Button type="submit" className="w-full gap-2" disabled={isSending}>
+              <Button type="submit" className="w-full gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" disabled={isSending}>
                 {isSending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />

@@ -291,7 +291,7 @@ export function TicketCard({
                      size="sm"
                      onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
                      aria-label="Download original ticket"
-                     className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                     className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
                  >
                      <Download className="mr-2 h-4 w-4" />
                      Download
@@ -307,7 +307,7 @@ export function TicketCard({
                  onClick={handlePurchase}
                  disabled={isPurchasing}
                  aria-label={`Buy ${currentTicket.type} ticket for ₹${currentTicket.price.toFixed(2)}`}
-                 className="gap-2"
+                 className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
              >
                  {isPurchasing ? (
                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -329,7 +329,7 @@ export function TicketCard({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={redirectToLogin} className="gap-2">
+            <AlertDialogAction onClick={redirectToLogin} className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
               <LogIn className="h-4 w-4" /> Go to Login
             </AlertDialogAction>
           </AlertDialogFooter>

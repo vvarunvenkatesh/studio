@@ -146,7 +146,7 @@ export default function SignupPage() {
                 className="bg-background/80 text-foreground"
               />
             </div>
-            <Button type="submit" className="w-full gap-2" disabled={isSigningUp}>
+            <Button type="submit" className="w-full gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" disabled={isSigningUp}>
               {isSigningUp ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

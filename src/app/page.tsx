@@ -175,7 +175,7 @@ function SearchForm() {
                 className="bg-background text-foreground"
             />
          </div>
-        <Button type="submit" className="w-full sm:w-auto gap-2">
+        <Button type="submit" className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
        </form>
@@ -225,7 +225,7 @@ export default function Home() {
              <SearchForm />
 
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Browse by Category</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 mx-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 mb-12 md:mb-16 mx-auto max-w-5xl">
                 <CategoryIcon icon={Train} label="Train Tickets" href="/tickets?category=train" />
                 <CategoryIcon icon={Bus} label="Bus Tickets" href="/tickets?category=bus" />
                 <CategoryIcon icon={Film} label="Movie Tickets" href="/tickets?category=movie" />
@@ -233,7 +233,7 @@ export default function Home() {
                 <CategoryIcon icon={TicketCategoryIcon} label="Sports Tickets" href="/tickets?category=sports" />
              </div>
 
-              <div className="mx-auto">
+              <div className="mx-auto max-w-5xl">
                  <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     <BottomAdCard

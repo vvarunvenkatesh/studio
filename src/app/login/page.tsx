@@ -196,7 +196,7 @@ export default function LoginPage() {
                       <Button
                           type="button"
                           onClick={handleSendOtp}
-                          className="w-auto"
+                          className="w-auto bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
                           disabled={isSendingOtp || !isValidIdentifier()}
                       >
                           {isSendingOtp ? (
@@ -247,7 +247,7 @@ export default function LoginPage() {
 
             {/* Login/Verify OTP Button - Show only after OTP is sent */}
             {otpSent && (
-                <Button type="submit" className="w-full gap-2" disabled={isVerifyingOtp || isSendingOtp || otp.length !== 6}>
+                <Button type="submit" className="w-full gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" disabled={isVerifyingOtp || isSendingOtp || otp.length !== 6}>
                   {isVerifyingOtp ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -277,4 +277,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
