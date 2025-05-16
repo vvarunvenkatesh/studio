@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, Edit2, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save } from 'lucide-react';
+import { User, LogOut, Edit2, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -197,7 +197,7 @@ export default function ProfileBasicInfoPage() {
         }
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        const phoneRegex = /^\d{10}$/; 
+        const phoneRegex = /^\d{10}$/;
         if (!phoneRegex.test(valueToVerify)) {
             toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
             return;
@@ -280,10 +280,15 @@ export default function ProfileBasicInfoPage() {
         <div className="text-center sm:text-left">
           <CardTitle className="text-foreground flex items-center">
             {userData.name}
-            {isUserVerified && (
-                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/30 gap-1.5 ml-2">
+            {isUserVerified ? (
+                <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-300 gap-1.5 ml-2">
                 <ShieldCheck className="h-4 w-4" />
                 Verified
+                </Badge>
+            ) : (
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-300 gap-1.5 ml-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Pending Verification
                 </Badge>
             )}
           </CardTitle>
@@ -493,13 +498,16 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input
-                id="aadhaarDisplay"
-                value={userData.aadhaarNumber ? `********${userData.aadhaarNumber.slice(-4)}` : 'Not Provided'}
-                readOnly
-                className="bg-muted/50 text-foreground flex-grow cursor-pointer"
-                onClick={() => handleEditField('aadhaar')}
-              />
+               <div className="flex items-center gap-2 flex-grow">
+                <Input
+                    id="aadhaarDisplay"
+                    value={userData.aadhaarNumber ? `********${userData.aadhaarNumber.slice(-4)}` : 'Not Provided'}
+                    readOnly
+                    className="bg-muted/50 text-foreground flex-grow cursor-pointer"
+                    onClick={() => handleEditField('aadhaar')}
+                />
+                {userData.aadhaarNumber && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
+               </div>
               <Button variant="outline" size="icon" onClick={() => handleEditField('aadhaar')} aria-label={userData.aadhaarNumber ? "Edit Aadhaar" : "Add Aadhaar"}>
                  {userData.aadhaarNumber ? <Edit2 className="h-4 w-4" /> : <Fingerprint className="h-4 w-4" />}
               </Button>
@@ -542,3 +550,5 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+
+    
