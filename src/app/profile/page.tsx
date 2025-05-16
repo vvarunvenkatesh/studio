@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, LogOut, Edit2, Camera, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-// Removed FormDescription import as it's not needed for this page's structure.
+import { Badge } from '@/components/ui/badge'; // Import Badge component
 
 interface UserData {
   name: string;
@@ -36,6 +36,7 @@ export default function ProfileBasicInfoPage() {
 
   const [profileImage, setProfileImage] = React.useState<string | null>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [isUserVerified, setIsUserVerified] = React.useState(false);
 
   // Editing states
   const [isEditingName, setIsEditingName] = React.useState(false);
@@ -48,6 +49,10 @@ export default function ProfileBasicInfoPage() {
   const [isSendingOtp, setIsSendingOtp] = React.useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
 
+  const checkUserVerification = (data: UserData) => {
+    const verified = !!(data.email && data.contact && data.aadhaarNumber);
+    setIsUserVerified(verified);
+  };
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -57,27 +62,28 @@ export default function ProfileBasicInfoPage() {
       const storedUserData = localStorage.getItem('userData');
       if (storedUserData) {
           try {
-            const parsedData = JSON.parse(storedUserData);
+            const parsedData: UserData = JSON.parse(storedUserData);
             setUserData(prevData => ({ ...prevData, ...parsedData }));
-            setTempName(parsedData.name || prevData.name);
-            // Initialize tempValue based on which field might be edited first if needed,
-            // or set it when an edit button is clicked.
+            setTempName(parsedData.name || userData.name);
+            checkUserVerification(parsedData);
           } catch (e) {
             console.error("Failed to parse user data from localStorage", e);
-            // If parsing fails, save initial default userData
             localStorage.setItem('userData', JSON.stringify(userData));
             setTempName(userData.name);
+            checkUserVerification(userData);
           }
       } else {
           localStorage.setItem('userData', JSON.stringify(userData));
           setTempName(userData.name);
+          checkUserVerification(userData);
       }
     }
-  }, []); // Empty dependency array to run once on mount
+  }, []);
 
   const saveUserDataToLocalStorage = (updatedData: UserData) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('userData', JSON.stringify(updatedData));
+      checkUserVerification(updatedData); // Re-check verification status after saving
     }
   };
 
@@ -131,9 +137,10 @@ export default function ProfileBasicInfoPage() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('profileImageUrl');
-      localStorage.removeItem('userData');
+      localStorage.removeItem('userData'); // Also clear userData on logout
       window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
       toast({ title: "Logged Out", description: "You have been successfully logged out.", variant: "success" });
       window.location.href = '/';
     }
@@ -164,7 +171,7 @@ export default function ProfileBasicInfoPage() {
   const handleGenderChange = (value: string) => {
     const updatedUserData = { ...userData, gender: value };
     setUserData(updatedUserData);
-    saveUserDataToLocalStorage(updatedUserData); // Save gender change immediately or queue for a general save
+    saveUserDataToLocalStorage(updatedUserData);
     toast({ title: "Gender Updated", description: "Your gender selection has been updated." });
   };
 
@@ -181,7 +188,6 @@ export default function ProfileBasicInfoPage() {
     setEditingField(null);
     setOtp('');
     setOtpSent(false);
-    // tempValue will reset when handleEditField is called next
   };
 
   const handleSendOtpForUpdate = async () => {
@@ -198,7 +204,7 @@ export default function ProfileBasicInfoPage() {
         validationMessage = "Please enter a valid email address.";
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        validationRegex = /^\+?[1-9]\d{1,14}$/; // Simple international phone regex
+        validationRegex = /^\+?[1-9]\d{1,14}$/; 
         validationMessage = "Please enter a valid phone number.";
     } else if (editingField === 'aadhaar') {
         originalValue = userData.aadhaarNumber || '';
@@ -217,7 +223,7 @@ export default function ProfileBasicInfoPage() {
     }
 
     setIsSendingOtp(true);
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
     setOtpSent(true);
     toast({
       title: 'OTP Sent (Simulation)',
@@ -233,9 +239,9 @@ export default function ProfileBasicInfoPage() {
       return;
     }
     setIsVerifyingOtp(true);
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-    if (otp === '123456') { // Simulated OTP check
+    if (otp === '123456') { 
       const updatedUserData = { ...userData };
       if (editingField === 'email') {
         updatedUserData.email = tempValue;
@@ -257,7 +263,7 @@ export default function ProfileBasicInfoPage() {
   };
 
   return (
-    <Card className="w-full bg-card"> {/* Use default bg-card */}
+    <Card className="w-full bg-card">
       <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
         <div className="relative group">
           <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
@@ -272,8 +278,15 @@ export default function ProfileBasicInfoPage() {
           <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
         </div>
         <div className="text-center sm:text-left">
-          {/* Use default text-foreground */}
-          <CardTitle className="text-foreground">User Profile</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-foreground">User Profile</CardTitle>
+            {isUserVerified && (
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/30 gap-1.5">
+                <ShieldCheck className="h-4 w-4" />
+                Verified
+              </Badge>
+            )}
+          </div>
           {selectedFile && (
             <Button size="sm" onClick={handleImageSave} disabled={isSavingImage} className="mt-2 gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
               {isSavingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -282,10 +295,9 @@ export default function ProfileBasicInfoPage() {
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-6 pt-6"> {/* Added pt-6 for spacing */}
+      <CardContent className="space-y-6 pt-6">
         {/* Name Field */}
         <div className="space-y-2">
-          {/* Use default text-foreground */}
           <Label htmlFor="name" className="text-foreground">Name</Label>
           {isEditingName ? (
             <div className="space-y-2">
@@ -293,7 +305,6 @@ export default function ProfileBasicInfoPage() {
                 id="name"
                 value={tempName}
                 onChange={(e) => setTempName(e.target.value)}
-                // Use default text-foreground for input text
                 className="text-foreground"
               />
               <div className="flex gap-2">
@@ -307,7 +318,6 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              {/* Use default text-foreground for read-only input */}
               <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground flex-grow" />
               <Button variant="outline" size="icon" onClick={handleEditName} aria-label="Edit Name">
                 <Edit2 className="h-4 w-4" />
@@ -318,7 +328,6 @@ export default function ProfileBasicInfoPage() {
 
         {/* Email Field */}
         <div className="space-y-2">
-          {/* Use default text-foreground */}
           <Label htmlFor="email" className="text-foreground">Email Address</Label>
           {editingField === 'email' ? (
             <div className="space-y-2">
@@ -327,7 +336,6 @@ export default function ProfileBasicInfoPage() {
                 type="email"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                // Use default text-foreground for input text
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
@@ -341,7 +349,6 @@ export default function ProfileBasicInfoPage() {
                  </div>
               ) : (
                 <div className="space-y-2">
-                  {/* Use default text-foreground */}
                   <Label htmlFor="emailOtp" className="text-foreground">Enter OTP for Email</Label>
                   <Input
                     id="emailOtp"
@@ -351,7 +358,6 @@ export default function ProfileBasicInfoPage() {
                     placeholder="6-digit OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                    // Use default text-foreground for input text
                     className="text-foreground"
                     disabled={isVerifyingOtp}
                   />
@@ -367,7 +373,6 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              {/* Use default text-foreground for read-only input */}
               <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground flex-grow" />
               <Button variant="outline" size="icon" onClick={() => handleEditField('email')} aria-label="Edit Email">
                 <Edit2 className="h-4 w-4" />
@@ -378,7 +383,6 @@ export default function ProfileBasicInfoPage() {
 
         {/* Contact Field */}
         <div className="space-y-2">
-          {/* Use default text-foreground */}
           <Label htmlFor="contact" className="text-foreground">Contact Number</Label>
           {editingField === 'contact' ? (
              <div className="space-y-2">
@@ -387,7 +391,6 @@ export default function ProfileBasicInfoPage() {
                 type="tel"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                // Use default text-foreground for input text
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
@@ -401,7 +404,6 @@ export default function ProfileBasicInfoPage() {
                  </div>
                 ) : (
                 <div className="space-y-2">
-                  {/* Use default text-foreground */}
                   <Label htmlFor="contactOtp" className="text-foreground">Enter OTP for Contact</Label>
                   <Input
                     id="contactOtp"
@@ -411,7 +413,6 @@ export default function ProfileBasicInfoPage() {
                     placeholder="6-digit OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                    // Use default text-foreground for input text
                     className="text-foreground"
                     disabled={isVerifyingOtp}
                   />
@@ -427,7 +428,6 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              {/* Use default text-foreground for read-only input */}
               <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground flex-grow" />
               <Button variant="outline" size="icon" onClick={() => handleEditField('contact')} aria-label="Edit Contact">
                 <Edit2 className="h-4 w-4" />
@@ -438,7 +438,6 @@ export default function ProfileBasicInfoPage() {
 
         {/* Aadhaar Field */}
         <div className="space-y-2">
-          {/* Use default text-foreground */}
           <Label htmlFor="aadhaar" className="text-foreground">Aadhaar Number</Label>
           {editingField === 'aadhaar' ? (
              <div className="space-y-2">
@@ -449,7 +448,6 @@ export default function ProfileBasicInfoPage() {
                 value={tempValue}
                 maxLength={12}
                 onChange={(e) => setTempValue(e.target.value.replace(/[^0-9]/g, ''))}
-                // Use default text-foreground for input text
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
@@ -463,7 +461,6 @@ export default function ProfileBasicInfoPage() {
                  </div>
                 ) : (
                 <div className="space-y-2">
-                  {/* Use default text-foreground */}
                   <Label htmlFor="aadhaarOtp" className="text-foreground">Enter OTP for Aadhaar</Label>
                   <Input
                     id="aadhaarOtp"
@@ -473,7 +470,6 @@ export default function ProfileBasicInfoPage() {
                     placeholder="6-digit OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                    // Use default text-foreground for input text
                     className="text-foreground"
                     disabled={isVerifyingOtp}
                   />
@@ -489,7 +485,6 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              {/* Use default text-foreground for read-only input */}
               <Input
                 id="aadhaarDisplay"
                 value={userData.aadhaarNumber ? `********${userData.aadhaarNumber.slice(-4)}` : 'Not Provided'}
@@ -501,7 +496,6 @@ export default function ProfileBasicInfoPage() {
               </Button>
             </div>
           )}
-           {/* Use default text-muted-foreground */}
            <p className="text-xs text-muted-foreground">
              For verification purposes only. Your Aadhaar number will be masked.
            </p>
@@ -509,32 +503,28 @@ export default function ProfileBasicInfoPage() {
 
         {/* Gender Field */}
         <div className="space-y-1">
-          {/* Use default text-foreground */}
           <Label className="text-foreground">Gender</Label>
           <RadioGroup
             value={userData.gender}
-            onValueChange={handleGenderChange} // Directly update state and save
+            onValueChange={handleGenderChange}
             className="flex items-center space-x-4 pt-2"
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="male" id="male" />
-              {/* Use default text-foreground */}
               <Label htmlFor="male" className="text-foreground font-normal">Male</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="female" id="female" />
-              {/* Use default text-foreground */}
               <Label htmlFor="female" className="text-foreground font-normal">Female</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="other" id="other" />
-              {/* Use default text-foreground */}
               <Label htmlFor="other" className="text-foreground font-normal">Other</Label>
             </div>
           </RadioGroup>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end border-t pt-6 mt-4"> {/* Added mt-4 for spacing */}
+      <CardFooter className="flex justify-end border-t pt-6 mt-4">
         <Button variant="destructive" onClick={handleLogout} className="gap-2">
           <LogOut className="h-4 w-4" />
           Logout
@@ -543,4 +533,3 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
-

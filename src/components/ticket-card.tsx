@@ -7,13 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn } from 'lucide-react';
+import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-// Removed direct import of purchaseTicket service
 import { cn } from '@/lib/utils';
 import { useRouter, usePathname, useSearchParams as useNextSearchParams } from 'next/navigation';
-import { getSimulatedCurrentUserId } from '@/services/ticket-marketplace'; // Import helper
+import { getSimulatedCurrentUserId } from '@/services/ticket-marketplace';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -22,7 +21,7 @@ interface TicketCardProps {
   onCancelListing?: (ticketId: string) => Promise<void> | void;
   isCancelling?: boolean;
   className?: string;
-  isSeller?: boolean;
+  isSeller?: boolean; // This prop might become less relevant if we rely on currentUserId and ticket.sellerId
 }
 
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
@@ -40,7 +39,8 @@ export function TicketCard({
     onCancelListing,
     isCancelling,
     className,
-    isSeller = false
+    // isSeller prop is kept for potential direct control, but logic will primarily use currentUserId
+    isSeller: propIsSeller 
 }: TicketCardProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -59,20 +59,31 @@ export function TicketCard({
       if (typeof window !== 'undefined') {
           const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
           setIsLoggedIn(loggedInStatus);
-          setCurrentUserIdState(getSimulatedCurrentUserId()); // Set current user ID
+          setCurrentUserIdState(getSimulatedCurrentUserId());
       }
       const handleStorageChange = (event: StorageEvent) => {
           if (event.key === 'isLoggedIn') {
               const newLoggedInStatus = event.newValue === 'true';
               setIsLoggedIn(newLoggedInStatus);
-              setCurrentUserIdState(getSimulatedCurrentUserId()); // Update current user ID
+              setCurrentUserIdState(getSimulatedCurrentUserId());
           }
+           if (event.key === 'marketplaceTickets') { // Listen for general ticket updates
+                const updatedTickets: Ticket[] = event.newValue ? JSON.parse(event.newValue) : [];
+                const thisTicketUpdate = updatedTickets.find(t => t.id === currentTicket.id);
+                if (thisTicketUpdate) {
+                    setCurrentTicket(thisTicketUpdate);
+                    setIsSold(thisTicketUpdate.status === 'sold');
+                } else {
+                    // Ticket might have been deleted, mark as sold or handle appropriately
+                    setIsSold(true); 
+                }
+            }
       };
       window.addEventListener('storage', handleStorageChange);
       return () => {
           window.removeEventListener('storage', handleStorageChange);
       };
-  }, []);
+  }, [currentTicket.id]);
 
 
   React.useEffect(() => {
@@ -83,6 +94,8 @@ export function TicketCard({
 
   const formattedDate = format(new Date(currentTicket.date), 'PPP');
   const CategorySpecificIcon = categoryIconMap[currentTicket.type] || TicketIconLucide;
+  const actualIsSeller = !!currentUserId && currentTicket.sellerId === currentUserId && currentUserId !== 'anonymousUser';
+
 
   const redirectToLogin = () => {
     const currentRedirectPath = pathname + '?' + searchParamsHook.toString();
@@ -95,7 +108,7 @@ export function TicketCard({
         setShowLoginDialog(true);
         return;
     }
-    if (isSold || isSeller) return;
+    if (isSold || actualIsSeller) return;
     setIsPurchasing(true);
     try {
       const response = await fetch('/api/orders/purchase', {
@@ -223,15 +236,13 @@ export function TicketCard({
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500"
-      style={{ backgroundColor: '#FFCE54' }}
+      style={{ backgroundColor: '#FFCE54' }} // Keep this specific color for pending
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
     </Badge>
   );
 
-  // Determine actual seller status based on currentUserId
-  const actualIsSeller = !!currentUserId && currentTicket.sellerId === currentUserId && currentUserId !== 'anonymousUser';
 
   return (
     <>
@@ -241,10 +252,18 @@ export function TicketCard({
     )}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between mb-1">
-           <CardTitle className="text-lg font-semibold capitalize flex items-center mr-2 text-foreground">
+           <div className="flex items-center mr-2">
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
-             <span className="truncate">{currentTicket.type} Ticket</span>
-           </CardTitle>
+             <CardTitle className="text-lg font-semibold capitalize truncate text-foreground">
+               {currentTicket.type} Ticket
+             </CardTitle>
+             {currentTicket.sellerVerified && (
+                <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-primary/30 gap-1 text-xs px-1.5 py-0.5 shrink-0">
+                    <ShieldCheck className="h-3 w-3" />
+                    Verified
+                </Badge>
+             )}
+           </div>
            <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
