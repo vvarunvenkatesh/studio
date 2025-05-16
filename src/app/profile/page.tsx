@@ -298,7 +298,7 @@ export default function ProfileBasicInfoPage() {
                 <Button onClick={handleSaveName} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
                   <Save className="h-4 w-4" /> Save
                 </Button>
-                <Button variant="ghost" onClick={handleCancelEditName} className="gap-2">
+                <Button variant="ghost" onClick={handleCancelEditName} className="gap-2 hover:text-destructive hover:bg-destructive/10">
                   <X className="h-4 w-4" /> Cancel
                 </Button>
               </div>
@@ -332,7 +332,7 @@ export default function ProfileBasicInfoPage() {
                       {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                       {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
                     </Button>
-                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2"> <X className="h-4 w-4" /> Cancel</Button>
+                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2 hover:text-destructive hover:bg-destructive/10"> <X className="h-4 w-4" /> Cancel</Button>
                  </div>
               ) : (
                 <div className="space-y-2">
@@ -357,7 +357,7 @@ export default function ProfileBasicInfoPage() {
                         {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                         {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
                       </Button>
-                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
                    </div>
                 </div>
               )}
@@ -393,7 +393,7 @@ export default function ProfileBasicInfoPage() {
                       {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                       {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
                     </Button>
-                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
                  </div>
                 ) : (
                 <div className="space-y-2">
@@ -418,7 +418,7 @@ export default function ProfileBasicInfoPage() {
                         {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                         {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
                       </Button>
-                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
                   </div>
                 </div>
               )}
@@ -454,7 +454,7 @@ export default function ProfileBasicInfoPage() {
                       {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                       {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
                     </Button>
-                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
                  </div>
                 ) : (
                 <div className="space-y-2">
@@ -479,7 +479,7 @@ export default function ProfileBasicInfoPage() {
                         {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                         {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
                       </Button>
-                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
                   </div>
                 </div>
               )}
@@ -535,7 +535,3 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
-
-    
-
-    
