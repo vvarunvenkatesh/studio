@@ -98,7 +98,7 @@ export default function TicketsPage() {
   const loadTickets = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const query = new URLSearchParams(searchParams); 
+    const query = new URLSearchParams(searchParams);
 
     if (query.get('from')) setFromCityFilter(query.get('from')!); else query.delete('from');
     if (query.get('to')) setToCityFilter(query.get('to')!); else query.delete('to');
@@ -115,7 +115,7 @@ export default function TicketsPage() {
     setDateRange(dateRangeState);
     if (dateRangeState?.from) query.set('startDate', format(dateRangeState.from, 'yyyy-MM-dd')); else query.delete('startDate');
     if (dateRangeState?.to) query.set('endDate', format(dateRangeState.to, 'yyyy-MM-dd')); else query.delete('endDate');
-    query.delete('date'); 
+    query.delete('date');
 
     try {
       const response = await fetch(`/api/tickets?${query.toString()}`);
@@ -181,9 +181,9 @@ export default function TicketsPage() {
   };
 
   const handleFilterChange = () => {
-    const query = new URLSearchParams(); 
+    const query = new URLSearchParams();
 
-    const category = searchParams.get('category'); 
+    const category = searchParams.get('category');
     if (category) query.set('category', category);
 
     if (fromCityFilter) query.set('from', fromCityFilter);
@@ -241,7 +241,7 @@ export default function TicketsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background pb-32 md:pb-16"> {/* Increased pb for mobile to make space for both nav and sliding tab */}
       <Header />
-      <main className="flex-1 container py-8">
+      <main className="flex-1 container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
@@ -322,12 +322,12 @@ export default function TicketsPage() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 md:px-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {renderSkeletons()}
           </div>
         ) : tickets.length > 0 ? (
           <div className={cn(
-            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 md:px-0"
+            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           )}>
             {tickets.map((ticket) => (
               <TicketCard

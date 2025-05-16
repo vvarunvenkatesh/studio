@@ -11,16 +11,16 @@ import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as Tic
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
-import { cn } from '@/lib/utils'; 
-import { Label } from '@/components/ui/label'; 
+import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 // Simple Advertisement Slider Component
 const advertisements = [
   { id: 1, src: 'https://picsum.photos/1200/448?random=1', alt: 'concert', hint: 'concert crowd music' },
   { id: 2, src: 'https://picsum.photos/1200/448?random=2', alt: 'train travel', hint: 'train window journey' },
   { id: 3, src: 'https://picsum.photos/1200/448?random=3', alt: 'movie theatre', hint: 'movie theater screen' },
-  { id: 4, src: 'https://picsum.photos/1200/448?random=4', alt: 'bus travel', hint: 'bus road trip' }, 
-  { id: 5, src: 'https://picsum.photos/1200/448?random=5', alt: 'sports event', hint: 'stadium sports crowd' }, 
+  { id: 4, src: 'https://picsum.photos/1200/448?random=4', alt: 'bus travel', hint: 'bus road trip' },
+  { id: 5, src: 'https://picsum.photos/1200/448?random=5', alt: 'sports event', hint: 'stadium sports crowd' },
 ];
 
 function AdvertisementSlider() {
@@ -56,7 +56,7 @@ function AdvertisementSlider() {
            clearInterval(intervalRef.current); // Clear interval on unmount
         }
     };
-  }, [goToNext]); 
+  }, [goToNext]);
 
   return (
     <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg group">
@@ -65,12 +65,12 @@ function AdvertisementSlider() {
           key={ad.id}
           src={ad.src}
           alt={ad.alt}
-          fill 
-          sizes="(max-width: 768px) 100vw, 1200px" 
-          style={{ objectFit: 'cover' }} 
+          fill
+          sizes="(max-width: 768px) 100vw, 1200px"
+          style={{ objectFit: 'cover' }}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentAd ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           data-ai-hint={ad.hint}
-          priority={index === 0} 
+          priority={index === 0}
         />
       ))}
        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
@@ -103,10 +103,10 @@ function AdvertisementSlider() {
                     key={index}
                     onClick={() => goToSlide(index)}
                     className={cn(
-                        "rounded-full transition-all duration-300 ease-in-out", 
+                        "rounded-full transition-all duration-300 ease-in-out",
                         index === currentAd
-                            ? 'h-2.5 w-2.5 bg-white' 
-                            : 'h-2 w-2 bg-white/50 hover:bg-white/75' 
+                            ? 'h-2.5 w-2.5 bg-white'
+                            : 'h-2 w-2 bg-white/50 hover:bg-white/75'
                     )}
                     aria-label={`Go to slide ${index + 1}`}
                 />
@@ -145,7 +145,7 @@ function SearchForm() {
     const query = new URLSearchParams();
     if (fromCity) query.set('from', fromCity);
     if (toCity) query.set('to', toCity);
-    query.set('category', 'transport'); 
+    query.set('category', 'transport');
     router.push(`/tickets?${query.toString()}`);
   };
 
@@ -219,7 +219,7 @@ export default function Home() {
 
        <AdvertisementSlider />
 
-       <main className="flex-1 container py-6 md:py-10">
+       <main className="flex-1 container mx-auto px-4 py-6 md:py-10">
 
          <div className="mt-8 md:mt-12">
              <SearchForm />

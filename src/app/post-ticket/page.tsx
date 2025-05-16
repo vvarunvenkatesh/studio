@@ -105,7 +105,7 @@ export default function PostTicketPage() {
       ticketType === 'movie' ? 'bg-movie-poster' : 'bg-background'
     )}>
        <Header />
-      <main className="flex-1 container py-8 md:py-12 relative z-10">
+      <main className="flex-1 container mx-auto px-4 py-8 md:py-12 relative z-10">
         <div className="max-w-3xl mx-auto">
             <h1 className="text-3xl font-bold mb-6 text-center md:text-left text-foreground">Post a New Ticket</h1>
            <PostTicketForm onTypeChange={handleTypeChange} />
