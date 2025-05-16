@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription as ShadcnCardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, LogOut, Edit2, Camera, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { FormDescription } from '@/components/ui/form'; // Added FormDescription import
 
 interface UserData {
   name: string;
@@ -197,7 +198,7 @@ export default function ProfileBasicInfoPage() {
         validationMessage = "Please enter a valid email address.";
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        validationRegex = /^\+?[1-9]\d{1,14}$/;
+        validationRegex = /^\+?[1-9]\d{1,14}$/; // Simple international phone regex
         validationMessage = "Please enter a valid phone number.";
     } else if (editingField === 'aadhaar') {
         originalValue = userData.aadhaarNumber || '';
@@ -205,7 +206,7 @@ export default function ProfileBasicInfoPage() {
         validationMessage = "Aadhaar number must be 12 digits.";
     }
 
-    if (valueToVerify === originalValue && editingField !== 'aadhaar' && userData.aadhaarNumber) { // Allow re-verification for existing Aadhaar
+    if (valueToVerify === originalValue && !(editingField === 'aadhaar' && !userData.aadhaarNumber) ) { 
         toast({title: "No Change", description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} is the same as current.`, variant: "default"});
         setEditingField(null);
         return;
@@ -519,3 +520,4 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+
