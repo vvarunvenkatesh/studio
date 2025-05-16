@@ -55,6 +55,7 @@ export default function LoginPage() {
       toast({
         title: 'OTP Sent (Simulation)',
         description: `An OTP has been sent to your ${loginMethod}. Use '123456' to login.`,
+        variant: 'warning', // Use the new warning variant
       });
       setIsSendingOtp(false);
   };
