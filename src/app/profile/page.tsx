@@ -54,6 +54,7 @@ export default function ProfileBasicInfoPage() {
   const [otpSent, setOtpSent] = React.useState(false);
   const [isSendingOtp, setIsSendingOtp] = React.useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
+  const [otpError, setOtpError] = React.useState(false); // State for OTP error
 
   const getAvatarInfoForGender = (gender: string): { url: string; hint: string } => {
     return GENDER_AVATARS[gender as keyof typeof GENDER_AVATARS] || DEFAULT_AVATAR_INFO;
@@ -160,6 +161,7 @@ export default function ProfileBasicInfoPage() {
     setEditingField(field);
     setOtp('');
     setOtpSent(false);
+    setOtpError(false); // Reset OTP error
     if (field === 'email') setTempValue(userData.email);
     if (field === 'contact') setTempValue(userData.contact);
     if (field === 'aadhaar') setTempValue(userData.aadhaarNumber || '');
@@ -169,10 +171,12 @@ export default function ProfileBasicInfoPage() {
     setEditingField(null);
     setOtp('');
     setOtpSent(false);
+    setOtpError(false); // Reset OTP error
   };
 
   const handleSendOtpForUpdate = async () => {
     if (!editingField) return;
+    setOtpError(false); // Reset OTP error on new OTP request
 
     let valueToVerify = tempValue;
     let originalValue = '';
@@ -186,7 +190,7 @@ export default function ProfileBasicInfoPage() {
         }
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        const phoneRegex = /^\d{10}$/;
+        const phoneRegex = /^\d{10}$/; // Ensure 10 digits
         if (!phoneRegex.test(valueToVerify)) {
             toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
             return;
@@ -220,9 +224,12 @@ export default function ProfileBasicInfoPage() {
   const handleVerifyOtpForUpdate = async () => {
     if (!editingField || !otp || otp.length !== 6) {
       toast({ title: 'Invalid OTP', description: 'Please enter a valid 6-digit OTP.', variant: 'destructive' });
+      setOtpError(true); // Set error for invalid OTP format
       return;
     }
     setIsVerifyingOtp(true);
+    setOtpError(false); // Reset error before verification attempt
+
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     if (otp === '123456') {
@@ -240,8 +247,10 @@ export default function ProfileBasicInfoPage() {
       setEditingField(null);
       setOtpSent(false);
       setOtp('');
+      setOtpError(false);
     } else {
       toast({ title: 'Verification Failed', description: 'Incorrect OTP. Please try again.', variant: 'destructive' });
+      setOtpError(true); // Set error for incorrect OTP
     }
     setIsVerifyingOtp(false);
   };
@@ -335,8 +344,12 @@ export default function ProfileBasicInfoPage() {
                     maxLength={6}
                     placeholder="6-digit OTP"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="text-foreground"
+                    onChange={(e) => {
+                        setOtp(e.target.value.replace(/[^0-9]/g, ''));
+                        setOtpError(false);
+                    }}
+                    onFocus={() => setOtpError(false)}
+                    className={cn("text-foreground", otpError && "border-destructive focus-visible:ring-destructive")}
                     disabled={isVerifyingOtp}
                   />
                    <div className="flex gap-2">
@@ -392,8 +405,12 @@ export default function ProfileBasicInfoPage() {
                     maxLength={6}
                     placeholder="6-digit OTP"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="text-foreground"
+                    onChange={(e) => {
+                        setOtp(e.target.value.replace(/[^0-9]/g, ''));
+                        setOtpError(false);
+                    }}
+                    onFocus={() => setOtpError(false)}
+                    className={cn("text-foreground", otpError && "border-destructive focus-visible:ring-destructive")}
                     disabled={isVerifyingOtp}
                   />
                   <div className="flex gap-2">
@@ -449,8 +466,12 @@ export default function ProfileBasicInfoPage() {
                     maxLength={6}
                     placeholder="6-digit OTP"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="text-foreground"
+                     onChange={(e) => {
+                        setOtp(e.target.value.replace(/[^0-9]/g, ''));
+                        setOtpError(false);
+                    }}
+                    onFocus={() => setOtpError(false)}
+                    className={cn("text-foreground", otpError && "border-destructive focus-visible:ring-destructive")}
                     disabled={isVerifyingOtp}
                   />
                   <div className="flex gap-2">
@@ -514,5 +535,7 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
+
+    
 
     
