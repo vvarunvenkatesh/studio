@@ -100,6 +100,7 @@ export default function LoginPage() {
       toast({
         title: 'Login Successful',
         description: redirectPath ? 'Redirecting you back...' : 'Redirecting you to the homepage...',
+        variant: 'success', // Use the new success variant
       });
       window.location.href = redirectPath || '/';
     } else {
