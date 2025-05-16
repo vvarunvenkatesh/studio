@@ -8,29 +8,40 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, Edit2, Camera, Loader2, KeyRound, ShieldCheck, X } from 'lucide-react';
+import { User, LogOut, Edit2, Camera, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+
+interface UserData {
+  name: string;
+  email: string;
+  contact: string;
+  gender: 'male' | 'female' | 'other' | string;
+  aadhaarNumber?: string;
+}
 
 export default function ProfileBasicInfoPage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isSavingImage, setIsSavingImage] = React.useState(false);
 
-  const [userData, setUserData] = React.useState({
+  const [userData, setUserData] = React.useState<UserData>({
     name: 'Alex Doe',
     email: 'alex.doe@example.com',
     contact: '+1 123 456 7890',
     gender: 'other',
+    aadhaarNumber: '',
   });
 
   const [profileImage, setProfileImage] = React.useState<string | null>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
 
   // Editing states
-  const [editingField, setEditingField] = React.useState<'email' | 'contact' | null>(null);
-  const [tempEmail, setTempEmail] = React.useState(userData.email);
-  const [tempContact, setTempContact] = React.useState(userData.contact);
+  const [isEditingName, setIsEditingName] = React.useState(false);
+  const [tempName, setTempName] = React.useState(userData.name);
+
+  const [editingField, setEditingField] = React.useState<'email' | 'contact' | 'aadhaar' | null>(null);
+  const [tempValue, setTempValue] = React.useState(''); // For email, contact, aadhaar
   const [otp, setOtp] = React.useState('');
   const [otpSent, setOtpSent] = React.useState(false);
   const [isSendingOtp, setIsSendingOtp] = React.useState(false);
@@ -41,24 +52,38 @@ export default function ProfileBasicInfoPage() {
     if (typeof window !== 'undefined') {
       const storedImage = localStorage.getItem('profileImageUrl');
       setProfileImage(storedImage);
-      // In a real app, fetch user data from backend
+      
       const storedUserData = localStorage.getItem('userData');
       if (storedUserData) {
-          const parsedData = JSON.parse(storedUserData);
-          setUserData(parsedData);
-          setTempEmail(parsedData.email);
-          setTempContact(parsedData.contact);
+          try {
+            const parsedData = JSON.parse(storedUserData);
+            setUserData(prevData => ({ ...prevData, ...parsedData }));
+            setTempName(parsedData.name || prevData.name);
+            // Initialize tempValue based on which field might be edited first if needed,
+            // or set it when an edit button is clicked.
+          } catch (e) {
+            console.error("Failed to parse user data from localStorage", e);
+            // If parsing fails, save initial default userData
+            localStorage.setItem('userData', JSON.stringify(userData));
+            setTempName(userData.name);
+          }
       } else {
-          // Save initial userData if not present
           localStorage.setItem('userData', JSON.stringify(userData));
+          setTempName(userData.name);
       }
     }
-  }, []);
+  }, []); // Empty dependency array to run once on mount
+
+  const saveUserDataToLocalStorage = (updatedData: UserData) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('userData', JSON.stringify(updatedData));
+    }
+  };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
         toast({ title: "Image Too Large", description: "Please select an image smaller than 2MB.", variant: "destructive" });
         return;
       }
@@ -81,13 +106,13 @@ export default function ProfileBasicInfoPage() {
       return;
     }
     setIsSavingImage(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
     try {
       if (typeof window !== 'undefined') {
         localStorage.setItem('profileImageUrl', profileImage);
         window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: profileImage, storageArea: localStorage }));
         toast({ title: "Profile Picture Updated", description: "Your new profile picture has been saved." });
-        setSelectedFile(null);
+        setSelectedFile(null); // Clear selected file after save
       }
     } catch (error) {
       console.error("Failed to save profile image:", error);
@@ -105,7 +130,7 @@ export default function ProfileBasicInfoPage() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('profileImageUrl');
-      localStorage.removeItem('userData'); // Clear user data on logout
+      localStorage.removeItem('userData');
       window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
       toast({ title: "Logged Out", description: "You have been successfully logged out.", variant: "success" });
@@ -113,55 +138,85 @@ export default function ProfileBasicInfoPage() {
     }
   };
 
-  const handleEditField = (field: 'email' | 'contact') => {
+  const handleEditName = () => {
+    setIsEditingName(true);
+    setTempName(userData.name);
+  };
+
+  const handleSaveName = () => {
+    if (tempName.trim() === '') {
+        toast({ title: "Invalid Name", description: "Name cannot be empty.", variant: "destructive" });
+        return;
+    }
+    const updatedUserData = { ...userData, name: tempName };
+    setUserData(updatedUserData);
+    saveUserDataToLocalStorage(updatedUserData);
+    setIsEditingName(false);
+    toast({ title: "Name Updated", description: "Your name has been saved." });
+  };
+
+  const handleCancelEditName = () => {
+    setIsEditingName(false);
+    setTempName(userData.name);
+  };
+
+  const handleGenderChange = (value: string) => {
+    const updatedUserData = { ...userData, gender: value };
+    setUserData(updatedUserData);
+    saveUserDataToLocalStorage(updatedUserData); // Save gender change immediately or queue for a general save
+    toast({ title: "Gender Updated", description: "Your gender selection has been updated." });
+  };
+
+  const handleEditField = (field: 'email' | 'contact' | 'aadhaar') => {
     setEditingField(field);
     setOtp('');
     setOtpSent(false);
-    if (field === 'email') setTempEmail(userData.email);
-    if (field === 'contact') setTempContact(userData.contact);
+    if (field === 'email') setTempValue(userData.email);
+    if (field === 'contact') setTempValue(userData.contact);
+    if (field === 'aadhaar') setTempValue(userData.aadhaarNumber || '');
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelEditField = () => {
     setEditingField(null);
     setOtp('');
     setOtpSent(false);
-    setTempEmail(userData.email);
-    setTempContact(userData.contact);
+    // tempValue will reset when handleEditField is called next
   };
 
   const handleSendOtpForUpdate = async () => {
     if (!editingField) return;
 
-    let valueToVerify = '';
+    let valueToVerify = tempValue;
+    let originalValue = '';
+    let validationRegex: RegExp | null = null;
+    let validationMessage = '';
+
     if (editingField === 'email') {
-        valueToVerify = tempEmail;
-        if (valueToVerify === userData.email) {
-            toast({title: "No Change", description: "Email is the same as current.", variant: "default"});
-            setEditingField(null);
-            return;
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(valueToVerify)) {
-            toast({title: "Invalid Email", description: "Please enter a valid email address.", variant: "destructive"});
-            return;
-        }
+        originalValue = userData.email;
+        validationRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        validationMessage = "Please enter a valid email address.";
     } else if (editingField === 'contact') {
-        valueToVerify = tempContact;
-        if (valueToVerify === userData.contact) {
-            toast({title: "No Change", description: "Contact number is the same as current.", variant: "default"});
-            setEditingField(null);
-            return;
-        }
-        const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-         if (!phoneRegex.test(valueToVerify)) {
-            toast({title: "Invalid Phone Number", description: "Please enter a valid phone number.", variant: "destructive"});
-            return;
-        }
+        originalValue = userData.contact;
+        validationRegex = /^\+?[1-9]\d{1,14}$/;
+        validationMessage = "Please enter a valid phone number.";
+    } else if (editingField === 'aadhaar') {
+        originalValue = userData.aadhaarNumber || '';
+        validationRegex = /^\d{12}$/;
+        validationMessage = "Aadhaar number must be 12 digits.";
+    }
+
+    if (valueToVerify === originalValue && editingField !== 'aadhaar' && userData.aadhaarNumber) { // Allow re-verification for existing Aadhaar
+        toast({title: "No Change", description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} is the same as current.`, variant: "default"});
+        setEditingField(null);
+        return;
+    }
+    if (validationRegex && !validationRegex.test(valueToVerify)) {
+        toast({title: `Invalid ${editingField.charAt(0).toUpperCase() + editingField.slice(1)}`, description: validationMessage, variant: "destructive"});
+        return;
     }
 
     setIsSendingOtp(true);
-    // Simulate API call to send OTP
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
     setOtpSent(true);
     toast({
       title: 'OTP Sent (Simulation)',
@@ -177,21 +232,20 @@ export default function ProfileBasicInfoPage() {
       return;
     }
     setIsVerifyingOtp(true);
-    // Simulate API call to verify OTP
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
 
     if (otp === '123456') { // Simulated OTP check
       const updatedUserData = { ...userData };
       if (editingField === 'email') {
-        updatedUserData.email = tempEmail;
+        updatedUserData.email = tempValue;
       } else if (editingField === 'contact') {
-        updatedUserData.contact = tempContact;
+        updatedUserData.contact = tempValue;
+      } else if (editingField === 'aadhaar') {
+        updatedUserData.aadhaarNumber = tempValue;
       }
       setUserData(updatedUserData);
-      if (typeof window !== 'undefined') {
-          localStorage.setItem('userData', JSON.stringify(updatedUserData));
-      }
-      toast({ title: 'Update Successful', description: `${editingField} has been updated.`, variant: 'success' });
+      saveUserDataToLocalStorage(updatedUserData);
+      toast({ title: 'Update Successful', description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} has been updated.`, variant: 'success' });
       setEditingField(null);
       setOtpSent(false);
       setOtp('');
@@ -200,7 +254,6 @@ export default function ProfileBasicInfoPage() {
     }
     setIsVerifyingOtp(false);
   };
-
 
   return (
     <Card className="w-full max-w-2xl bg-card">
@@ -218,20 +271,45 @@ export default function ProfileBasicInfoPage() {
           <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
         </div>
         <div className="text-center sm:text-left">
-          <CardTitle className="text-foreground">Basic Information</CardTitle>
-          <CardDescription className="text-muted-foreground">View and manage your profile details.</CardDescription>
+          <CardTitle className="text-foreground">User Profile</CardTitle>
+          {/* Removed CardDescription here */}
           {selectedFile && (
-            <Button size="sm" onClick={handleImageSave} disabled={isSavingImage} className="mt-2 gap-2">
-              {isSavingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit2 className="h-4 w-4" />}
+            <Button size="sm" onClick={handleImageSave} disabled={isSavingImage} className="mt-2 gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+              {isSavingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isSavingImage ? 'Saving...' : 'Save Picture'}
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-1">
+      <CardContent className="space-y-6 pt-6"> {/* Added pt-6 for spacing */}
+        {/* Name Field */}
+        <div className="space-y-2">
           <Label htmlFor="name" className="text-foreground">Name</Label>
-          <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground" />
+          {isEditingName ? (
+            <div className="space-y-2">
+              <Input
+                id="name"
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                className="text-foreground"
+              />
+              <div className="flex gap-2">
+                <Button onClick={handleSaveName} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Save className="h-4 w-4" /> Save
+                </Button>
+                <Button variant="ghost" onClick={handleCancelEditName} className="gap-2">
+                  <X className="h-4 w-4" /> Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Input id="name" value={userData.name} readOnly className="bg-muted/50 text-foreground flex-grow" />
+              <Button variant="outline" size="icon" onClick={handleEditName} aria-label="Edit Name">
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Email Field */}
@@ -242,18 +320,18 @@ export default function ProfileBasicInfoPage() {
               <Input
                 id="email"
                 type="email"
-                value={tempEmail}
-                onChange={(e) => setTempEmail(e.target.value)}
+                value={tempValue}
+                onChange={(e) => setTempValue(e.target.value)}
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
               {!otpSent ? (
                  <div className="flex gap-2">
-                    <Button onClick={handleSendOtpForUpdate} disabled={isSendingOtp || tempEmail === userData.email} className="gap-2">
+                    <Button onClick={handleSendOtpForUpdate} disabled={isSendingOtp || tempValue === userData.email} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
                       {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                       {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
                     </Button>
-                    <Button variant="ghost" onClick={handleCancelEdit} className="gap-2"> <X className="h-4 w-4" /> Cancel</Button>
+                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2"> <X className="h-4 w-4" /> Cancel</Button>
                  </div>
               ) : (
                 <div className="space-y-2">
@@ -270,11 +348,11 @@ export default function ProfileBasicInfoPage() {
                     disabled={isVerifyingOtp}
                   />
                    <div className="flex gap-2">
-                      <Button onClick={handleVerifyOtpForUpdate} disabled={isVerifyingOtp || otp.length !== 6} className="gap-2">
+                      <Button onClick={handleVerifyOtpForUpdate} disabled={isVerifyingOtp || otp.length !== 6} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
                         {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                         {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
                       </Button>
-                      <Button variant="ghost" onClick={handleCancelEdit} disabled={isVerifyingOtp} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
                    </div>
                 </div>
               )}
@@ -297,18 +375,18 @@ export default function ProfileBasicInfoPage() {
               <Input
                 id="contact"
                 type="tel"
-                value={tempContact}
-                onChange={(e) => setTempContact(e.target.value)}
+                value={tempValue}
+                onChange={(e) => setTempValue(e.target.value)}
                 className="text-foreground"
                 disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
                {!otpSent ? (
                  <div className="flex gap-2">
-                    <Button onClick={handleSendOtpForUpdate} disabled={isSendingOtp || tempContact === userData.contact} className="gap-2">
+                    <Button onClick={handleSendOtpForUpdate} disabled={isSendingOtp || tempValue === userData.contact} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
                       {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                       {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
                     </Button>
-                    <Button variant="ghost" onClick={handleCancelEdit} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
                  </div>
                 ) : (
                 <div className="space-y-2">
@@ -325,11 +403,11 @@ export default function ProfileBasicInfoPage() {
                     disabled={isVerifyingOtp}
                   />
                   <div className="flex gap-2">
-                      <Button onClick={handleVerifyOtpForUpdate} disabled={isVerifyingOtp || otp.length !== 6} className="gap-2">
+                      <Button onClick={handleVerifyOtpForUpdate} disabled={isVerifyingOtp || otp.length !== 6} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
                         {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                         {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
                       </Button>
-                      <Button variant="ghost" onClick={handleCancelEdit} disabled={isVerifyingOtp} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
                   </div>
                 </div>
               )}
@@ -344,25 +422,95 @@ export default function ProfileBasicInfoPage() {
           )}
         </div>
 
+        {/* Aadhaar Field */}
+        <div className="space-y-2">
+          <Label htmlFor="aadhaar" className="text-foreground">Aadhaar Number</Label>
+          {editingField === 'aadhaar' ? (
+             <div className="space-y-2">
+              <Input
+                id="aadhaar"
+                type="text"
+                placeholder="Enter 12-digit Aadhaar"
+                value={tempValue}
+                maxLength={12}
+                onChange={(e) => setTempValue(e.target.value.replace(/[^0-9]/g, ''))}
+                className="text-foreground"
+                disabled={otpSent || isSendingOtp || isVerifyingOtp}
+              />
+               {!otpSent ? (
+                 <div className="flex gap-2">
+                    <Button onClick={handleSendOtpForUpdate} disabled={isSendingOtp || (tempValue === userData.aadhaarNumber && !!userData.aadhaarNumber)} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                      {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                      {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
+                    </Button>
+                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                 </div>
+                ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="aadhaarOtp" className="text-foreground">Enter OTP for Aadhaar</Label>
+                  <Input
+                    id="aadhaarOtp"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                    className="text-foreground"
+                    disabled={isVerifyingOtp}
+                  />
+                  <div className="flex gap-2">
+                      <Button onClick={handleVerifyOtpForUpdate} disabled={isVerifyingOtp || otp.length !== 6} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                        {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                        {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
+                      </Button>
+                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2"><X className="h-4 w-4" />Cancel</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Input
+                id="aadhaarDisplay"
+                value={userData.aadhaarNumber ? `********${userData.aadhaarNumber.slice(-4)}` : 'Not Provided'}
+                readOnly
+                className="bg-muted/50 text-foreground flex-grow"
+              />
+              <Button variant="outline" size="icon" onClick={() => handleEditField('aadhaar')} aria-label={userData.aadhaarNumber ? "Edit Aadhaar" : "Add Aadhaar"}>
+                 {userData.aadhaarNumber ? <Edit2 className="h-4 w-4" /> : <Fingerprint className="h-4 w-4" />}
+              </Button>
+            </div>
+          )}
+           <FormDescription className="text-xs text-muted-foreground">
+             For verification purposes only. Your Aadhaar number will be masked.
+           </FormDescription>
+        </div>
+
+        {/* Gender Field */}
         <div className="space-y-1">
           <Label className="text-foreground">Gender</Label>
-          <RadioGroup defaultValue={userData.gender} className="flex items-center space-x-4 pt-2" disabled>
+          <RadioGroup
+            value={userData.gender}
+            onValueChange={handleGenderChange} // Directly update state and save
+            className="flex items-center space-x-4 pt-2"
+          >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="male" id="male" />
-              <Label htmlFor="male" className="text-foreground">Male</Label>
+              <Label htmlFor="male" className="text-foreground font-normal">Male</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="female" id="female" />
-              <Label htmlFor="female" className="text-foreground">Female</Label>
+              <Label htmlFor="female" className="text-foreground font-normal">Female</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="other" id="other" />
-              <Label htmlFor="other" className="text-foreground">Other</Label>
+              <Label htmlFor="other" className="text-foreground font-normal">Other</Label>
             </div>
           </RadioGroup>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end border-t pt-4">
+      <CardFooter className="flex justify-end border-t pt-6 mt-4"> {/* Added mt-4 for spacing */}
         <Button variant="destructive" onClick={handleLogout} className="gap-2">
           <LogOut className="h-4 w-4" />
           Logout
