@@ -12,6 +12,10 @@ export interface Ticket {
    */
   type: 'train' | 'event' | 'movie' | 'bus' | 'sports';
   /**
+   * Optional user-defined title for the ticket, especially for events, movies, sports.
+   */
+  title?: string;
+  /**
    * A description of the ticket.
    */
   description: string;
@@ -96,6 +100,7 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
                          sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
                          sellerContactEmail: ticket.sellerContactEmail || undefined,
                          sellerContactPhone: ticket.sellerContactPhone || undefined,
+                         title: ticket.title || undefined, // Ensure title is handled
                       }));
                 }
                 return parsedData as T;
@@ -113,6 +118,7 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
           sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
           sellerContactEmail: ticket.sellerContactEmail || undefined,
           sellerContactPhone: ticket.sellerContactPhone || undefined,
+          title: ticket.title || undefined, // Ensure title is handled
       })) as T;
     }
     return defaultValue;
@@ -185,7 +191,8 @@ const getDefaultTickets = (): Ticket[] => [
       {
         id: '2',
         type: 'event',
-        description: 'Concert ticket - Rock Band Live, General Admission',
+        title: 'Rock Band Live Concert',
+        description: 'General Admission for the annual Rock Fest',
         price: 750,
         date: '2024-10-22',
         time: '20:00',
@@ -199,7 +206,8 @@ const getDefaultTickets = (): Ticket[] => [
        {
         id: '3',
         type: 'movie',
-        description: 'Movie Premiere - Sci-Fi Adventure, Seat J12',
+        title: 'Sci-Fi Adventure - Premiere Night',
+        description: 'Exclusive premiere screening, Seat J12',
         price: 250,
         date: '2024-09-10',
         time: '19:00',
@@ -245,6 +253,7 @@ const getDefaultTickets = (): Ticket[] => [
        {
         id: '6',
         type: 'sports',
+        title: 'Champions League Final Match',
         description: 'Basketball Game - Section 102, Row 5, Seat 3',
         price: 900,
         date: '2024-11-05',
@@ -299,10 +308,9 @@ export async function getAvailableTickets(filters?: {
   endDate?: string;
   searchTerm?: string;
   ticketId?: string;
-  location?: string; // Added location filter
+  location?: string;
 }): Promise<Ticket[]> {
-  await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async operation
-
+  // Always load the latest from localStorage at the start of the function
   const allCurrentTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
 
   if (filters?.ticketId) {
@@ -330,8 +338,8 @@ export async function getAvailableTickets(filters?: {
     const toLower = filters.toCity.toLowerCase();
     filteredTickets = filteredTickets.filter(ticket => ticket.toCity?.toLowerCase().includes(toLower));
   }
-  
-  if (filters?.location) { // Added filter for specific location
+
+  if (filters?.location && (filters.category === 'movie' || filters.category === 'event' || filters.category === 'sports')) {
     const locationLower = filters.location.toLowerCase();
     filteredTickets = filteredTickets.filter(ticket => ticket.location?.toLowerCase().includes(locationLower));
   }
@@ -355,8 +363,9 @@ export async function getAvailableTickets(filters?: {
   if (filters?.searchTerm) {
     const term = filters.searchTerm.toLowerCase();
     filteredTickets = filteredTickets.filter(ticket =>
+        (ticket.title && ticket.title.toLowerCase().includes(term)) || // Search by title
         ticket.description.toLowerCase().includes(term) ||
-        (ticket.location && ticket.location.toLowerCase().includes(term)) || // searchTerm can still search location
+        (ticket.location && ticket.location.toLowerCase().includes(term)) ||
         (ticket.fromCity && ticket.fromCity.toLowerCase().includes(term)) ||
         (ticket.toCity && ticket.toCity.toLowerCase().includes(term)) ||
         (ticket.type.toLowerCase().includes(term))
@@ -367,14 +376,13 @@ export async function getAvailableTickets(filters?: {
 }
 
 export async function getTicketById(ticketId: string): Promise<Ticket | null> {
-  await new Promise(resolve => setTimeout(resolve, 50));
+  // Always load the latest from localStorage
   const currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
   const ticket = currentMarketplaceTickets.find(t => t.id === ticketId);
   return ticket || null;
 }
 
-export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId' | 'sellerVerified' | 'sellerContactEmail' | 'sellerContactPhone'> & { originalTicketDataUri?: string }): Promise<Ticket> {
-  await new Promise(resolve => setTimeout(resolve, 100));
+export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId' | 'sellerVerified' | 'sellerContactEmail' | 'sellerContactPhone'> & { originalTicketDataUri?: string, title?: string }): Promise<Ticket> {
 
   const currentUserId = getSimulatedCurrentUserId();
   let sellerIsVerified = false;
@@ -404,6 +412,7 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
     sellerVerified: sellerIsVerified,
     sellerContactEmail: sellerEmail,
     sellerContactPhone: sellerPhone,
+    title: ticketData.title || undefined,
   };
 
   let currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
@@ -424,7 +433,6 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
 }
 
 export async function updateTicket(ticketId: string, updates: Partial<Ticket>): Promise<Ticket | null> {
-  await new Promise(resolve => setTimeout(resolve, 50));
   let currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
   const ticketIndex = currentMarketplaceTickets.findIndex(t => t.id === ticketId);
 
@@ -439,7 +447,6 @@ export async function updateTicket(ticketId: string, updates: Partial<Ticket>): 
 
 
 export async function purchaseTicket(ticketId: string): Promise<{ success: boolean; message: string; ticket?: Ticket }> {
-  await new Promise(resolve => setTimeout(resolve, 300));
 
   const buyerId = getSimulatedCurrentUserId();
   if (buyerId === 'anonymousUser') {
@@ -488,7 +495,6 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
 }
 
 export async function deleteTicket(ticketId: string): Promise<{ success: boolean; message: string }> {
-    await new Promise(resolve => setTimeout(resolve, 200));
 
     const currentUserId = getSimulatedCurrentUserId();
     if (currentUserId === 'anonymousUser') {
@@ -518,7 +524,7 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
 export function getSimulatedCurrentUserId(): string {
     if (typeof window !== 'undefined') {
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const userId = localStorage.getItem('userId'); 
+        const userId = localStorage.getItem('userId');
         if (isLoggedIn && userId) {
             return userId;
         }
@@ -553,6 +559,7 @@ if (typeof window !== 'undefined') {
                      sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
                      sellerContactEmail: ticket.sellerContactEmail || undefined,
                      sellerContactPhone: ticket.sellerContactPhone || undefined,
+                     title: ticket.title || undefined, // Ensure title is handled
                  }));
                  console.log('Marketplace tickets updated from storage event.');
              } catch (e) {

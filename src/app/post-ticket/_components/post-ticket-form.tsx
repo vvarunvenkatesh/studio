@@ -36,8 +36,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import type { Ticket } from '@/services/ticket-marketplace';
 import { postTicket as postTicketService } from '@/services/ticket-marketplace'; // Import service directly
 
-const formSchema = z.object({
+const formSchemaBase = z.object({
   type: z.enum(['train', 'event', 'movie', 'bus', 'sports'], { required_error: 'Ticket type is required.' }),
+  title: z.string().optional(), // Title is optional by default
   description: z
     .string()
     .min(10, { message: 'Description must be at least 10 characters.' })
@@ -54,22 +55,39 @@ const formSchema = z.object({
   fromCity: z.string().optional(),
   toCity: z.string().optional(),
   originalTicketDataUri: z.string().optional(),
-}).refine(data => {
-  if ((data.type === 'event' || data.type === 'movie' || data.type === 'sports') && !data.location) {
-    return false;
+});
+
+const formSchema = formSchemaBase.superRefine((data, ctx) => {
+  if ((data.type === 'event' || data.type === 'movie' || data.type === 'sports')) {
+    if (!data.title || data.title.trim().length < 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Title is required and must be at least 3 characters for Event, Movie, or Sports tickets.',
+        path: ['title'],
+      });
+    }
+    if (data.title && data.title.trim().length > 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Title must not exceed 100 characters.',
+        path: ['title'],
+      });
+    }
+    if (!data.location || data.location.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Location / Venue is required for Event, Movie, or Sports tickets.',
+        path: ['location'],
+      });
+    }
   }
-  return true;
-}, {
-  message: 'Location / Venue is required for Event, Movie, or Sports tickets.',
-  path: ['location'],
-}).refine(data => {
-  if ((data.type === 'train' || data.type === 'bus') && (!data.fromCity || !data.toCity)) {
-    return false;
+  if ((data.type === 'train' || data.type === 'bus') && (!data.fromCity || data.fromCity.trim() === '' || !data.toCity || data.toCity.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Departure and Destination cities are required for Train or Bus tickets.',
+      path: ['fromCity'], // Or ['toCity'] or make it a general form error
+    });
   }
-  return true;
-}, {
-   message: 'Departure and Destination cities are required for Train or Bus tickets.',
-   path: ['fromCity'],
 });
 
 
@@ -83,7 +101,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParamsHook = useNextSearchParams(); 
+  const searchParamsHook = useNextSearchParams();
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -112,6 +130,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: undefined,
+      title: '',
       description: '',
       price: undefined,
       date: undefined,
@@ -131,6 +150,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     }
     if (ticketType === 'train' || ticketType === 'bus') {
        form.setValue('location', '');
+       form.setValue('title', ''); // Clear title for non-event types
     } else if (ticketType === 'event' || ticketType === 'movie' || ticketType === 'sports') {
        form.setValue('fromCity', '');
        form.setValue('toCity', '');
@@ -239,20 +259,19 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     }
     setIsSubmitting(true);
     try {
-      // Prepare payload for the service function
       const ticketPayloadForService = {
         type: values.type,
+        title: (values.type === 'movie' || values.type === 'event' || values.type === 'sports') ? values.title : undefined,
         description: values.description,
         price: values.price,
-        date: format(values.date, 'yyyy-MM-dd'), // Format date for service
+        date: format(values.date, 'yyyy-MM-dd'),
         time: values.time,
-        location: values.location || '', // Ensure location is string, even if optional and not provided for some types
+        location: values.location || '',
         fromCity: values.fromCity,
         toCity: values.toCity,
         originalTicketDataUri: values.originalTicketDataUri,
       };
 
-      // Call the service function directly
       const createdTicket = await postTicketService(ticketPayloadForService);
 
       if (!createdTicket || !createdTicket.id) {
@@ -261,7 +280,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
 
       toast({
         title: 'Ticket Posted!',
-        description: `Your ${createdTicket.type} ticket for ${createdTicket.location || `${createdTicket.fromCity} to ${createdTicket.toCity}`} has been successfully listed.`,
+        description: `Your ${createdTicket.title || createdTicket.type} ticket for ${createdTicket.location || `${createdTicket.fromCity} to ${createdTicket.toCity}`} has been successfully listed.`,
         duration: 5000,
       });
       form.reset();
@@ -269,7 +288,6 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
        if (fileInputRef.current) {
           fileInputRef.current.value = '';
        }
-      // Navigate after a short delay to allow toast to be seen
       setTimeout(() => {
           router.push(`/tickets?category=${createdTicket.type}`);
       }, 1500);
@@ -326,6 +344,30 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             </FormItem>
           )}
         />
+
+        {(ticketType === 'movie' || ticketType === 'event' || ticketType === 'sports') && (
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-foreground">Title (e.g., Event/Movie/Match Name) *</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., Avengers Premiere, Rock Fest, Champions Final"
+                    className="text-foreground"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription className="text-muted-foreground">
+                  Provide a specific title for your event, movie, or sports ticket.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
           name="description"
@@ -568,7 +610,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
          )}
          <Button
             type="submit"
-            className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90" // Using primary theme color for this main action
+            className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={isSubmitting || isCheckingGrammar}>
           {isSubmitting ? (
             <>
@@ -601,5 +643,3 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     </>
   );
 }
-
-    

@@ -5,9 +5,9 @@ import * as React from 'react';
 import type { Ticket } from '@/services/ticket-marketplace';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
-import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail, Phone } from 'lucide-react'; // Changed DollarSign to IndianRupeeIcon
+import { Button, buttonVariants } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail, Phone } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -77,8 +77,11 @@ export function TicketCard({
   const CategorySpecificIcon = categoryIconMap[ticketProp.type] || TicketIconLucide;
 
   const isTicketSold = ticketProp.status === 'sold';
-  // Determine actual seller status based on card's internal user ID understanding, mainly for manage variant
   const actualIsSeller = !!cardInternalCurrentUserId && ticketProp.sellerId === cardInternalCurrentUserId && cardInternalCurrentUserId !== 'anonymousUser';
+
+  const cardTitle = (ticketProp.type === 'movie' || ticketProp.type === 'event' || ticketProp.type === 'sports') && ticketProp.title
+    ? ticketProp.title
+    : `${ticketProp.type.charAt(0).toUpperCase() + ticketProp.type.slice(1)} Ticket`;
 
 
   const redirectToLogin = () => {
@@ -95,33 +98,32 @@ export function TicketCard({
         setShowLoginDialog(true);
         return;
     }
-    // Use propIsSeller for browse view, actualIsSeller for stricter check if needed elsewhere
     const sellerCheck = variant === 'browse' ? propIsSeller : actualIsSeller;
     if (isTicketSold || sellerCheck) return;
 
     setIsPurchasing(true);
     try {
-      const response = await fetch('/api/orders/purchase', {
+      // Directly call service for purchase simulation (no API for this in localStorage approach)
+      const result = await fetch('/api/orders/purchase', { // Still using API for purchase to simulate backend interaction
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticketProp.id }),
       });
 
-      const result = await response.json();
+      const responseData = await result.json();
 
-      if (response.ok && result.success && result.ticket) {
+      if (result.ok && responseData.success && responseData.ticket) {
         let contactMessage = "Contact the seller ";
-        if (result.ticket.sellerContactEmail && result.ticket.sellerContactPhone) {
-            contactMessage += `at ${result.ticket.sellerContactEmail} or by phone at ${result.ticket.sellerContactPhone}`;
-        } else if (result.ticket.sellerContactEmail) {
-            contactMessage += `at ${result.ticket.sellerContactEmail}`;
-        } else if (result.ticket.sellerContactPhone) {
-            contactMessage += `by phone at ${result.ticket.sellerContactPhone}`;
+        if (responseData.ticket.sellerContactEmail && responseData.ticket.sellerContactPhone) {
+            contactMessage += `at ${responseData.ticket.sellerContactEmail} or by phone at ${responseData.ticket.sellerContactPhone}`;
+        } else if (responseData.ticket.sellerContactEmail) {
+            contactMessage += `at ${responseData.ticket.sellerContactEmail}`;
+        } else if (responseData.ticket.sellerContactPhone) {
+            contactMessage += `by phone at ${responseData.ticket.sellerContactPhone}`;
         } else {
             contactMessage += "using their listed contact details";
         }
         contactMessage += " to complete your purchase.";
-
 
         toast({
           title: 'Purchase Initiated!',
@@ -130,17 +132,17 @@ export function TicketCard({
           duration: 7000,
         });
         if (onPurchaseSuccess) {
-          onPurchaseSuccess(result.ticket.id);
+          onPurchaseSuccess(responseData.ticket.id);
         }
       } else {
         toast({
           title: 'Purchase Failed',
-          description: result.message || 'Could not initiate purchase for the ticket.',
+          description: responseData.message || 'Could not initiate purchase for the ticket.',
           variant: 'destructive',
         });
-        if (result.ticket && result.message?.includes('already sold')) {
+        if (responseData.ticket && responseData.message?.includes('already sold')) {
            if (onPurchaseSuccess) {
-              onPurchaseSuccess(result.ticket.id);
+              onPurchaseSuccess(responseData.ticket.id);
            }
         }
       }
@@ -283,7 +285,7 @@ export function TicketCard({
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500 px-2 py-1"
-      style={{ backgroundColor: '#FFCE54' }}
+      style={{ backgroundColor: '#FFCE54' }} // Restored original color
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -302,7 +304,7 @@ export function TicketCard({
            <div className="flex items-center mr-2">
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
              <CardTitle className="text-lg font-semibold capitalize truncate text-foreground">
-               {ticketProp.type} Ticket
+               {cardTitle}
              </CardTitle>
              {ticketProp.sellerVerified && (
                 <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-primary/30 gap-1 text-xs px-1.5 py-0.5 shrink-0">
@@ -334,7 +336,7 @@ export function TicketCard({
          {(ticketProp.type === 'train' || ticketProp.type === 'bus') && ticketProp.location && (!ticketProp.fromCity || !ticketProp.toCity) && (
              <div className="flex items-center text-xs text-muted-foreground">
                 <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{ticketProp.location}</span> {/* Platform/Gate for transport */}
+                <span className="truncate">{ticketProp.location}</span>
              </div>
           )}
          <div className="flex items-center">
@@ -345,7 +347,6 @@ export function TicketCard({
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{ticketProp.time}</span>
          </div>
-         {/* Seller Contact Information Section */}
          {!isTicketSold && !(propIsSeller && variant === 'browse') && (ticketProp.sellerContactEmail || ticketProp.sellerContactPhone) && (
              <div className="mt-2 pt-2 border-t border-dashed space-y-1">
                 {ticketProp.sellerContactEmail && (
@@ -389,14 +390,14 @@ export function TicketCard({
              )
          ) : variant === 'manage' ? (
              renderCancelButton()
-         ) : propIsSeller ? (
+         ) : propIsSeller ? ( // Use propIsSeller for browse view, true if current user is the seller of this ticket
              renderPendingIndicator()
          ) : (
              <Button
                  size="sm"
                  onClick={handlePurchase}
                  disabled={isPurchasing}
-                 aria-label={`Buy ${ticketProp.type} ticket for ₹${ticketProp.price.toFixed(2)}`}
+                 aria-label={`Buy ${ticketProp.title || ticketProp.type} ticket for ₹${ticketProp.price.toFixed(2)}`}
                  className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
              >
                  {isPurchasing ? (
