@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck } from 'lucide-react';
+import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -20,7 +21,7 @@ interface TicketCardProps {
   onCancelListing?: (ticketId: string) => Promise<void> | void;
   isCancelling?: boolean;
   className?: string;
-  isSeller?: boolean; 
+  isSeller?: boolean;
 }
 
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
@@ -38,7 +39,7 @@ export function TicketCard({
     onCancelListing,
     isCancelling,
     className,
-    isSeller: propIsSeller 
+    isSeller: propIsSeller
 }: TicketCardProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -65,14 +66,14 @@ export function TicketCard({
               setIsLoggedIn(newLoggedInStatus);
               setCurrentUserIdState(getSimulatedCurrentUserId());
           }
-           if (event.key === 'marketplaceTickets') { 
+           if (event.key === 'marketplaceTickets') {
                 const updatedTickets: Ticket[] = event.newValue ? JSON.parse(event.newValue) : [];
                 const thisTicketUpdate = updatedTickets.find(t => t.id === currentTicket.id);
                 if (thisTicketUpdate) {
                     setCurrentTicket(thisTicketUpdate);
                     setIsSold(thisTicketUpdate.status === 'sold');
                 } else {
-                    setIsSold(true); 
+                    setIsSold(true); // If ticket no longer in marketplace, assume sold or removed
                 }
             }
       };
@@ -95,8 +96,10 @@ export function TicketCard({
 
 
   const redirectToLogin = () => {
-    const currentRedirectPath = pathname + '?' + searchParamsHook.toString();
-    router.push(`/login?redirect=${encodeURIComponent(currentRedirectPath)}`);
+    // If on tickets page, include current search params for redirect
+    // Otherwise, just redirect to login
+    const baseRedirectPath = pathname.startsWith('/tickets') ? pathname + '?' + searchParamsHook.toString() : pathname;
+    router.push(`/login?redirect=${encodeURIComponent(baseRedirectPath)}`);
   };
 
 
@@ -105,9 +108,11 @@ export function TicketCard({
         setShowLoginDialog(true);
         return;
     }
-    if (isSold || actualIsSeller) return;
+    if (isSold || actualIsSeller) return; // Should not happen if button is disabled, but good check
     setIsPurchasing(true);
     try {
+      // In a real app, this would go to an API endpoint that handles payment.
+      // For now, it directly calls the service function.
       const response = await fetch('/api/orders/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,11 +123,12 @@ export function TicketCard({
 
       if (response.ok && result.success && result.ticket) {
         toast({
-          title: 'Purchase Successful!',
-          description: `You have successfully bought the ${result.ticket.type} ticket (ID: ${result.ticket.id}).`,
+          title: 'Purchase Initiated!',
+          description: `Contact the seller at ${result.ticket.sellerContactEmail || 'their listed email'} to complete your purchase.`,
           variant: 'success',
+          duration: 7000,
         });
-        setIsSold(true);
+        setIsSold(true); // Mark as sold to update UI
         setCurrentTicket(result.ticket);
         if (onPurchaseSuccess) {
           onPurchaseSuccess(result.ticket.id);
@@ -130,22 +136,23 @@ export function TicketCard({
       } else {
         toast({
           title: 'Purchase Failed',
-          description: result.message || 'Could not purchase the ticket.',
+          description: result.message || 'Could not initiate purchase for the ticket.',
           variant: 'destructive',
         });
+        // If server confirms it's already sold, update UI
         if (result.ticket && result.message?.includes('already sold')) {
            setIsSold(true);
            setCurrentTicket(result.ticket);
-           if (onPurchaseSuccess) {
+           if (onPurchaseSuccess) { // Notify parent to re-filter if needed
               onPurchaseSuccess(result.ticket.id);
            }
         }
       }
     } catch (error: any) {
-      console.error('Error purchasing ticket:', error);
+      console.error('Error initiating purchase:', error);
       toast({
         title: 'Purchase Error',
-        description: error.message || 'Something went wrong during the purchase.',
+        description: error.message || 'Something went wrong during the purchase initiation.',
         variant: 'destructive',
       });
     } finally {
@@ -158,13 +165,13 @@ export function TicketCard({
        toast({ title: 'Download Failed', description: 'No file available.', variant: 'destructive' });
        return;
      }
-   
+
      const link = document.createElement('a');
      let fileExtension = 'file';
      const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
      let isImage = false;
      let mimeType = '';
-   
+
      if (mimeMatch && mimeMatch[1]) {
        mimeType = mimeMatch[1];
        const extensionMap: Record<string, string> = {
@@ -178,7 +185,7 @@ export function TicketCard({
      const baseFilename = `ticket_${ticketType}_${ticketId}`;
      const watermarkedFilename = `${baseFilename}_watermarked.${fileExtension}`;
      const originalFilename = `${baseFilename}.${fileExtension}`;
-   
+
      if (isImage) {
        try {
          const img = new Image();
@@ -196,28 +203,22 @@ export function TicketCard({
              document.body.removeChild(link);
              return;
            }
-   
+
            ctx.drawImage(img, 0, 0);
-           
+
            const fontSize = Math.max(12, Math.min(img.width / 20, img.height / 15));
            ctx.font = `bold ${fontSize}px Arial`;
            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
            ctx.textAlign = 'center';
            ctx.textBaseline = 'middle';
-           
-           const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`; // Use a portion of ID if too long
+
+           const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`;
            const x = canvas.width / 2;
            const y = canvas.height / 2;
-           
-           // Apply watermark multiple times for better visibility or diagonal
-           // For simplicity, one centered watermark
+
            ctx.fillText(watermarkText, x, y);
-           // Example for a second, slightly offset watermark
-           // ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; // Lighter for contrast
-           // ctx.fillText(watermarkText, x + 2, y + 2);
 
-
-           link.href = canvas.toDataURL(mimeType); 
+           link.href = canvas.toDataURL(mimeType);
            link.download = watermarkedFilename;
            document.body.appendChild(link);
            link.click();
@@ -286,7 +287,7 @@ export function TicketCard({
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500 px-2 py-1"
-      style={{ backgroundColor: '#FFCE54' }}
+      style={{ backgroundColor: '#FFCE54' }} // Keep original yellow for pending
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -348,6 +349,15 @@ export function TicketCard({
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{currentTicket.time}</span>
          </div>
+         {!isSold && !actualIsSeller && currentTicket.sellerContactEmail && (
+             <div className="flex items-center mt-2 pt-2 border-t border-dashed">
+                <Mail className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs text-muted-foreground">Seller:</span>
+                <a href={`mailto:${currentTicket.sellerContactEmail}`} className="ml-1 text-xs text-primary hover:underline truncate">
+                    {currentTicket.sellerContactEmail}
+                </a>
+             </div>
+         )}
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4 mt-auto">
          <div className="flex items-center font-semibold text-lg text-primary">
@@ -408,17 +418,18 @@ export function TicketCard({
   );
 }
 
-const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
-    const seenIds = new Set<string>();
-    return items.filter(item => {
-        if (!item || typeof item.id === 'undefined') {
-            console.warn("Encountered invalid item object:", item);
-            return false;
-        }
-        if (seenIds.has(item.id)) {
-            return false;
-        }
-        seenIds.add(item.id);
-        return true;
-    });
-};
+// Helper function (if not already defined elsewhere or if you prefer it scoped here)
+// const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
+//     const seenIds = new Set<string>();
+//     return items.filter(item => {
+//         if (!item || typeof item.id === 'undefined') {
+//             console.warn("Encountered invalid item object:", item);
+//             return false;
+//         }
+//         if (seenIds.has(item.id)) {
+//             return false;
+//         }
+//         seenIds.add(item.id);
+//         return true;
+//     });
+// };
