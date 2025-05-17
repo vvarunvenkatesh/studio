@@ -336,7 +336,8 @@ export async function getAvailableTickets(filters?: {
   minPrice?: number;
   maxPrice?: number;
   startDate?: string; 
-  endDate?: string; 
+  endDate?: string;
+  searchTerm?: string; // Added for generic search
 }): Promise<Ticket[]> {
   await new Promise(resolve => setTimeout(resolve, 50));
   tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
@@ -375,6 +376,17 @@ export async function getAvailableTickets(filters?: {
   if (filters?.endDate) {
       const end = new Date(filters.endDate + 'T23:59:59');
       filteredTickets = filteredTickets.filter(ticket => new Date(ticket.date + 'T00:00:00') <= end);
+  }
+
+  if (filters?.searchTerm) {
+    const term = filters.searchTerm.toLowerCase();
+    filteredTickets = filteredTickets.filter(ticket =>
+        ticket.description.toLowerCase().includes(term) ||
+        ticket.location.toLowerCase().includes(term) ||
+        (ticket.fromCity && ticket.fromCity.toLowerCase().includes(term)) ||
+        (ticket.toCity && ticket.toCity.toLowerCase().includes(term)) ||
+        ticket.type.toLowerCase().includes(term)
+    );
   }
 
   return filteredTickets;

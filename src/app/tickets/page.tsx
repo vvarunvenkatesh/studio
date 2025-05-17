@@ -62,6 +62,8 @@ export default function TicketsPage() {
   const [priceRange, setPriceRange] = React.useState<[number | undefined, number | undefined]>(parsePriceRange(searchParams.get('price')));
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(parseDateRange(searchParams.get('date')));
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+  const [genericSearchTerm, setGenericSearchTerm] = React.useState(searchParams.get('q') || '');
+
 
   React.useEffect(() => {
     setCurrentUserId(getSimulatedCurrentUserId());
@@ -69,17 +71,20 @@ export default function TicketsPage() {
 
 
   const pageTitle = React.useMemo(() => {
-    const currentCategory = searchParams.get('category'); // Keep as string
+    const currentCategory = searchParams.get('category');
     const currentFrom = searchParams.get('from');
     const currentTo = searchParams.get('to');
+    const currentSearchTerm = searchParams.get('q');
 
+    if (currentSearchTerm) {
+        return `Results for "${currentSearchTerm}"`;
+    }
     if (currentCategory === 'transport') {
         let title = "Train & Bus Tickets";
         if (currentFrom) title += ` from ${currentFrom}`;
         if (currentTo) title += ` to ${currentTo}`;
         return title;
     }
-
     if (currentCategory && categoryMap[currentCategory as Ticket['type']]) {
       let title = `${categoryMap[currentCategory as Ticket['type']].name} Tickets`;
       if (currentFrom) title += ` from ${currentFrom}`;
@@ -116,6 +121,19 @@ export default function TicketsPage() {
     if (dateRangeState?.from) query.set('startDate', format(dateRangeState.from, 'yyyy-MM-dd')); else query.delete('startDate');
     if (dateRangeState?.to) query.set('endDate', format(dateRangeState.to, 'yyyy-MM-dd')); else query.delete('endDate');
     query.delete('date');
+
+    // Get generic search term from URL
+    const currentSearchTerm = query.get('q');
+    if (currentSearchTerm) {
+        setGenericSearchTerm(currentSearchTerm);
+        // Add searchTerm to the API query if present
+        query.set('searchTerm', currentSearchTerm);
+    } else {
+        setGenericSearchTerm('');
+        query.delete('searchTerm'); // Ensure it's removed if not in URL
+    }
+    query.delete('q'); // Remove 'q' as 'searchTerm' is used for API
+
 
     try {
       const response = await fetch(`/api/tickets?${query.toString()}`);
@@ -185,6 +203,8 @@ export default function TicketsPage() {
 
     const category = searchParams.get('category');
     if (category) query.set('category', category);
+    
+    if (genericSearchTerm) query.set('q', genericSearchTerm); // Use 'q' for URL persistence
 
     if (fromCityFilter) query.set('from', fromCityFilter);
     if (toCityFilter) query.set('to', toCityFilter);
@@ -192,9 +212,9 @@ export default function TicketsPage() {
     const [minPrice, maxPrice] = priceRange;
     if (minPrice !== undefined || maxPrice !== undefined) {
         const priceParts = [];
-        if (minPrice !== undefined) priceParts.push(String(minPrice)); else priceParts.push(''); // Add empty string for consistent format like "-max" or "min-"
+        if (minPrice !== undefined) priceParts.push(String(minPrice)); else priceParts.push(''); 
         if (maxPrice !== undefined) priceParts.push(String(maxPrice));
-        if (priceParts.length > 0 && (priceParts[0] !== '' || priceParts.length > 1)) { // Ensure not just "-"
+        if (priceParts.length > 0 && (priceParts[0] !== '' || priceParts.length > 1)) { 
           query.set('price', priceParts.join('-'));
         }
     }
@@ -212,10 +232,11 @@ export default function TicketsPage() {
     setToCityFilter('');
     setPriceRange([undefined, undefined]);
     setDateRange(undefined);
+    setGenericSearchTerm(''); 
     const category = searchParams.get('category');
     const query = new URLSearchParams();
-    if (category && category !== 'transport') query.set('category', category); // Preserve category if it exists and is not 'transport'
-    else if (category === 'transport') query.set('category', 'transport'); // Keep transport if it was the active filter
+    if (category && category !== 'transport') query.set('category', category); 
+    else if (category === 'transport') query.set('category', 'transport'); 
     router.push(`${pathname}?${query.toString()}`);
   };
 
@@ -236,16 +257,27 @@ export default function TicketsPage() {
     ))
   );
 
-  const hasActiveFilters = fromCityFilter || toCityFilter || priceRange[0] !== undefined || priceRange[1] !== undefined || dateRange?.from;
+  const hasActiveFilters = fromCityFilter || toCityFilter || priceRange[0] !== undefined || priceRange[1] !== undefined || dateRange?.from || genericSearchTerm;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-32 md:pb-16"> {/* Increased pb for mobile to make space for both nav and sliding tab */}
+    <div className="flex min-h-screen flex-col bg-background pb-32 md:pb-16">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div className="w-full lg:col-span-2">
+              <Label htmlFor="genericSearchFilter" className="block text-sm font-medium text-muted-foreground mb-1">Search Term</Label>
+              <Input
+                id="genericSearchFilter"
+                type="text"
+                placeholder="Event, city, type..."
+                value={genericSearchTerm}
+                onChange={(e) => setGenericSearchTerm(e.target.value)}
+                className="bg-background text-foreground"
+              />
+            </div>
             <div className="w-full">
               <Label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From City</Label>
               <Input
@@ -268,17 +300,17 @@ export default function TicketsPage() {
                 className="bg-background text-foreground"
               />
             </div>
-             <div className="w-full">
+             <div className="w-full lg:col-span-2">
                 <Label htmlFor="dateRangeFilter" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</Label>
                 <DateRangePicker
                     id="dateRangeFilter"
                     date={dateRange}
                     onDateChange={setDateRange}
                     className="bg-background text-foreground [&>button]:text-foreground"
-                    onDateSelect={() => {}} // onDateChange and internal state handle selection now
+                    onDateSelect={() => {}} 
                  />
              </div>
-             <div className="w-full">
+             <div className="w-full lg:col-span-2">
                 <Label htmlFor="minPriceFilter" className="block text-sm font-medium text-muted-foreground mb-1">Price Range (₹)</Label>
                 <div className="flex items-center gap-2">
                     <Input

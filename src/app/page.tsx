@@ -15,13 +15,11 @@ import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
-// Simple Advertisement Slider Component
+// Simple Advertisement Slider Component - Reduced to 3
 const advertisements = [
   { id: 1, src: 'https://picsum.photos/1200/448?random=1', alt: 'concert', hint: 'concert crowd music' },
   { id: 2, src: 'https://picsum.photos/1200/448?random=2', alt: 'train travel', hint: 'train window journey' },
   { id: 3, src: 'https://picsum.photos/1200/448?random=3', alt: 'movie theatre', hint: 'movie theater screen' },
-  { id: 4, src: 'https://picsum.photos/1200/448?random=4', alt: 'bus travel', hint: 'bus road trip' },
-  { id: 5, src: 'https://picsum.photos/1200/448?random=5', alt: 'sports event', hint: 'stadium sports crowd' },
 ];
 
 function AdvertisementSlider() {
@@ -135,18 +133,15 @@ function CategoryIcon({ icon: Icon, label, href }: CategoryIconProps) {
   );
 }
 
-// Search Form Component
+// Updated Search Form Component
 function SearchForm() {
   const router = useRouter();
-  const [fromCity, setFromCity] = React.useState('');
-  const [toCity, setToCity] = React.useState('');
+  const [searchTerm, setSearchTerm] = React.useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const query = new URLSearchParams();
-    if (fromCity) query.set('from', fromCity);
-    if (toCity) query.set('to', toCity);
-    // Removed: query.set('category', 'transport'); 
+    if (searchTerm) query.set('q', searchTerm); // Use 'q' for generic search term
     router.push(`/tickets?${query.toString()}`);
   };
 
@@ -155,27 +150,16 @@ function SearchForm() {
         <h2 className="text-xl font-semibold mb-4 text-center text-foreground">Search for Tickets</h2>
        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-4">
         <div className="flex-1 w-full sm:w-auto">
-            <Label htmlFor="fromCity" className="sr-only">From City</Label>
+            <Label htmlFor="searchTerm" className="sr-only">Search Term</Label>
             <Input
-                id="fromCity"
+                id="searchTerm"
                 type="text"
-                placeholder="From City"
-                value={fromCity}
-                onChange={(e) => setFromCity(e.target.value)}
+                placeholder="Search by event, movie, city, type..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-background text-foreground"
             />
         </div>
-         <div className="flex-1 w-full sm:w-auto">
-            <Label htmlFor="toCity" className="sr-only">To City</Label>
-            <Input
-                id="toCity"
-                type="text"
-                placeholder="To City"
-                value={toCity}
-                onChange={(e) => setToCity(e.target.value)}
-                className="bg-background text-foreground"
-            />
-         </div>
         <Button type="submit" className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
