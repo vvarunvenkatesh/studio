@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useRouter, usePathname, useSearchParams as useNextSearchParams } from 'next/navigation';
-import { getSimulatedCurrentUserId } from '@/services/ticket-marketplace';
+import { getSimulatedCurrentUserId, purchaseTicket as purchaseTicketService } from '@/services/ticket-marketplace'; // Import purchaseTicketService
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -50,7 +50,7 @@ export function TicketCard({
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isPurchasing, setIsPurchasing] = React.useState(false);
   const [cardInternalCurrentUserId, setCardInternalCurrentUserId] = React.useState<string | null>(null);
-  const [detailsVisible, setDetailsVisible] = React.useState(false); // New state for details visibility
+  const [detailsVisible, setDetailsVisible] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -104,22 +104,17 @@ export function TicketCard({
 
     setIsPurchasing(true);
     try {
-      const result = await fetch('/api/orders/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: ticketProp.id }),
-      });
+      // Directly call the service function
+      const result = await purchaseTicketService(ticketProp.id);
 
-      const responseData = await result.json();
-
-      if (result.ok && responseData.success && responseData.ticket) {
+      if (result.success && result.ticket) {
         let contactMessage = "Contact the seller ";
-        if (responseData.ticket.sellerContactEmail && responseData.ticket.sellerContactPhone) {
-            contactMessage += `at ${responseData.ticket.sellerContactEmail} or by phone at ${responseData.ticket.sellerContactPhone}`;
-        } else if (responseData.ticket.sellerContactEmail) {
-            contactMessage += `at ${responseData.ticket.sellerContactEmail}`;
-        } else if (responseData.ticket.sellerContactPhone) {
-            contactMessage += `by phone at ${responseData.ticket.sellerContactPhone}`;
+        if (result.ticket.sellerContactEmail && result.ticket.sellerContactPhone) {
+            contactMessage += `at ${result.ticket.sellerContactEmail} or by phone at ${result.ticket.sellerContactPhone}`;
+        } else if (result.ticket.sellerContactEmail) {
+            contactMessage += `at ${result.ticket.sellerContactEmail}`;
+        } else if (result.ticket.sellerContactPhone) {
+            contactMessage += `by phone at ${result.ticket.sellerContactPhone}`;
         } else {
             contactMessage += "using their listed contact details";
         }
@@ -132,17 +127,17 @@ export function TicketCard({
           duration: 7000,
         });
         if (onPurchaseSuccess) {
-          onPurchaseSuccess(responseData.ticket.id);
+          onPurchaseSuccess(result.ticket.id);
         }
       } else {
         toast({
           title: 'Purchase Failed',
-          description: responseData.message || 'Could not initiate purchase for the ticket.',
+          description: result.message || 'Could not initiate purchase for the ticket.',
           variant: 'destructive',
         });
-        if (responseData.ticket && responseData.message?.includes('already sold')) {
+        if (result.ticket && result.message?.includes('already sold')) {
            if (onPurchaseSuccess) {
-              onPurchaseSuccess(responseData.ticket.id);
+              onPurchaseSuccess(result.ticket.id);
            }
         }
       }
@@ -393,7 +388,7 @@ export function TicketCard({
           renderCancelButton()
         ) : propIsSeller ? (
           renderPendingIndicator()
-        ) : !detailsVisible ? ( // If details are not visible, show "Get Details"
+        ) : !detailsVisible ? (
           <Button
             size="sm"
             onClick={() => setDetailsVisible(true)}
@@ -403,7 +398,7 @@ export function TicketCard({
             <Info className="mr-2 h-4 w-4" />
             Get Details
           </Button>
-        ) : ( // If details are visible, show "Buy Ticket"
+        ) : (
           <Button
             size="sm"
             onClick={handlePurchase}
