@@ -8,47 +8,48 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, Edit2, Loader2, KeyRound, ShieldCheck, X, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, LogOut, Edit2, Loader2, KeyRound, ShieldCheck, X, Save, CheckCircle2, AlertCircle, Fingerprint } from 'lucide-react'; // Added Fingerprint
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 interface UserData {
   name: string;
   email: string;
   contact: string;
   gender: 'male' | 'female' | 'other' | string;
-  // aadhaarNumber?: string; // Removed Aadhaar
 }
 
-// Define gender-based avatar URLs
 const GENDER_AVATARS: Record<string, { url: string; hint: string }> = {
   male: { url: 'https://placehold.co/100x100.png', hint: 'male cartoon' },
   female: { url: 'https://placehold.co/100x100.png', hint: 'female cartoon' },
   other: { url: 'https://placehold.co/100x100.png', hint: 'neutral avatar' },
 };
-const DEFAULT_AVATAR_INFO = GENDER_AVATARS.other; // Fallback
+const DEFAULT_AVATAR_INFO = GENDER_AVATARS.other;
 
 export default function ProfileBasicInfoPage() {
   const { toast } = useToast();
+  const router = useRouter();
+  const [isClientLoggedIn, setIsClientLoggedIn] = React.useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = React.useState(true);
+
 
   const [userData, setUserData] = React.useState<UserData>({
     name: 'Alex Doe',
-    email: 'alex.doe@example.com',
-    contact: '+1 123 456 7890',
+    email: '', // Initialize as empty, will be set from localStorage or default
+    contact: '', // Initialize as empty
     gender: 'other',
-    // aadhaarNumber: '', // Removed Aadhaar
   });
 
   const [profileImage, setProfileImage] = React.useState<string>(DEFAULT_AVATAR_INFO.url);
   const [profileImageHint, setProfileImageHint] = React.useState<string>(DEFAULT_AVATAR_INFO.hint);
   const [isUserVerified, setIsUserVerified] = React.useState(false);
 
-  // Editing states
   const [isEditingName, setIsEditingName] = React.useState(false);
   const [tempName, setTempName] = React.useState(userData.name);
 
-  const [editingField, setEditingField] = React.useState<'email' | 'contact' | null>(null); // Removed 'aadhaar'
+  const [editingField, setEditingField] = React.useState<'email' | 'contact' | null>(null);
   const [tempValue, setTempValue] = React.useState('');
   const [otp, setOtp] = React.useState('');
   const [otpSent, setOtpSent] = React.useState(false);
@@ -61,82 +62,114 @@ export default function ProfileBasicInfoPage() {
   };
 
   const checkUserVerification = (data: UserData) => {
-    // Verification now depends only on email and contact
     const verified = !!(data.email && data.contact);
     setIsUserVerified(verified);
     if (verified && typeof window !== 'undefined') {
-        localStorage.setItem('hasSeenVerificationPrompt', 'true'); 
+        localStorage.setItem('hasSeenVerificationPrompt', 'true');
     }
     return verified;
   };
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUserData = localStorage.getItem('userData');
-      let currentGender = userData.gender;
-      let currentName = userData.name;
+    const checkAuthStatus = () => {
+      if (typeof window !== 'undefined') {
+        const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        setIsClientLoggedIn(loggedIn);
+        setIsLoadingAuth(false);
+        if (!loggedIn) {
+          router.replace('/login?redirect=/profile'); // Use replace to avoid adding to history
+        } else {
+          const storedUserData = localStorage.getItem('userData');
+          let currentGender = 'other';
+          let currentName = 'Alex Doe'; // Default name
+          let initialEmail = '';
+          let initialContact = '';
 
-      if (storedUserData) {
-        try {
-          const parsedData: UserData = JSON.parse(storedUserData);
-          // Ensure aadhaarNumber is not part of the loaded data if it exists in old storage
-          const { aadhaarNumber, ...restOfParsedData } = parsedData as any; 
-          setUserData(prevData => ({ ...prevData, ...restOfParsedData }));
-          currentName = restOfParsedData.name || userData.name;
-          setTempName(currentName);
-          currentGender = restOfParsedData.gender || userData.gender;
-          checkUserVerification(restOfParsedData);
-        } catch (e) {
-          console.error("Failed to parse user data from localStorage", e);
-          const { aadhaarNumber, ...defaultData } = userData as any;
-          localStorage.setItem('userData', JSON.stringify(defaultData)); 
-          setTempName(userData.name);
-          checkUserVerification(userData);
+
+          if (storedUserData) {
+            try {
+              const parsedData: UserData = JSON.parse(storedUserData);
+              currentName = parsedData.name || currentName;
+              initialEmail = parsedData.email || '';
+              initialContact = parsedData.contact || '';
+              currentGender = parsedData.gender || 'other';
+
+              setUserData({
+                name: currentName,
+                email: initialEmail,
+                contact: initialContact,
+                gender: currentGender,
+              });
+              setTempName(currentName);
+              checkUserVerification({ name: currentName, email: initialEmail, contact: initialContact, gender: currentGender });
+            } catch (e) {
+              console.error("Failed to parse user data from localStorage", e);
+              // Fallback to defaults if parsing fails
+              setUserData({ name: currentName, email: initialEmail, contact: initialContact, gender: currentGender });
+              setTempName(currentName);
+              checkUserVerification({ name: currentName, email: initialEmail, contact: initialContact, gender: currentGender });
+            }
+          } else {
+             // If no stored data, use defaults (but user is logged in, so this is unlikely unless localStorage was cleared manually)
+            setUserData({ name: currentName, email: initialEmail, contact: initialContact, gender: currentGender });
+            setTempName(currentName);
+            checkUserVerification({ name: currentName, email: initialEmail, contact: initialContact, gender: currentGender });
+          }
+
+          const avatarInfo = getAvatarInfoForGender(currentGender);
+          setProfileImage(avatarInfo.url);
+          setProfileImageHint(avatarInfo.hint);
+          localStorage.setItem('profileImageUrl', avatarInfo.url);
+          window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: avatarInfo.url, storageArea: localStorage }));
         }
-      } else {
-        const { aadhaarNumber, ...defaultData } = userData as any;
-        localStorage.setItem('userData', JSON.stringify(defaultData));
-        setTempName(userData.name);
-        checkUserVerification(userData);
       }
+    };
 
-      const avatarInfo = getAvatarInfoForGender(currentGender);
-      setProfileImage(avatarInfo.url);
-      setProfileImageHint(avatarInfo.hint);
-      localStorage.setItem('profileImageUrl', avatarInfo.url);
-      window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: avatarInfo.url, storageArea: localStorage }));
-    }
+    checkAuthStatus();
+
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'isLoggedIn' || event.key === 'userData' || event.key === 'profileImageUrl') {
+            checkAuthStatus();
+        }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, [router]);
+
 
   const saveUserDataToLocalStorage = (updatedData: UserData) => {
     if (typeof window !== 'undefined') {
-      const { aadhaarNumber, ...dataToSave } = updatedData as any; // Ensure aadhaarNumber is not saved
-      localStorage.setItem('userData', JSON.stringify(dataToSave));
-      checkUserVerification(dataToSave); 
+      localStorage.setItem('userData', JSON.stringify(updatedData));
+      const isNowVerified = checkUserVerification(updatedData);
 
-      const newAvatarInfo = getAvatarInfoForGender(dataToSave.gender);
+      const newAvatarInfo = getAvatarInfoForGender(updatedData.gender);
       if (profileImage !== newAvatarInfo.url) {
         setProfileImage(newAvatarInfo.url);
         setProfileImageHint(newAvatarInfo.hint);
         localStorage.setItem('profileImageUrl', newAvatarInfo.url);
         window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: newAvatarInfo.url, storageArea: localStorage }));
       }
-      window.dispatchEvent(new CustomEvent('userDataChanged', { detail: dataToSave }));
+      window.dispatchEvent(new CustomEvent('userDataChanged', { detail: updatedData }));
     }
   };
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userId'); // Also remove userId
       localStorage.removeItem('profileImageUrl');
       localStorage.removeItem('userData');
-      localStorage.removeItem('hasSeenVerificationPrompt'); 
+      // localStorage.removeItem('hasSeenVerificationPrompt'); // Keep this so they don't see the prompt again if they log back in
       window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'userId', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
       toast({ title: "Logged Out", description: "You have been successfully logged out.", variant: "success" });
-      window.location.href = '/';
+      router.push('/'); // Redirect to home after logout
     }
   };
 
@@ -169,14 +202,13 @@ export default function ProfileBasicInfoPage() {
     toast({ title: "Gender Updated", description: "Your gender selection has been updated.", variant: "success" });
   };
 
-  const handleEditField = (field: 'email' | 'contact') => { // Removed 'aadhaar'
+  const handleEditField = (field: 'email' | 'contact') => {
     setEditingField(field);
     setOtp('');
     setOtpSent(false);
     setOtpError(false);
     if (field === 'email') setTempValue(userData.email);
     if (field === 'contact') setTempValue(userData.contact);
-    // Removed aadhaar logic
   };
 
   const handleCancelEditField = () => {
@@ -202,20 +234,19 @@ export default function ProfileBasicInfoPage() {
         }
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        const phoneRegex = /^\d{10}$/; 
+        const phoneRegex = /^\d{10}$/;
         if (!phoneRegex.test(valueToVerify)) {
             toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
             return;
         }
     }
-    // Removed aadhaar validation
 
-    if (valueToVerify === originalValue) {
+    if (valueToVerify === originalValue && originalValue !== '') {
         toast({title: "No Change", description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} is the same as current.`, variant: "default"});
-        setEditingField(null); 
+        setEditingField(null);
         return;
     }
-    
+
     setIsSendingOtp(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setOtpSent(true);
@@ -238,14 +269,13 @@ export default function ProfileBasicInfoPage() {
 
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (otp === '123456') { 
+    if (otp === '123456') {
       const updatedUserData = { ...userData };
       if (editingField === 'email') {
         updatedUserData.email = tempValue;
       } else if (editingField === 'contact') {
         updatedUserData.contact = tempValue;
-      } 
-      // Removed aadhaar update
+      }
       setUserData(updatedUserData);
       saveUserDataToLocalStorage(updatedUserData);
       toast({ title: 'Update Successful', description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} has been updated.`, variant: 'success' });
@@ -259,6 +289,23 @@ export default function ProfileBasicInfoPage() {
     }
     setIsVerifyingOtp(false);
   };
+
+  if (isLoadingAuth) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isClientLoggedIn) {
+    // This case should ideally be handled by the redirect, but as a fallback:
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)] text-muted-foreground">
+        <p>Redirecting to login...</p>
+      </div>
+    );
+  }
 
   return (
     <Card className="w-full bg-card">
@@ -293,7 +340,6 @@ export default function ProfileBasicInfoPage() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
-        {/* Name Field */}
         <div className="space-y-2">
           <Label htmlFor="name" className="text-foreground">Name</Label>
           {isEditingName ? (
@@ -323,7 +369,6 @@ export default function ProfileBasicInfoPage() {
           )}
         </div>
 
-        {/* Email Field */}
         <div className="space-y-2">
           <Label htmlFor="email" className="text-foreground">Email Address</Label>
           {editingField === 'email' ? (
@@ -374,7 +419,8 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground flex-grow cursor-pointer" onClick={() => handleEditField('email')} />
+              <Input id="email" type="email" value={userData.email || 'Not set'} readOnly={!userData.email} className={cn("bg-muted/50 text-foreground flex-grow", userData.email ? "cursor-pointer" : "cursor-not-allowed opacity-70")} onClick={() => userData.email && handleEditField('email')} />
+              {userData.email && <CheckCircle2 className="h-5 w-5 text-green-500" />}
               <Button variant="outline" size="icon" onClick={() => handleEditField('email')} aria-label="Edit Email">
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -382,7 +428,6 @@ export default function ProfileBasicInfoPage() {
           )}
         </div>
 
-        {/* Contact Field */}
         <div className="space-y-2">
           <Label htmlFor="contact" className="text-foreground">Contact Number</Label>
           {editingField === 'contact' ? (
@@ -435,7 +480,8 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground flex-grow cursor-pointer" onClick={() => handleEditField('contact')}/>
+              <Input id="contact" value={userData.contact || 'Not set'} readOnly={!userData.contact} className={cn("bg-muted/50 text-foreground flex-grow", userData.contact ? "cursor-pointer" : "cursor-not-allowed opacity-70")} onClick={() => userData.contact && handleEditField('contact')}/>
+              {userData.contact && <CheckCircle2 className="h-5 w-5 text-green-500" />}
               <Button variant="outline" size="icon" onClick={() => handleEditField('contact')} aria-label="Edit Contact">
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -443,9 +489,6 @@ export default function ProfileBasicInfoPage() {
           )}
         </div>
 
-        {/* Aadhaar Field - REMOVED */}
-
-        {/* Gender Field */}
         <div className="space-y-1">
           <Label className="text-foreground">Gender</Label>
           <RadioGroup
