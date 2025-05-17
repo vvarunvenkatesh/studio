@@ -24,7 +24,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning={true}> {/* Added suppressHydrationWarning here */}
-      {/* Apply the font class, suppress hydration warning, add flex structure and padding-bottom */}
       <body
          // Apply pb-16 always for bottom nav height, as md:pb-0 might not trigger correctly for all devices/views
          // Increased to pb-24 on mobile to accommodate both nav bar and sliding tab trigger
