@@ -1,19 +1,17 @@
-
 'use client';
 
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, IndianRupeeIcon, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2 } from 'lucide-react'; // Changed Rupee to IndianRupeeIcon
+import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, IndianRupeeIcon, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2 } from 'lucide-react';
 import type { Ticket } from '@/services/ticket-marketplace';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog components
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; 
 
 
-// Mapping for category icons
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
   bus: Bus,
   train: Train,
@@ -22,124 +20,151 @@ const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
   sports: TicketCategoryIcon,
 };
 
-// Simplified Order Item Component
 interface OrderItemProps {
   order: Ticket;
-  onDelete: (orderId: string) => void; // Add onDelete prop
+  onDelete: (orderId: string) => void;
 }
 
-function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
+function OrderItem({ order, onDelete }: OrderItemProps) { 
   const { toast } = useToast();
   const CategorySpecificIcon = categoryIconMap[order.type] || TicketCategoryIcon;
   const formattedDate = format(new Date(order.date), 'PPP');
 
-   // Function to handle downloading the original ticket (copied from TicketCard, could be extracted)
-   const handleDownload = (dataUri: string | undefined, ticketId: string, ticketType: string) => {
-     if (dataUri) {
+   const handleDownload = async (dataUri: string | undefined, ticketId: string, ticketType: string) => {
+     if (!dataUri) {
+       toast({ title: 'Download Failed', description: 'No file available.', variant: 'destructive' });
+       return;
+     }
+   
+     const link = document.createElement('a');
+     let fileExtension = 'file';
+     const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
+     let isImage = false;
+     let mimeType = '';
+   
+     if (mimeMatch && mimeMatch[1]) {
+       mimeType = mimeMatch[1];
+       const extensionMap: Record<string, string> = {
+         'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
+         'application/pdf': 'pdf', 'application/msword': 'doc',
+         'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+       };
+       fileExtension = extensionMap[mimeType] || fileExtension;
+       isImage = mimeType.startsWith('image/');
+     }
+     const baseFilename = `ticket_${ticketType}_${ticketId}`;
+     const watermarkedFilename = `${baseFilename}_watermarked.${fileExtension}`;
+     const originalFilename = `${baseFilename}.${fileExtension}`;
+   
+     if (isImage) {
        try {
-          const link = document.createElement('a');
-          link.href = dataUri;
+         const img = new Image();
+         img.onload = () => {
+           const canvas = document.createElement('canvas');
+           canvas.width = img.width;
+           canvas.height = img.height;
+           const ctx = canvas.getContext('2d');
+           if (!ctx) {
+             toast({ title: 'Watermark Failed', description: 'Could not process image.', variant: 'destructive' });
+             link.href = dataUri;
+             link.download = originalFilename;
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+             return;
+           }
+   
+           ctx.drawImage(img, 0, 0);
+           
+           const fontSize = Math.max(12, Math.min(img.width / 20, img.height / 15));
+           ctx.font = `bold ${fontSize}px Arial`;
+           ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+           ctx.textAlign = 'center';
+           ctx.textBaseline = 'middle';
+           
+           const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`;
+           const x = canvas.width / 2;
+           const y = canvas.height / 2;
+           
+           ctx.fillText(watermarkText, x, y);
 
-          let fileExtension = 'file';
-          const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
-          if (mimeMatch && mimeMatch[1]) {
-            const mimeType = mimeMatch[1];
-            const extensionMap: Record<string, string> = {
-              'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
-              'application/pdf': 'pdf', 'application/msword': 'doc',
-              'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-            };
-            fileExtension = extensionMap[mimeType] || fileExtension;
-          }
-
-          const filename = `ticket_${ticketType}_${ticketId}.${fileExtension}`;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          toast({
-            title: 'Download Started',
-            description: `Downloading ${filename}...`
-          })
-        } catch (error) {
-            console.error("Error preparing download:", error);
-             toast({
-               title: 'Download Failed',
-               description: 'Could not prepare the file for download.',
-               variant: 'destructive'
-             })
-        }
+           link.href = canvas.toDataURL(mimeType); 
+           link.download = watermarkedFilename;
+           document.body.appendChild(link);
+           link.click();
+           document.body.removeChild(link);
+           toast({ title: 'Download Started', description: `Downloading watermarked ${watermarkedFilename}...` });
+         };
+         img.onerror = () => {
+           toast({ title: 'Download Failed', description: 'Could not load image for watermarking.', variant: 'destructive' });
+         };
+         img.src = dataUri;
+       } catch (error) {
+         console.error("Error watermarking image:", error);
+         toast({ title: 'Watermark Error', description: 'Could not apply watermark.', variant: 'destructive' });
+         link.href = dataUri;
+         link.download = originalFilename;
+         document.body.appendChild(link);
+         link.click();
+         document.body.removeChild(link);
+       }
      } else {
-        toast({
-          title: 'Download Failed',
-          description: 'No original ticket file available for download.',
-          variant: 'destructive'
-        })
+       link.href = dataUri;
+       link.download = originalFilename;
+       document.body.appendChild(link);
+       link.click();
+       document.body.removeChild(link);
+       toast({ title: 'Download Started', description: `Downloading ${originalFilename}... (Watermark not applicable)` });
      }
    };
 
   return (
-    // Use default bg-card
-    <Card className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 bg-card shadow-sm"> {/* Use default bg-card */}
+    <Card className="flex flex-col sm:flex-row sm:items-start gap-4 p-4 bg-card shadow-sm">
        <div className="flex-shrink-0 flex items-center justify-center sm:justify-start mb-2 sm:mb-0">
-          {/* Use default text-primary */}
           <CategorySpecificIcon className="h-8 w-8 text-primary" />
        </div>
 
        <div className="flex-grow grid gap-1.5 text-sm">
           <div className="flex justify-between items-start">
-             {/* Use default text-foreground */}
              <h3 className="font-semibold capitalize text-foreground">{order.type} Ticket</h3>
-             {/* Use default badge style */}
-             <Badge variant="secondary" className="text-xs whitespace-nowrap">ID: {order.id}</Badge>
+             <Badge variant="secondary" className="text-xs whitespace-nowrap">ID: {order.id.substring(0,6)}</Badge>
           </div>
-          {/* Use default text-muted-foreground */}
           <p className="text-muted-foreground text-xs line-clamp-2">{order.description}</p>
 
-          {/* Details Section */}
-          {/* Use default text-foreground */}
           <div className="mt-2 space-y-1 text-xs text-foreground">
              {(order.type === 'train' || order.type === 'bus') && order.fromCity && order.toCity && (
                <div className="flex items-center font-medium">
                  <span className="truncate">{order.fromCity}</span>
-                 {/* Use default text-muted-foreground */}
                  <ArrowRight className="mx-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
                  <span className="truncate">{order.toCity}</span>
                </div>
              )}
              {(order.type === 'event' || order.type === 'movie' || order.type === 'sports') && order.location && (
                <div className="flex items-center">
-                 {/* Use default text-muted-foreground */}
                  <MapPin className="mr-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
                  <span className="truncate">{order.location}</span>
                </div>
              )}
               {(order.type === 'train' || order.type === 'bus') && order.location && (!order.fromCity || !order.toCity) && (
-                // Use default text-muted-foreground
                 <div className="flex items-center text-xs text-muted-foreground">
-                  {/* Use default text-muted-foreground */}
                   <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
                   <span className="truncate">{order.location}</span>
                 </div>
               )}
              <div className="flex items-center">
-               {/* Use default text-muted-foreground */}
                <Calendar className="mr-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
                <span>{formattedDate}</span>
              </div>
              <div className="flex items-center">
-               {/* Use default text-muted-foreground */}
                <Clock className="mr-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
                <span>{order.time}</span>
              </div>
           </div>
        </div>
 
-       {/* Price, Download, and Delete */}
        <div className="flex sm:flex-col items-end sm:items-center justify-between sm:justify-start mt-2 sm:mt-0 sm:ml-4 gap-2">
-          {/* Use default text-primary */}
           <div className="flex items-center font-semibold text-lg text-primary">
-             <IndianRupeeIcon className="mr-1 h-5 w-5" /> {/* Changed to IndianRupeeIcon */}
+             <IndianRupeeIcon className="mr-1 h-5 w-5" />
              {order.price.toFixed(2)}
          </div>
           {order.originalTicketDataUri ? (
@@ -147,16 +172,14 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
                size="sm"
                onClick={() => handleDownload(order.originalTicketDataUri, order.id, order.type)}
                aria-label="Download original ticket"
-               className="gap-2 mt-0 sm:mt-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" // Adjust margin for layout
+               className="gap-2 mt-0 sm:mt-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
              >
                <Download className="mr-2 h-4 w-4" />
                Download
              </Button>
            ) : (
-             // Use default outline badge with muted text
              <Badge variant="outline" className="mt-0 sm:mt-2 text-xs text-muted-foreground">No File</Badge>
            )}
-            {/* Delete Button */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                   <Button
@@ -188,17 +211,16 @@ function OrderItem({ order, onDelete }: OrderItemProps) { // Receive onDelete
 }
 
 export default function ProfileOrdersPage() {
-  const { toast } = useToast(); // Get toast function
+  const { toast } = useToast(); 
   const [orders, setOrders] = React.useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // Function to get unique orders based on ID
   const getUniqueOrders = (tickets: Ticket[]): Ticket[] => {
       const seenIds = new Set<string>();
       return tickets.filter(ticket => {
           if (!ticket || typeof ticket.id === 'undefined') {
               console.warn("Encountered invalid ticket object:", ticket);
-              return false; // Skip invalid entries
+              return false; 
           }
           if (seenIds.has(ticket.id)) {
               return false;
@@ -210,60 +232,48 @@ export default function ProfileOrdersPage() {
 
 
   React.useEffect(() => {
-    // Load orders from localStorage on mount
     if (typeof window !== 'undefined') {
       try {
         const storedOrdersString = localStorage.getItem('userOrders');
         const storedOrders: Ticket[] = storedOrdersString ? JSON.parse(storedOrdersString) : [];
-        setOrders(getUniqueOrders(storedOrders).reverse()); // Ensure uniqueness and show newest orders first
+        setOrders(getUniqueOrders(storedOrders).reverse()); 
       } catch (e) {
         console.error("Failed to load orders from localStorage:", e);
-        // Handle error (e.g., show a message)
       } finally {
         setIsLoading(false);
       }
 
-       // Listen for changes to userOrders in localStorage
        const handleStorageChange = (event: StorageEvent) => {
            if (event.key === 'userOrders' && event.newValue) {
              try {
                const updatedStoredOrders: Ticket[] = JSON.parse(event.newValue);
-               setOrders(getUniqueOrders(updatedStoredOrders).reverse()); // Ensure uniqueness on update
+               setOrders(getUniqueOrders(updatedStoredOrders).reverse()); 
              } catch (e) {
                console.error("Failed to parse updated orders:", e);
              }
            } else if (event.key === 'userOrders' && event.newValue === null) {
-               setOrders([]); // Clear orders if removed from storage
+               setOrders([]); 
            }
        };
 
        window.addEventListener('storage', handleStorageChange);
-
-       // Cleanup listener on unmount
        return () => {
            window.removeEventListener('storage', handleStorageChange);
        };
-
-
     } else {
-        setIsLoading(false); // Set loading to false if window is not defined
+        setIsLoading(false); 
     }
   }, []);
 
-  // Function to handle deleting an order
   const handleDeleteOrder = (orderId: string) => {
     if (typeof window !== 'undefined') {
       try {
-        // Filter out the order to delete from the current unique state
         const updatedOrders = orders.filter(order => order.id !== orderId);
-        setOrders(updatedOrders); // Update state immediately
+        setOrders(updatedOrders); 
 
-        // Update localStorage with the filtered list (reverse it back for storage if needed)
-        // Assuming the state `orders` is already reversed for display, reverse it back before saving
         const ordersToSave = [...updatedOrders].reverse();
         localStorage.setItem('userOrders', JSON.stringify(ordersToSave));
 
-        // Dispatch storage event to notify other tabs/windows if necessary
         window.dispatchEvent(new StorageEvent('storage', {
           key: 'userOrders',
           newValue: JSON.stringify(ordersToSave),
@@ -282,43 +292,33 @@ export default function ProfileOrdersPage() {
           description: 'Could not remove the order history.',
           variant: 'destructive',
         });
-        // Optionally revert state if localStorage update fails
-        // This would require storing the original orders before trying to update
-        // For simplicity, we're not reverting here. Reloading might fix inconsistency.
       }
     }
   };
 
 
   return (
-    // Use default bg-background
-    <Card className="w-full bg-background"> {/* Use default bg-background */}
+    <Card className="w-full bg-background"> 
       <CardHeader>
-        {/* Use default text-foreground */}
         <CardTitle className='text-foreground'>My Orders</CardTitle>
-        {/* Use default text-muted-foreground */}
         <CardDescription className='text-muted-foreground'>View your past ticket purchases.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-           // Use default text-muted-foreground
            <div className="text-center text-muted-foreground py-10">Loading orders...</div>
         ) : orders.length === 0 ? (
-          // Use default background/border/text color
           <div className="flex flex-col items-center justify-center h-40 border border-dashed rounded-lg text-center text-muted-foreground bg-muted/30">
              <ShoppingBag className="h-10 w-10 mb-2" />
             <p>You haven't purchased any tickets yet.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Map over the state which is already guaranteed to be unique */}
             {orders.map((order) => (
-              <OrderItem key={order.id} order={order} onDelete={handleDeleteOrder} /> // Pass handleDeleteOrder
+              <OrderItem key={order.id} order={order} onDelete={handleDeleteOrder} /> 
             ))}
           </div>
         )}
       </CardContent>
-       {/* Use default text-muted-foreground */}
        <CardFooter className="text-xs text-muted-foreground pt-4 border-t">
            Order history is stored locally in your browser. Clearing browser data may remove this history.
        </CardFooter>

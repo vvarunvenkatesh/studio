@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -21,7 +20,7 @@ interface TicketCardProps {
   onCancelListing?: (ticketId: string) => Promise<void> | void;
   isCancelling?: boolean;
   className?: string;
-  isSeller?: boolean; // This prop might become less relevant if we rely on currentUserId and ticket.sellerId
+  isSeller?: boolean; 
 }
 
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
@@ -39,7 +38,6 @@ export function TicketCard({
     onCancelListing,
     isCancelling,
     className,
-    // isSeller prop is kept for potential direct control, but logic will primarily use currentUserId
     isSeller: propIsSeller 
 }: TicketCardProps) {
   const { toast } = useToast();
@@ -67,14 +65,13 @@ export function TicketCard({
               setIsLoggedIn(newLoggedInStatus);
               setCurrentUserIdState(getSimulatedCurrentUserId());
           }
-           if (event.key === 'marketplaceTickets') { // Listen for general ticket updates
+           if (event.key === 'marketplaceTickets') { 
                 const updatedTickets: Ticket[] = event.newValue ? JSON.parse(event.newValue) : [];
                 const thisTicketUpdate = updatedTickets.find(t => t.id === currentTicket.id);
                 if (thisTicketUpdate) {
                     setCurrentTicket(thisTicketUpdate);
                     setIsSold(thisTicketUpdate.status === 'sold');
                 } else {
-                    // Ticket might have been deleted, mark as sold or handle appropriately
                     setIsSold(true); 
                 }
             }
@@ -123,6 +120,7 @@ export function TicketCard({
         toast({
           title: 'Purchase Successful!',
           description: `You have successfully bought the ${result.ticket.type} ticket (ID: ${result.ticket.id}).`,
+          variant: 'success',
         });
         setIsSold(true);
         setCurrentTicket(result.ticket);
@@ -155,45 +153,97 @@ export function TicketCard({
     }
   };
 
-   const handleDownload = (dataUri: string | undefined, ticketId: string, ticketType: string) => {
-     if (dataUri) {
+   const handleDownload = async (dataUri: string | undefined, ticketId: string, ticketType: string) => {
+     if (!dataUri) {
+       toast({ title: 'Download Failed', description: 'No file available.', variant: 'destructive' });
+       return;
+     }
+   
+     const link = document.createElement('a');
+     let fileExtension = 'file';
+     const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
+     let isImage = false;
+     let mimeType = '';
+   
+     if (mimeMatch && mimeMatch[1]) {
+       mimeType = mimeMatch[1];
+       const extensionMap: Record<string, string> = {
+         'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
+         'application/pdf': 'pdf', 'application/msword': 'doc',
+         'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+       };
+       fileExtension = extensionMap[mimeType] || fileExtension;
+       isImage = mimeType.startsWith('image/');
+     }
+     const baseFilename = `ticket_${ticketType}_${ticketId}`;
+     const watermarkedFilename = `${baseFilename}_watermarked.${fileExtension}`;
+     const originalFilename = `${baseFilename}.${fileExtension}`;
+   
+     if (isImage) {
        try {
-          const link = document.createElement('a');
-          link.href = dataUri;
-          let fileExtension = 'file';
-          const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
-          if (mimeMatch && mimeMatch[1]) {
-            const mimeType = mimeMatch[1];
-            const extensionMap: Record<string, string> = {
-              'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
-              'application/pdf': 'pdf', 'application/msword': 'doc',
-              'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-            };
-            fileExtension = extensionMap[mimeType] || fileExtension;
-          }
-          const filename = `ticket_${ticketType}_${ticketId}.${fileExtension}`;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          toast({
-            title: 'Download Started',
-            description: `Downloading ${filename}...`
-          })
-        } catch (error) {
-            console.error("Error preparing download:", error);
-             toast({
-               title: 'Download Failed',
-               description: 'Could not prepare the file for download.',
-               variant: 'destructive'
-             })
-        }
+         const img = new Image();
+         img.onload = () => {
+           const canvas = document.createElement('canvas');
+           canvas.width = img.width;
+           canvas.height = img.height;
+           const ctx = canvas.getContext('2d');
+           if (!ctx) {
+             toast({ title: 'Watermark Failed', description: 'Could not process image.', variant: 'destructive' });
+             link.href = dataUri;
+             link.download = originalFilename;
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+             return;
+           }
+   
+           ctx.drawImage(img, 0, 0);
+           
+           const fontSize = Math.max(12, Math.min(img.width / 20, img.height / 15));
+           ctx.font = `bold ${fontSize}px Arial`;
+           ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+           ctx.textAlign = 'center';
+           ctx.textBaseline = 'middle';
+           
+           const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`; // Use a portion of ID if too long
+           const x = canvas.width / 2;
+           const y = canvas.height / 2;
+           
+           // Apply watermark multiple times for better visibility or diagonal
+           // For simplicity, one centered watermark
+           ctx.fillText(watermarkText, x, y);
+           // Example for a second, slightly offset watermark
+           // ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; // Lighter for contrast
+           // ctx.fillText(watermarkText, x + 2, y + 2);
+
+
+           link.href = canvas.toDataURL(mimeType); 
+           link.download = watermarkedFilename;
+           document.body.appendChild(link);
+           link.click();
+           document.body.removeChild(link);
+           toast({ title: 'Download Started', description: `Downloading watermarked ${watermarkedFilename}...` });
+         };
+         img.onerror = () => {
+           toast({ title: 'Download Failed', description: 'Could not load image for watermarking.', variant: 'destructive' });
+         };
+         img.src = dataUri;
+       } catch (error) {
+         console.error("Error watermarking image:", error);
+         toast({ title: 'Watermark Error', description: 'Could not apply watermark.', variant: 'destructive' });
+         link.href = dataUri;
+         link.download = originalFilename;
+         document.body.appendChild(link);
+         link.click();
+         document.body.removeChild(link);
+       }
      } else {
-        toast({
-          title: 'Download Failed',
-          description: 'No original ticket file available for download.',
-          variant: 'destructive'
-        })
+       link.href = dataUri;
+       link.download = originalFilename;
+       document.body.appendChild(link);
+       link.click();
+       document.body.removeChild(link);
+       toast({ title: 'Download Started', description: `Downloading ${originalFilename}... (Watermark not applicable for this file type)` });
      }
    };
 
@@ -235,8 +285,8 @@ export function TicketCard({
   const renderPendingIndicator = () => (
     <Badge
       variant="outline"
-      className="text-xs text-black gap-1.5 border-amber-500"
-      style={{ backgroundColor: '#FFCE54' }} // Keep this specific color for pending
+      className="text-xs text-black gap-1.5 border-amber-500 px-2 py-1"
+      style={{ backgroundColor: '#FFCE54' }}
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -264,7 +314,7 @@ export function TicketCard({
                 </Badge>
              )}
            </div>
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {currentTicket.id}</Badge>
+           <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {currentTicket.id.substring(0, 6)}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
              {currentTicket.description}
