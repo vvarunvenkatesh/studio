@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail, Phone } from 'lucide-react';
+import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail, Phone, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -50,6 +50,7 @@ export function TicketCard({
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isPurchasing, setIsPurchasing] = React.useState(false);
   const [cardInternalCurrentUserId, setCardInternalCurrentUserId] = React.useState<string | null>(null);
+  const [detailsVisible, setDetailsVisible] = React.useState(false); // New state for details visibility
 
 
   React.useEffect(() => {
@@ -103,8 +104,7 @@ export function TicketCard({
 
     setIsPurchasing(true);
     try {
-      // Directly call service for purchase simulation (no API for this in localStorage approach)
-      const result = await fetch('/api/orders/purchase', { // Still using API for purchase to simulate backend interaction
+      const result = await fetch('/api/orders/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketId: ticketProp.id }),
@@ -285,7 +285,7 @@ export function TicketCard({
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500 px-2 py-1"
-      style={{ backgroundColor: '#FFCE54' }} // Restored original color
+      style={{ backgroundColor: '#FFCE54' }}
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -347,7 +347,8 @@ export function TicketCard({
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{ticketProp.time}</span>
          </div>
-         {!isTicketSold && !(propIsSeller && variant === 'browse') && (ticketProp.sellerContactEmail || ticketProp.sellerContactPhone) && (
+         {/* Seller Contact Information Section - Now conditional */}
+         {detailsVisible && !isTicketSold && !(propIsSeller && variant === 'browse') && (ticketProp.sellerContactEmail || ticketProp.sellerContactPhone) && (
              <div className="mt-2 pt-2 border-t border-dashed space-y-1">
                 {ticketProp.sellerContactEmail && (
                     <div className="flex items-center">
@@ -374,40 +375,50 @@ export function TicketCard({
              {ticketProp.price.toFixed(2)}
          </div>
 
-         {isTicketSold ? (
-             ticketProp.originalTicketDataUri ? (
-                 <Button
-                     size="sm"
-                     onClick={() => handleDownload(ticketProp.originalTicketDataUri, ticketProp.id, ticketProp.type)}
-                     aria-label="Download original ticket"
-                     className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
-                 >
-                     <Download className="mr-2 h-4 w-4" />
-                     Download
-                 </Button>
-             ) : (
-                 <Badge variant="destructive">Sold</Badge>
-             )
-         ) : variant === 'manage' ? (
-             renderCancelButton()
-         ) : propIsSeller ? ( // Use propIsSeller for browse view, true if current user is the seller of this ticket
-             renderPendingIndicator()
-         ) : (
-             <Button
-                 size="sm"
-                 onClick={handlePurchase}
-                 disabled={isPurchasing}
-                 aria-label={`Buy ${ticketProp.title || ticketProp.type} ticket for ₹${ticketProp.price.toFixed(2)}`}
-                 className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
-             >
-                 {isPurchasing ? (
-                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                 ) : (
-                     <ShoppingCart className="mr-2 h-4 w-4" />
-                 )}
-                 {isPurchasing ? 'Processing...' : 'Buy Ticket'}
-             </Button>
-         )}
+        {isTicketSold ? (
+          ticketProp.originalTicketDataUri ? (
+            <Button
+              size="sm"
+              onClick={() => handleDownload(ticketProp.originalTicketDataUri, ticketProp.id, ticketProp.type)}
+              aria-label="Download original ticket"
+              className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download
+            </Button>
+          ) : (
+            <Badge variant="destructive">Sold</Badge>
+          )
+        ) : variant === 'manage' ? (
+          renderCancelButton()
+        ) : propIsSeller ? (
+          renderPendingIndicator()
+        ) : !detailsVisible ? ( // If details are not visible, show "Get Details"
+          <Button
+            size="sm"
+            onClick={() => setDetailsVisible(true)}
+            aria-label="Get ticket details"
+            className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
+          >
+            <Info className="mr-2 h-4 w-4" />
+            Get Details
+          </Button>
+        ) : ( // If details are visible, show "Buy Ticket"
+          <Button
+            size="sm"
+            onClick={handlePurchase}
+            disabled={isPurchasing}
+            aria-label={`Buy ${ticketProp.title || ticketProp.type} ticket for ₹${ticketProp.price.toFixed(2)}`}
+            className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
+          >
+            {isPurchasing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ShoppingCart className="mr-2 h-4 w-4" />
+            )}
+            {isPurchasing ? 'Processing...' : 'Buy Ticket'}
+          </Button>
+        )}
       </CardFooter>
     </Card>
      <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
