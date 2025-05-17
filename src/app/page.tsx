@@ -11,15 +11,16 @@ import { Bus, Train, Film, Calendar as CalendarIconLucide, Search, Ticket as Tic
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
+import { Footer } from '@/components/footer'; // Import Footer
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 // Simple Advertisement Slider Component - Reduced to 3
 const advertisements = [
-  { id: 1, src: 'https://picsum.photos/1200/448?random=1', alt: 'concert', hint: 'concert crowd music' },
-  { id: 2, src: 'https://picsum.photos/1200/448?random=2', alt: 'train travel', hint: 'train window journey' },
-  { id: 3, src: 'https://picsum.photos/1200/448?random=3', alt: 'movie theatre', hint: 'movie theater screen' },
+  { id: 1, src: 'https://placehold.co/1200x448.png', alt: 'concert', hint: 'concert crowd music' },
+  { id: 2, src: 'https://placehold.co/1200x448.png', alt: 'train travel', hint: 'train window journey' },
+  { id: 3, src: 'https://placehold.co/1200x448.png', alt: 'movie theatre', hint: 'movie theater screen' },
 ];
 
 function AdvertisementSlider() {
@@ -141,7 +142,7 @@ function SearchForm() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const query = new URLSearchParams();
-    if (searchTerm) query.set('q', searchTerm); // Use 'q' for generic search term
+    if (searchTerm) query.set('q', searchTerm);
     router.push(`/tickets?${query.toString()}`);
   };
 
@@ -263,7 +264,7 @@ export default function Home() {
                  <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Featured Offers</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     <BottomAdCard
-                        src="https://picsum.photos/400/300?random=10"
+                        src="https://placehold.co/400x300.png"
                         alt="Travel Deal"
                         title="Weekend Getaway Special"
                         description="Save up to 20% on last-minute train tickets this weekend."
@@ -271,7 +272,7 @@ export default function Home() {
                         hint="train travel discount"
                     />
                      <BottomAdCard
-                        src="https://picsum.photos/400/300?random=11"
+                        src="https://placehold.co/400x300.png"
                         alt="Event Promotion"
                         title="Hot Event Tickets Available"
                         description="Don't miss the biggest concerts and sports events. Find tickets now!"
@@ -279,7 +280,7 @@ export default function Home() {
                         hint="concert event tickets"
                     />
                      <BottomAdCard
-                        src="https://picsum.photos/400/300?random=12"
+                        src="https://placehold.co/400x300.png"
                         alt="Movie Night Offer"
                         title="Movie Buffs Rejoice!"
                         description="Grab cheap movie tickets for tonight's blockbusters."
@@ -306,6 +307,7 @@ export default function Home() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Footer />
     </div>
   );
 }
