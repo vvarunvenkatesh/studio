@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { getSimulatedCurrentUserId, getAvailableTickets, deleteTicket as deleteTicketService } from '@/services/ticket-marketplace';
-import { BottomSlidingTab } from '@/components/ui/bottom-sliding-tab';
+// Removed BottomSlidingTab import
 
 const categoryMap: Record<Ticket['type'], { icon: React.ElementType; name: string }> = {
     bus: { icon: Bus, name: 'Bus' },
@@ -376,10 +376,9 @@ export default function TicketsPage() {
 
         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
           <div className={cn(
-              "gap-4",
               isEventLikeCategory
-                ? "flex flex-col md:flex-row md:items-end" // For movie/event/sports: horizontal on md+
-                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end" // For train/bus/all: grid layout
+                ? "flex flex-col md:flex-row md:items-end gap-4" // For movie/event/sports: horizontal on md+
+                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end gap-4" // For train/bus/all: grid layout
           )}>
             {/* Generic Search Term Input */}
             <div className={cn(
@@ -541,17 +540,7 @@ export default function TicketsPage() {
           </div>
         ) : null}
       </main>
-       <BottomSlidingTab triggerLabel="Filters & Sort" title="Advanced Options">
-        <div className="space-y-4">
-          <p className="text-muted-foreground">More filtering and sorting options can be added here.</p>
-          <div>
-            <h3 className="font-semibold mb-2 text-foreground">Sort by</h3>
-            <Button variant="outline" className="w-full mb-2 justify-start">Price: Low to High</Button>
-            <Button variant="outline" className="w-full mb-2 justify-start">Price: High to Low</Button>
-            <Button variant="outline" className="w-full justify-start">Date: Newest First</Button>
-          </div>
-        </div>
-      </BottomSlidingTab>
+      {/* BottomSlidingTab component removed */}
     </div>
   );
 }
