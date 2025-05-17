@@ -146,13 +146,13 @@ function SearchForm() {
     const query = new URLSearchParams();
     if (fromCity) query.set('from', fromCity);
     if (toCity) query.set('to', toCity);
-    query.set('category', 'transport'); // Always set category to transport for this form
+    // Removed: query.set('category', 'transport'); 
     router.push(`/tickets?${query.toString()}`);
   };
 
   return (
     <Card className="p-4 md:p-6 mb-8 md:mb-12 bg-muted/30 border border-dashed max-w-4xl mx-auto">
-        <h2 className="text-xl font-semibold mb-4 text-center text-foreground">Search for Train or Bus Tickets</h2>
+        <h2 className="text-xl font-semibold mb-4 text-center text-foreground">Search for Tickets</h2>
        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-4">
         <div className="flex-1 w-full sm:w-auto">
             <Label htmlFor="fromCity" className="sr-only">From City</Label>
@@ -227,7 +227,7 @@ export default function Home() {
       if (storedUserData) {
         try {
           const parsedData = JSON.parse(storedUserData);
-          isProfileFullyVerified = !!(parsedData.email && parsedData.contact && parsedData.aadhaarNumber);
+          isProfileFullyVerified = !!(parsedData.email && parsedData.contact);
         } catch (e) {
           console.error("Failed to parse user data for verification check", e);
         }
@@ -311,7 +311,7 @@ export default function Home() {
           <AlertDialogHeader>
             <AlertDialogTitle>Complete Your Profile Verification</AlertDialogTitle>
             <AlertDialogDescription>
-              Completing your profile (Email, Phone, and Aadhaar) helps build trust with other users and can improve your ticket selling/buying experience. Would you like to complete it now?
+              Completing your profile (Email and Phone) helps build trust with other users and can improve your ticket selling/buying experience. Would you like to complete it now?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

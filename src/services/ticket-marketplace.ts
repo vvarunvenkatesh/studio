@@ -63,7 +63,6 @@ interface UserData {
   email: string;
   contact: string;
   gender: 'male' | 'female' | 'other' | string;
-  // aadhaarNumber?: string; // Removed Aadhaar
 }
 
 
@@ -118,15 +117,36 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
                  const { aadhaarNumber, ...restOfData } = data as any; // Ensure aadhaarNumber is not saved
                  dataToSave = restOfData as T;
             }
-            localStorage.setItem(key, JSON.stringify(dataToSave));
+            const stringifiedData = JSON.stringify(dataToSave);
+            // Check for quota before attempting to save
+            // A more sophisticated approach might involve trying to remove older/less important data
+            // if quota is an issue, but for now, we'll just check the length.
+            // This is a very rough estimate as localStorage limits vary and depend on encoding.
+            if (key === marketplaceTicketsKey && stringifiedData.length > 4.5 * 1024 * 1024) { // Approx 4.5MB
+                 console.warn(`Data for ${key} is large (${(stringifiedData.length / (1024*1024)).toFixed(2)}MB) and might exceed localStorage quota.`);
+            }
+            localStorage.setItem(key, stringifiedData);
             window.dispatchEvent(new StorageEvent('storage', {
                 key: key,
-                newValue: JSON.stringify(dataToSave),
+                newValue: stringifiedData,
                 storageArea: localStorage,
             }));
         } catch (e) {
              console.error(`Failed to save ${key} to localStorage`, e);
              if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22)) {
+                 // Reduce data in userPostedTickets before re-throwing if quota is exceeded
+                 if (key === userPostedTicketsKey || key === marketplaceTicketsKey) {
+                    const currentTickets = loadFromLocalStorage<Ticket[]>(key, []);
+                    if (currentTickets.length > 5) { // Arbitrary: try to keep at least 5 recent
+                        const trimmedTickets = currentTickets.slice(-5); // Keep last 5
+                        const ticketsToSave = key === userPostedTicketsKey ? 
+                            trimmedTickets.map(({ originalTicketDataUri, ...ticket }) => ticket) : 
+                            trimmedTickets;
+                        localStorage.setItem(key, JSON.stringify(ticketsToSave));
+                        console.warn(`Quota exceeded. Trimmed ${key} to last 5 entries.`);
+                        // Don't re-throw immediately, let the current operation fail if it's still too much
+                    }
+                 }
                  throw e;
              }
         }
@@ -274,8 +294,19 @@ const getUserPostedTickets = (): Ticket[] => {
 
 const saveUserPostedTickets = (postedTickets: Ticket[]) => {
     const uniqueTickets = getUniqueById(postedTickets);
-    // Remove originalTicketDataUri before saving to userPostedTickets to save space
-    const ticketsToSave = uniqueTickets.map(({ originalTicketDataUri, ...ticket }) => ticket);
+    // Remove originalTicketDataUri before saving to userPostedTickets to save space,
+    // but only if it's not essential for other logic that reads from userPostedTickets.
+    // For now, we keep it to ensure consistency if other parts rely on it.
+    const ticketsToSave = uniqueTickets.map(ticket => {
+        const { originalTicketDataUri, ...rest } = ticket;
+        // Keep originalTicketDataUri only if it's small enough, otherwise remove it
+        // This is a simplistic check, a more robust solution would check byte size
+        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { // e.g., > 100KB
+            console.warn(`Removing large originalTicketDataUri for ticket ID ${ticket.id} from userPostedTickets to save space.`);
+            return rest;
+        }
+        return ticket;
+    });
     saveToLocalStorage(userPostedTicketsKey, ticketsToSave);
 };
 
@@ -314,10 +345,11 @@ export async function getAvailableTickets(filters?: {
   if (filters?.category) {
     if (filters.category === 'transport') {
       filteredTickets = filteredTickets.filter(ticket => ticket.type === 'train' || ticket.type === 'bus');
-    } else if (filters.category !== 'all') {
+    } else if (filters.category !== 'all') { // 'all' or undefined category means no type filtering
       filteredTickets = filteredTickets.filter(ticket => ticket.type === filters.category);
     }
   }
+
 
   if (filters?.fromCity) {
     const fromLower = filters.fromCity.toLowerCase();
@@ -365,7 +397,6 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
     if (storedUserData) {
         try {
             const parsedData: UserData = JSON.parse(storedUserData);
-            // Verification now depends only on email and contact
             sellerIsVerified = !!(parsedData.email && parsedData.contact);
         } catch (e) {
             console.error("Failed to parse userData for seller verification status", e);
@@ -494,12 +525,10 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
 export function getSimulatedCurrentUserId(): string {
     if (typeof window !== 'undefined') {
         if (localStorage.getItem('isLoggedIn') === 'true') {
-            // For simulation, let's say the logged-in user's ID is 'currentUser'
-            // In a real app, this would come from an auth session
             return localStorage.getItem('userId') || 'currentUser'; 
         }
     }
-    return 'anonymousUser'; // Represents a non-logged-in user
+    return 'anonymousUser'; 
 }
 
 export function setSimulatedCurrentUserId(userId: string | null) {
@@ -511,14 +540,12 @@ export function setSimulatedCurrentUserId(userId: string | null) {
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userId');
         }
-        // Dispatch events to notify other parts of the app about login status change
         window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn' }));
         window.dispatchEvent(new StorageEvent('storage', { key: 'userId' }));
     }
 }
 
 
-// Initialize with default tickets if none are in localStorage
 if (typeof window !== 'undefined') {
     window.addEventListener('storage', (event) => {
         if (event.key === marketplaceTicketsKey && event.newValue) {
