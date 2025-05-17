@@ -12,43 +12,46 @@ import { User, LogOut, Edit2, Loader2, KeyRound, ShieldCheck, X, Save, CheckCirc
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
+import { getSimulatedCurrentUserId, isUserVerifiedByTicketCount } from '@/services/ticket-marketplace'; // Import new verification
 
 interface UserData {
   name: string;
   email: string;
   contact: string;
   gender: 'male' | 'female' | 'other' | string;
-  // aadhaarNumber?: string; // Removed Aadhaar
 }
 
-// Define gender-based avatar URLs
 const GENDER_AVATARS: Record<string, { url: string; hint: string }> = {
   male: { url: 'https://placehold.co/100x100.png', hint: 'male cartoon' },
   female: { url: 'https://placehold.co/100x100.png', hint: 'female cartoon' },
   other: { url: 'https://placehold.co/100x100.png', hint: 'neutral avatar' },
 };
-const DEFAULT_AVATAR_INFO = GENDER_AVATARS.other; // Fallback
+const DEFAULT_AVATAR_INFO = GENDER_AVATARS.other;
 
 export default function ProfileBasicInfoPage() {
   const { toast } = useToast();
+  const router = useRouter();
+  const [isClientLoggedIn, setIsClientLoggedIn] = React.useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = React.useState(true);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+
 
   const [userData, setUserData] = React.useState<UserData>({
     name: 'Alex Doe',
-    email: 'alex.doe@example.com',
-    contact: '+1 123 456 7890',
+    email: '',
+    contact: '',
     gender: 'other',
-    // aadhaarNumber: '', // Removed Aadhaar
   });
 
   const [profileImage, setProfileImage] = React.useState<string>(DEFAULT_AVATAR_INFO.url);
   const [profileImageHint, setProfileImageHint] = React.useState<string>(DEFAULT_AVATAR_INFO.hint);
   const [isUserVerified, setIsUserVerified] = React.useState(false);
 
-  // Editing states
   const [isEditingName, setIsEditingName] = React.useState(false);
   const [tempName, setTempName] = React.useState(userData.name);
 
-  const [editingField, setEditingField] = React.useState<'email' | 'contact' | null>(null); // Removed 'aadhaar'
+  const [editingField, setEditingField] = React.useState<'email' | 'contact' | null>(null);
   const [tempValue, setTempValue] = React.useState('');
   const [otp, setOtp] = React.useState('');
   const [otpSent, setOtpSent] = React.useState(false);
@@ -60,83 +63,124 @@ export default function ProfileBasicInfoPage() {
     return GENDER_AVATARS[gender as keyof typeof GENDER_AVATARS] || DEFAULT_AVATAR_INFO;
   };
 
-  const checkUserVerification = (data: UserData) => {
-    // Verification now depends only on email and contact
-    const verified = !!(data.email && data.contact);
-    setIsUserVerified(verified);
-    if (verified && typeof window !== 'undefined') {
-        localStorage.setItem('hasSeenVerificationPrompt', 'true'); 
+  const checkUserVerificationStatus = React.useCallback(() => {
+    if (currentUserId && currentUserId !== 'anonymousUser') {
+      const verified = isUserVerifiedByTicketCount(currentUserId);
+      setIsUserVerified(verified);
+      if (verified) {
+        localStorage.setItem('hasSeenVerificationPrompt', 'true');
+      }
+    } else {
+      setIsUserVerified(false);
     }
-    return verified;
-  };
+  }, [currentUserId]);
+
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUserData = localStorage.getItem('userData');
-      let currentGender = userData.gender;
-      let currentName = userData.name;
+    const updateAuthAndUserData = () => {
+      if (typeof window !== 'undefined') {
+        const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const userIdFromStorage = getSimulatedCurrentUserId(); // Use service
+        
+        setIsClientLoggedIn(loggedIn);
+        setCurrentUserId(userIdFromStorage);
+        setIsLoadingAuth(false);
 
-      if (storedUserData) {
-        try {
-          const parsedData: UserData = JSON.parse(storedUserData);
-          // Ensure aadhaarNumber is not part of the loaded data if it exists in old storage
-          const { aadhaarNumber, ...restOfParsedData } = parsedData as any; 
-          setUserData(prevData => ({ ...prevData, ...restOfParsedData }));
-          currentName = restOfParsedData.name || userData.name;
-          setTempName(currentName);
-          currentGender = restOfParsedData.gender || userData.gender;
-          checkUserVerification(restOfParsedData);
-        } catch (e) {
-          console.error("Failed to parse user data from localStorage", e);
-          const { aadhaarNumber, ...defaultData } = userData as any;
-          localStorage.setItem('userData', JSON.stringify(defaultData)); 
-          setTempName(userData.name);
-          checkUserVerification(userData);
+        if (!loggedIn) {
+          router.replace('/login?redirect=/profile');
+          return;
         }
-      } else {
-        const { aadhaarNumber, ...defaultData } = userData as any;
-        localStorage.setItem('userData', JSON.stringify(defaultData));
-        setTempName(userData.name);
-        checkUserVerification(userData);
-      }
 
-      const avatarInfo = getAvatarInfoForGender(currentGender);
-      setProfileImage(avatarInfo.url);
-      setProfileImageHint(avatarInfo.hint);
-      localStorage.setItem('profileImageUrl', avatarInfo.url);
-      window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: avatarInfo.url, storageArea: localStorage }));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+        const storedUserData = localStorage.getItem('userData');
+        let currentGender = 'other';
+        let currentName = 'Alex Doe';
+        let initialEmail = '';
+        let initialContact = '';
+
+        if (storedUserData) {
+          try {
+            const parsedData: UserData = JSON.parse(storedUserData);
+            currentName = parsedData.name || currentName;
+            initialEmail = parsedData.email || '';
+            initialContact = parsedData.contact || '';
+            currentGender = parsedData.gender || 'other';
+          } catch (e) {
+            console.error("Failed to parse user data from localStorage", e);
+          }
+        }
+        
+        setUserData({
+          name: currentName,
+          email: initialEmail,
+          contact: initialContact,
+          gender: currentGender,
+        });
+        setTempName(currentName);
+
+        const avatarInfo = getAvatarInfoForGender(currentGender);
+        setProfileImage(avatarInfo.url);
+        setProfileImageHint(avatarInfo.hint);
+        localStorage.setItem('profileImageUrl', avatarInfo.url);
+        window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: avatarInfo.url, storageArea: localStorage }));
+      }
+    };
+
+    updateAuthAndUserData();
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'isLoggedIn' || event.key === 'userId' || event.key === 'userData' || event.key === 'profileImageUrl' || event.key === 'marketplaceTickets') {
+        updateAuthAndUserData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [router]);
+
+  React.useEffect(() => {
+    checkUserVerificationStatus();
+  }, [currentUserId, userData, checkUserVerificationStatus]);
+
 
   const saveUserDataToLocalStorage = (updatedData: UserData) => {
     if (typeof window !== 'undefined') {
-      const { aadhaarNumber, ...dataToSave } = updatedData as any; // Ensure aadhaarNumber is not saved
-      localStorage.setItem('userData', JSON.stringify(dataToSave));
-      checkUserVerification(dataToSave); 
+      localStorage.setItem('userData', JSON.stringify(updatedData));
+      
+      if (currentUserId) { // Ensure currentUserId is available
+        const isNowVerified = isUserVerifiedByTicketCount(currentUserId);
+        setIsUserVerified(isNowVerified); // Update local state
+         if (isNowVerified) {
+           localStorage.setItem('hasSeenVerificationPrompt', 'true');
+         }
+      }
 
-      const newAvatarInfo = getAvatarInfoForGender(dataToSave.gender);
+      const newAvatarInfo = getAvatarInfoForGender(updatedData.gender);
       if (profileImage !== newAvatarInfo.url) {
         setProfileImage(newAvatarInfo.url);
         setProfileImageHint(newAvatarInfo.hint);
         localStorage.setItem('profileImageUrl', newAvatarInfo.url);
         window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: newAvatarInfo.url, storageArea: localStorage }));
       }
-      window.dispatchEvent(new CustomEvent('userDataChanged', { detail: dataToSave }));
+      // Dispatch custom event or rely on storage event for other components like Header
+      window.dispatchEvent(new CustomEvent('userDataChanged', { detail: updatedData }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: JSON.stringify(updatedData), storageArea: localStorage }));
     }
   };
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userId');
       localStorage.removeItem('profileImageUrl');
       localStorage.removeItem('userData');
-      localStorage.removeItem('hasSeenVerificationPrompt'); 
       window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'userId', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
       toast({ title: "Logged Out", description: "You have been successfully logged out.", variant: "success" });
-      window.location.href = '/';
+      router.push('/');
     }
   };
 
@@ -165,18 +209,17 @@ export default function ProfileBasicInfoPage() {
   const handleGenderChange = (value: string) => {
     const updatedUserData = { ...userData, gender: value };
     setUserData(updatedUserData);
-    saveUserDataToLocalStorage(updatedUserData);
+    saveUserDataToLocalStorage(updatedUserData); // Save immediately on gender change
     toast({ title: "Gender Updated", description: "Your gender selection has been updated.", variant: "success" });
   };
 
-  const handleEditField = (field: 'email' | 'contact') => { // Removed 'aadhaar'
+  const handleEditField = (field: 'email' | 'contact') => {
     setEditingField(field);
     setOtp('');
     setOtpSent(false);
     setOtpError(false);
     if (field === 'email') setTempValue(userData.email);
     if (field === 'contact') setTempValue(userData.contact);
-    // Removed aadhaar logic
   };
 
   const handleCancelEditField = () => {
@@ -202,20 +245,19 @@ export default function ProfileBasicInfoPage() {
         }
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        const phoneRegex = /^\d{10}$/; 
+        const phoneRegex = /^\d{10}$/; // Indian phone number format
         if (!phoneRegex.test(valueToVerify)) {
             toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
             return;
         }
     }
-    // Removed aadhaar validation
 
-    if (valueToVerify === originalValue) {
+    if (valueToVerify === originalValue && originalValue !== '') {
         toast({title: "No Change", description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} is the same as current.`, variant: "default"});
-        setEditingField(null); 
+        setEditingField(null);
         return;
     }
-    
+
     setIsSendingOtp(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setOtpSent(true);
@@ -238,27 +280,42 @@ export default function ProfileBasicInfoPage() {
 
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (otp === '123456') { 
+    if (otp === '123456') { // Simulated OTP check
       const updatedUserData = { ...userData };
       if (editingField === 'email') {
         updatedUserData.email = tempValue;
       } else if (editingField === 'contact') {
         updatedUserData.contact = tempValue;
-      } 
-      // Removed aadhaar update
+      }
       setUserData(updatedUserData);
       saveUserDataToLocalStorage(updatedUserData);
       toast({ title: 'Update Successful', description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} has been updated.`, variant: 'success' });
       setEditingField(null);
       setOtpSent(false);
       setOtp('');
-      setOtpError(false);
     } else {
       toast({ title: 'Verification Failed', description: 'Incorrect OTP. Please try again.', variant: 'destructive' });
       setOtpError(true);
     }
     setIsVerifyingOtp(false);
   };
+
+  if (isLoadingAuth) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isClientLoggedIn) {
+    // This case should ideally be handled by the redirect, but as a fallback:
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)] text-muted-foreground">
+        <p>Redirecting to login...</p>
+      </div>
+    );
+  }
 
   return (
     <Card className="w-full bg-card">
@@ -276,7 +333,7 @@ export default function ProfileBasicInfoPage() {
           </Avatar>
         </div>
         <div className="text-center sm:text-left">
-          <CardTitle className="text-foreground flex items-center">
+          <CardTitle className="text-foreground flex items-center text-2xl">
             {userData.name}
             {isUserVerified ? (
                 <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-300 gap-1.5 ml-2">
@@ -293,7 +350,6 @@ export default function ProfileBasicInfoPage() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
-        {/* Name Field */}
         <div className="space-y-2">
           <Label htmlFor="name" className="text-foreground">Name</Label>
           {isEditingName ? (
@@ -323,7 +379,6 @@ export default function ProfileBasicInfoPage() {
           )}
         </div>
 
-        {/* Email Field */}
         <div className="space-y-2">
           <Label htmlFor="email" className="text-foreground">Email Address</Label>
           {editingField === 'email' ? (
@@ -374,7 +429,8 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground flex-grow cursor-pointer" onClick={() => handleEditField('email')} />
+              <Input id="email" type="email" value={userData.email || 'Not set'} readOnly className={cn("bg-muted/50 text-foreground flex-grow", userData.email ? "cursor-pointer" : "cursor-not-allowed opacity-70")} onClick={() => handleEditField('email')} />
+              {userData.email && <CheckCircle2 className="h-5 w-5 text-green-500" />}
               <Button variant="outline" size="icon" onClick={() => handleEditField('email')} aria-label="Edit Email">
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -382,7 +438,6 @@ export default function ProfileBasicInfoPage() {
           )}
         </div>
 
-        {/* Contact Field */}
         <div className="space-y-2">
           <Label htmlFor="contact" className="text-foreground">Contact Number</Label>
           {editingField === 'contact' ? (
@@ -435,17 +490,15 @@ export default function ProfileBasicInfoPage() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input id="contact" value={userData.contact} readOnly className="bg-muted/50 text-foreground flex-grow cursor-pointer" onClick={() => handleEditField('contact')}/>
+              <Input id="contact" value={userData.contact || 'Not set'} readOnly className={cn("bg-muted/50 text-foreground flex-grow", userData.contact ? "cursor-pointer" : "cursor-not-allowed opacity-70")} onClick={() => handleEditField('contact')}/>
+              {userData.contact && <CheckCircle2 className="h-5 w-5 text-green-500" />}
               <Button variant="outline" size="icon" onClick={() => handleEditField('contact')} aria-label="Edit Contact">
                 <Edit2 className="h-4 w-4" />
               </Button>
             </div>
           )}
         </div>
-
-        {/* Aadhaar Field - REMOVED */}
-
-        {/* Gender Field */}
+       
         <div className="space-y-1">
           <Label className="text-foreground">Gender</Label>
           <RadioGroup

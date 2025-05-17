@@ -1,9 +1,10 @@
+
 'use client';
 
-import * as React from 'react';
+import * as _React from 'react'; // _React to avoid conflict with React namespace
 import Link from 'next/link';
 import {Button} from '@/components/ui/button';
-import {User, MapPin, Menu, LogIn, LogOut } from 'lucide-react'; // Added LogIn, LogOut
+import {User, MapPin, Menu, LogIn, LogOut, Building } from 'lucide-react'; // Added Menu, LogIn, LogOut, Building
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   Select,
@@ -14,10 +15,9 @@ import {
 } from '@/components/ui/select';
 import {cn} from '@/lib/utils';
 import {useIsMobile} from '@/hooks/use-mobile';
-import {Sheet, SheetContent, SheetTrigger, SheetClose} from '@/components/ui/sheet';
-import {Label} from '@/components/ui/label';
-import { DialogTitle } from "@/components/ui/dialog";
-import { TermsAndConditionsDialog } from './terms-and-conditions-dialog'; // Import T&C Dialog
+import {Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose} from '@/components/ui/sheet'; // Added DialogTitle
+import { Label } from '@/components/ui/label';
+import { TermsAndConditionsDialog } from './terms-and-conditions-dialog';
 
 interface HeaderProps {
   className?: string;
@@ -34,20 +34,19 @@ const availableLocations = [
   'Ahmedabad',
   'Jaipur',
   'Lucknow',
-  'Online', // Added Online for events that might not be city-specific
+  'Online', // Often useful for online event tickets
 ];
 
 export function Header({className}: HeaderProps) {
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
-  const [profileImageUrl, setProfileImageUrl] = React.useState<string | null>(null);
-  const [selectedLocation, setSelectedLocation] = React.useState<string>('');
+  const [isLoggedIn, setIsLoggedIn] = _React.useState(false);
+  const [profileImageUrl, setProfileImageUrl] = _React.useState<string | null>(null);
+  const [selectedLocation, setSelectedLocation] = _React.useState<string>('');
   const isMobile = useIsMobile();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = _React.useState(false);
+  const [showTnCDialog, setShowTnCDialog] = _React.useState(false);
+  const [tncAccepted, setTncAccepted] = _React.useState(true); // Default to true
 
-  const [showTnCDialog, setShowTnCDialog] = React.useState(false);
-  const [tncAccepted, setTncAccepted] = React.useState(true); // Assume accepted initially to avoid flicker
-
-  React.useEffect(() => {
+  _React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
       const storedImageUrl = localStorage.getItem('profileImageUrl');
@@ -64,7 +63,6 @@ export function Header({className}: HeaderProps) {
         setProfileImageUrl(null);
       }
       
-      // Show T&C dialog if logged in and not accepted
       if (loggedInStatus && !accepted) {
         setShowTnCDialog(true);
       }
@@ -81,7 +79,7 @@ export function Header({className}: HeaderProps) {
           } else {
             const updatedImageUrl = localStorage.getItem('profileImageUrl');
             setProfileImageUrl(updatedImageUrl);
-            if (!currentTncAccepted) { // Check again if T&C needs to be shown
+            if (!currentTncAccepted) {
                 setShowTnCDialog(true);
             }
           }
@@ -99,7 +97,7 @@ export function Header({className}: HeaderProps) {
         if (event.key === 'tncAccepted') {
             const newTncStatus = event.newValue === 'true';
             setTncAccepted(newTncStatus);
-            if (newTncStatus) { // if accepted in another tab, close dialog here
+            if (newTncStatus) {
                 setShowTnCDialog(false);
             }
         }
@@ -138,35 +136,35 @@ export function Header({className}: HeaderProps) {
   const handleLogout = () => {
      if (typeof window !== 'undefined') {
         localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userId');
         localStorage.removeItem('profileImageUrl');
-        localStorage.removeItem('userData'); // Also clear userData
-        // Note: tncAccepted is NOT cleared on logout, user accepts once per browser
+        localStorage.removeItem('userData'); // Ensure userData is also cleared
         window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'userId', newValue: null, storageArea: localStorage }));
         window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
         window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
-        // Toast for logout is handled on profile page itself for better UX
-        window.location.href = '/'; // Redirect to home
+        window.location.href = '/'; 
     }
   };
 
   return (
     <>
     <header className={cn("sticky top-0 z-40 w-full border-b bg-background", className)}>
-      <div className="container flex h-16 items-center px-4 md:px-6">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         {isMobile ? (
           <>
             {/* Mobile View */}
             <div className="flex-shrink-0">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="p-2">
+                  <Button variant="ghost" size="icon" className="p-2 text-foreground">
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Open menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-full xs:w-3/4 sm:w-64 p-0">
-                 <DialogTitle className="sr-only">Navigation Menu</DialogTitle>
-                  <div className="flex flex-col h-full">
+                <SheetContent side="left" className="w-full xs:w-3/4 sm:max-w-xs p-0 flex flex-col">
+                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                    {/* Brand Title Section */}
                     <div className="p-4 border-b">
                       <Link href="/" className="flex flex-col items-start" onClick={() => setMobileMenuOpen(false)}>
                         <span className="text-xl font-bold text-foreground">
@@ -177,60 +175,68 @@ export function Header({className}: HeaderProps) {
                         </span>
                       </Link>
                     </div>
-                    <nav className="flex-grow p-4 space-y-2">
-                      <Button asChild variant="ghost" className="w-full justify-start text-base" onClick={() => setMobileMenuOpen(false)}>
-                        <Link href="/post-ticket">Post Ticket</Link>
-                      </Button>
-                      <Button asChild variant="ghost" className="w-full justify-start text-base" onClick={() => setMobileMenuOpen(false)}>
-                        <Link href="/tickets">Browse Tickets</Link>
-                      </Button>
-                      {isLoggedIn && (
-                        <Button asChild variant="ghost" className="w-full justify-start text-base" onClick={() => setMobileMenuOpen(false)}>
-                          <Link href="/profile">My Profile</Link>
-                        </Button>
-                      )}
-                       <div className='p-2'>
-                         <Label className="text-sm font-medium text-muted-foreground mb-1">Location</Label>
-                         <Select value={selectedLocation} onValueChange={(newLocation) => {
-                           handleLocationChange(newLocation);
-                           setMobileMenuOpen(false); 
-                         }}>
-                           <SelectTrigger className="w-full h-9 px-3 py-1 text-sm border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
-                             <SelectValue placeholder="Select Location" />
-                           </SelectTrigger>
-                           <SelectContent>
-                             {availableLocations.map((location) => (
-                               <SelectItem key={location} value={location}>
-                                 {location}
-                               </SelectItem>
-                             ))}
-                           </SelectContent>
-                         </Select>
-                       </div>
-                    </nav>
+
+                    {/* Scrollable area for menu items and location selector */}
+                    <div className="flex-grow overflow-y-auto pt-2">
+                        {/* Navigation Links */}
+                        <nav className="px-4 pb-4 space-y-1">
+                          <Button asChild variant="ghost" className="w-full justify-start text-base text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                            <Link href="/post-ticket">Post Ticket</Link>
+                          </Button>
+                          <Button asChild variant="ghost" className="w-full justify-start text-base text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                            <Link href="/tickets">Browse Tickets</Link>
+                          </Button>
+                          {isLoggedIn && (
+                            <Button asChild variant="ghost" className="w-full justify-start text-base text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                              <Link href="/profile">My Profile</Link>
+                            </Button>
+                          )}
+                        </nav>
+
+                        {/* Location Selector Section */}
+                        <div className="px-4 pb-4 border-t pt-4">
+                            <Label className="text-sm font-medium text-muted-foreground mb-1 block px-1">Location</Label>
+                             <Select value={selectedLocation} onValueChange={(newLocation) => {
+                               handleLocationChange(newLocation);
+                               setMobileMenuOpen(false); // Close menu on selection
+                             }}>
+                               <SelectTrigger className="w-full h-9 text-sm border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                                 <SelectValue placeholder="Select Location" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 {availableLocations.map((location) => (
+                                   <SelectItem key={location} value={location}>
+                                     {location}
+                                   </SelectItem>
+                                 ))}
+                               </SelectContent>
+                             </Select>
+                        </div>
+                    </div>
+
+                    {/* Login/Logout Button (Stays at bottom) */}
                     <div className="p-4 border-t mt-auto">
                        {isLoggedIn ? (
-                           <Button variant="outline" className="w-full text-base gap-2" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
+                           <Button variant="outline" className="w-full text-base gap-2 text-foreground" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
                              <LogOut className="h-4 w-4" /> Logout
                            </Button>
                         ) : (
-                          <Button asChild variant="default" className="w-full text-base gap-2 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setMobileMenuOpen(false)}>
+                          <Button asChild variant="default" className="w-full text-base gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" onClick={() => setMobileMenuOpen(false)}>
                              <Link href="/login"><LogIn className="h-4 w-4" /> Login / Signup</Link>
                           </Button>
                         )}
                     </div>
-                  </div>
                 </SheetContent>
               </Sheet>
             </div>
 
             <div className="flex-grow flex justify-center overflow-hidden px-2">
               <div className="flex flex-col items-center text-center">
-                <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
+                <span className="whitespace-nowrap flex items-baseline justify-center gap-1">
                   <span className="text-2xl font-bold text-foreground">
                      <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                   </span>
-                </Link>
+                </span>
                 <span className="text-[10px] text-foreground opacity-80 truncate max-w-[150px]">
                   Ticket Reselling Platform
                 </span>
@@ -243,7 +249,7 @@ export function Header({className}: HeaderProps) {
                   className="w-auto h-auto p-1.5 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-foreground hover:bg-accent hover:text-accent-foreground"
                   aria-label="Select Location"
                 >
-                   <MapPin className="h-5 w-5 flex-shrink-0" />
+                   <MapPin className="h-5 w-5 flex-shrink-0" /> {/* Changed to MapPin */}
                 </SelectTrigger>
                 <SelectContent>
                   {availableLocations.map((location) => (
@@ -257,8 +263,8 @@ export function Header({className}: HeaderProps) {
           </>
         ) : (
           <>
-            {/* Desktop View - Refactored for better centering and right-alignment */}
-            <div className="flex items-center flex-shrink-0">
+            {/* Desktop View */}
+            <div className="flex items-center">
               <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                 <Link href="/post-ticket">
                   Post Ticket
@@ -266,57 +272,55 @@ export function Header({className}: HeaderProps) {
               </Button>
             </div>
 
-            <div className="flex-grow flex justify-center">
-              <div className="flex flex-col items-center">
-                <Link
-                  href="/"
-                  className="whitespace-nowrap flex items-baseline justify-center gap-1"
-                >
-                  <span className="text-3xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
-                  </span>
-                </Link>
-                <span className="text-xs text-foreground mt-[-4px] opacity-80">
-                  Ticket Reselling Platform
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+              <Link
+                href="/"
+                className="whitespace-nowrap flex items-baseline justify-center gap-1"
+              >
+                <span className="text-3xl font-bold text-foreground">
+                  <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                 </span>
-              </div>
+              </Link>
+              <span className="text-xs text-foreground mt-[-4px] opacity-80">
+                Ticket Reselling Platform
+              </span>
             </div>
 
-            <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
-               {isLoggedIn ? (
-                <Link href="/profile" className="mr-1 md:mr-0">
-                  <Avatar className="h-8 w-8 cursor-pointer">
-                    <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
-                    <AvatarFallback>
-                      <User className="h-4 w-4 text-muted-foreground" />
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-              ) : (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground hover:border-accent"
-                >
-                  <Link href="/login">
-                    Login/Signup
-                  </Link>
-                </Button>
-              )}
-               <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <SelectValue placeholder="Select Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLocations.map((location) => (
-                    <SelectItem key={location} value={location}>
-                      {location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-4"> {/* Increased gap for desktop */}
+                {isLoggedIn ? (
+                    <Link href="/profile" className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary">
+                    <Avatar className="h-8 w-8 cursor-pointer">
+                        <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
+                        <AvatarFallback>
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        </AvatarFallback>
+                    </Avatar>
+                    </Link>
+                ) : (
+                    <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="border-foreground bg-background text-foreground hover:bg-[#FF2459] hover:text-white hover:border-[#FF2459]"
+                    >
+                    <Link href="/login">
+                        Login/Signup
+                    </Link>
+                    </Button>
+                )}
+                 <Select value={selectedLocation} onValueChange={handleLocationChange}>
+                    <SelectTrigger className="w-auto h-9 px-3 py-1 text-sm border-foreground bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <SelectValue placeholder="Select Location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {availableLocations.map((location) => (
+                        <SelectItem key={location} value={location}>
+                        {location}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
             </div>
           </>
         )}
