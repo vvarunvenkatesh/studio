@@ -7,12 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail, Phone, Info } from 'lucide-react';
+import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, Mail, Phone, Info, CheckCircle2 } from 'lucide-react'; // Added CheckCircle2
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useRouter, usePathname, useSearchParams as useNextSearchParams } from 'next/navigation';
-import { getSimulatedCurrentUserId, purchaseTicket as purchaseTicketService } from '@/services/ticket-marketplace'; // Import purchaseTicketService
+import { getSimulatedCurrentUserId, purchaseTicket as purchaseTicketService } from '@/services/ticket-marketplace';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -39,7 +39,7 @@ export function TicketCard({
     onCancelListing,
     isCancelling,
     className,
-    isSeller: propIsSeller
+    isSeller: propIsSeller // Renamed to avoid conflict with internal isSeller state
 }: TicketCardProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -61,8 +61,9 @@ export function TicketCard({
             setCardInternalCurrentUserId(getSimulatedCurrentUserId());
         }
       }
-      updateLoginStatus();
+      updateLoginStatus(); // Initial check
 
+      // Listen for storage changes to update login status dynamically
       const handleStorageChange = (event: StorageEvent) => {
           if (event.key === 'isLoggedIn' || event.key === 'userId') {
               updateLoginStatus();
@@ -78,6 +79,7 @@ export function TicketCard({
   const CategorySpecificIcon = categoryIconMap[ticketProp.type] || TicketIconLucide;
 
   const isTicketSold = ticketProp.status === 'sold';
+  // This determines if the current logged-in user (from card's perspective) is the seller of THIS ticket
   const actualIsSeller = !!cardInternalCurrentUserId && ticketProp.sellerId === cardInternalCurrentUserId && cardInternalCurrentUserId !== 'anonymousUser';
 
   const cardTitle = (ticketProp.type === 'movie' || ticketProp.type === 'event' || ticketProp.type === 'sports') && ticketProp.title
@@ -87,6 +89,7 @@ export function TicketCard({
 
   const redirectToLogin = () => {
     let currentRedirectPath = pathname;
+    // For ticket browse pages, preserve search params
     if (pathname.startsWith('/tickets')) {
         currentRedirectPath += '?' + searchParamsHook.toString();
     }
@@ -99,8 +102,8 @@ export function TicketCard({
         setShowLoginDialog(true);
         return;
     }
-    const sellerCheck = variant === 'browse' ? propIsSeller : actualIsSeller;
-    if (isTicketSold || sellerCheck) return;
+    // Use 'actualIsSeller' for the check to prevent buying own ticket
+    if (isTicketSold || actualIsSeller) return;
 
     setIsPurchasing(true);
     try {
@@ -124,19 +127,21 @@ export function TicketCard({
           title: 'Purchase Initiated!',
           description: contactMessage,
           variant: 'success',
-          duration: 7000,
+          duration: 7000, // Increased duration for contact details
         });
         if (onPurchaseSuccess) {
-          onPurchaseSuccess(result.ticket.id);
+          onPurchaseSuccess(result.ticket.id); // Propagate success to parent for potential re-fetch
         }
+        // UI updates (like marking card as sold) will happen when parent re-renders with new ticket data
       } else {
         toast({
           title: 'Purchase Failed',
           description: result.message || 'Could not initiate purchase for the ticket.',
           variant: 'destructive',
         });
+        // If API indicates already sold, parent should refresh to reflect this
         if (result.ticket && result.message?.includes('already sold')) {
-           if (onPurchaseSuccess) {
+           if (onPurchaseSuccess) { // Notify parent to refresh
               onPurchaseSuccess(result.ticket.id);
            }
         }
@@ -158,19 +163,20 @@ export function TicketCard({
        toast({ title: 'Download Failed', description: 'No file available.', variant: 'destructive' });
        return;
      }
-
+   
      const link = document.createElement('a');
-     let fileExtension = 'file';
+     let fileExtension = 'file'; // Default extension
      const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
      let isImage = false;
      let mimeType = '';
-
+   
      if (mimeMatch && mimeMatch[1]) {
        mimeType = mimeMatch[1];
        const extensionMap: Record<string, string> = {
          'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
          'application/pdf': 'pdf', 'application/msword': 'doc',
          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+         // Add more mime types and extensions as needed
        };
        fileExtension = extensionMap[mimeType] || fileExtension;
        isImage = mimeType.startsWith('image/');
@@ -178,7 +184,7 @@ export function TicketCard({
      const baseFilename = `ticket_${ticketType}_${ticketId}`;
      const watermarkedFilename = `${baseFilename}_watermarked.${fileExtension}`;
      const originalFilename = `${baseFilename}.${fileExtension}`;
-
+   
      if (isImage) {
        try {
          const img = new Image();
@@ -189,29 +195,35 @@ export function TicketCard({
            const ctx = canvas.getContext('2d');
            if (!ctx) {
              toast({ title: 'Watermark Failed', description: 'Could not process image.', variant: 'destructive' });
+             // Fallback to downloading original if canvas fails
              link.href = dataUri;
-             link.download = originalFilename;
+             link.download = originalFilename; // Download original if watermarking fails
              document.body.appendChild(link);
              link.click();
              document.body.removeChild(link);
              return;
            }
-
+   
+           // Draw original image
            ctx.drawImage(img, 0, 0);
-
+           
+           // Add watermark text
+           // Adjust font size based on image dimensions for better visibility
            const fontSize = Math.max(12, Math.min(img.width / 20, img.height / 15));
            ctx.font = `bold ${fontSize}px Arial`;
-           ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+           ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Semi-transparent black
            ctx.textAlign = 'center';
            ctx.textBaseline = 'middle';
-
-           const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`;
+           
+           const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`; // Example watermark
+           // Position watermark (e.g., center)
            const x = canvas.width / 2;
            const y = canvas.height / 2;
-
+           
            ctx.fillText(watermarkText, x, y);
+           // You can add more complex watermarking like diagonal text or patterns
 
-           link.href = canvas.toDataURL(mimeType);
+           link.href = canvas.toDataURL(mimeType); // Use original mimeType for canvas export
            link.download = watermarkedFilename;
            document.body.appendChild(link);
            link.click();
@@ -221,10 +233,11 @@ export function TicketCard({
          img.onerror = () => {
            toast({ title: 'Download Failed', description: 'Could not load image for watermarking.', variant: 'destructive' });
          };
-         img.src = dataUri;
+         img.src = dataUri; // This triggers the img.onload or img.onerror
        } catch (error) {
          console.error("Error watermarking image:", error);
          toast({ title: 'Watermark Error', description: 'Could not apply watermark.', variant: 'destructive' });
+         // Fallback to downloading original
          link.href = dataUri;
          link.download = originalFilename;
          document.body.appendChild(link);
@@ -232,8 +245,9 @@ export function TicketCard({
          document.body.removeChild(link);
        }
      } else {
+       // For non-image files, download directly without watermarking attempt
        link.href = dataUri;
-       link.download = originalFilename;
+       link.download = originalFilename; // Use original filename
        document.body.appendChild(link);
        link.click();
        document.body.removeChild(link);
@@ -280,7 +294,7 @@ export function TicketCard({
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500 px-2 py-1"
-      style={{ backgroundColor: '#FFCE54' }}
+      style={{ backgroundColor: '#FFCE54' }} // Amber-like color for pending
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -302,10 +316,7 @@ export function TicketCard({
                {cardTitle}
              </CardTitle>
              {ticketProp.sellerVerified && (
-                <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-primary/30 gap-1 text-xs px-1.5 py-0.5 shrink-0">
-                    <ShieldCheck className="h-3 w-3" />
-                    Verified
-                </Badge>
+                <CheckCircle2 className="ml-2 h-4 w-4 text-green-500 flex-shrink-0" title="Verified Seller" />
              )}
            </div>
            <Badge variant={isTicketSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {ticketProp.id.substring(0, 6)}</Badge>
@@ -328,6 +339,7 @@ export function TicketCard({
                 <span className="truncate">{ticketProp.location}</span>
              </div>
          )}
+         {/* Case for train/bus where only general location (e.g., station name) might be provided */}
          {(ticketProp.type === 'train' || ticketProp.type === 'bus') && ticketProp.location && (!ticketProp.fromCity || !ticketProp.toCity) && (
              <div className="flex items-center text-xs text-muted-foreground">
                 <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
@@ -384,11 +396,11 @@ export function TicketCard({
           ) : (
             <Badge variant="destructive">Sold</Badge>
           )
-        ) : variant === 'manage' ? (
+        ) : variant === 'manage' ? ( // On Your Active Listings page (PostTicketPage)
           renderCancelButton()
-        ) : propIsSeller ? (
+        ) : propIsSeller ? ( // On browse pages (/tickets) if current user is the seller
           renderPendingIndicator()
-        ) : !detailsVisible ? (
+        ) : !detailsVisible ? ( // On browse pages, not seller, details not yet visible
           <Button
             size="sm"
             onClick={() => setDetailsVisible(true)}
@@ -398,7 +410,7 @@ export function TicketCard({
             <Info className="mr-2 h-4 w-4" />
             Get Details
           </Button>
-        ) : (
+        ) : ( // On browse pages, not seller, details are visible
           <Button
             size="sm"
             onClick={handlePurchase}
