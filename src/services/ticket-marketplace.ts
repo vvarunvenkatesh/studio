@@ -57,20 +57,20 @@ export interface Ticket {
    sellerVerified?: boolean;
 }
 
-// Added UserData interface for clarity, assuming it's used for profile
+// UserData interface now only includes fields relevant after Aadhaar removal
 interface UserData {
   name: string;
   email: string;
   contact: string;
   gender: 'male' | 'female' | 'other' | string;
-  aadhaarNumber?: string;
+  // aadhaarNumber?: string; // Removed Aadhaar
 }
 
 
 const marketplaceTicketsKey = 'marketplaceTickets';
 const userPostedTicketsKey = 'userPostedTickets';
 const userOrdersKey = 'userOrders';
-const userDataKey = 'userData'; // Key for storing current user's profile data
+const userDataKey = 'userData'; 
 
 
 // --- LocalStorage Helper Functions ---
@@ -86,8 +86,12 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
                          ...ticket,
                          sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
                          status: ticket.status || 'available',
-                         sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified, // Default sellerVerified
+                         sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified, 
                       }));
+                } else if (key === userDataKey && parsedData && typeof parsedData === 'object' && 'aadhaarNumber' in parsedData) {
+                    // Remove aadhaarNumber from loaded userData if it exists
+                    const { aadhaarNumber, ...restOfData } = parsedData as any;
+                    parsedData = restOfData;
                 }
                 return parsedData as T;
             } catch (e) {
@@ -100,7 +104,7 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
           ...ticket,
           sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
           status: ticket.status || 'available',
-          sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified, // Default sellerVerified
+          sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified, 
       })) as T;
     }
     return defaultValue;
@@ -109,10 +113,15 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
 const saveToLocalStorage = <T>(key: string, data: T) => {
     if (typeof window !== 'undefined') {
         try {
-            localStorage.setItem(key, JSON.stringify(data));
+            let dataToSave = data;
+            if (key === userDataKey && typeof data === 'object' && data !== null && 'aadhaarNumber' in data) {
+                 const { aadhaarNumber, ...restOfData } = data as any; // Ensure aadhaarNumber is not saved
+                 dataToSave = restOfData as T;
+            }
+            localStorage.setItem(key, JSON.stringify(dataToSave));
             window.dispatchEvent(new StorageEvent('storage', {
                 key: key,
-                newValue: JSON.stringify(data),
+                newValue: JSON.stringify(dataToSave),
                 storageArea: localStorage,
             }));
         } catch (e) {
@@ -131,10 +140,10 @@ const isCurrentUserVerifiedForDefault = (): boolean => {
     if (storedUserData) {
         try {
             const parsedData: UserData = JSON.parse(storedUserData);
-            // Check if the current user is 'currentUser' and has all verification fields
             const currentUserId = getSimulatedCurrentUserId();
             if (currentUserId === 'currentUser') {
-                 return !!(parsedData.email && parsedData.contact && parsedData.aadhaarNumber);
+                 // Verification now depends only on email and contact
+                 return !!(parsedData.email && parsedData.contact);
             }
         } catch (e) {
             console.error("Failed to parse userData for default ticket verification check", e);
@@ -182,7 +191,7 @@ const getDefaultTickets = (): Ticket[] => [
         location: 'Downtown Cinema',
         status: 'available',
         sellerId: 'currentUser',
-        sellerVerified: isCurrentUserVerifiedForDefault(), // Check current user's verification
+        sellerVerified: isCurrentUserVerifiedForDefault(), 
       },
       {
         id: '4',
@@ -210,7 +219,7 @@ const getDefaultTickets = (): Ticket[] => [
         toCity: 'Denver',
         status: 'available',
         sellerId: 'currentUser',
-        sellerVerified: isCurrentUserVerifiedForDefault(), // Check current user's verification
+        sellerVerified: isCurrentUserVerifiedForDefault(), 
       },
        {
         id: '6',
@@ -265,6 +274,7 @@ const getUserPostedTickets = (): Ticket[] => {
 
 const saveUserPostedTickets = (postedTickets: Ticket[]) => {
     const uniqueTickets = getUniqueById(postedTickets);
+    // Remove originalTicketDataUri before saving to userPostedTickets to save space
     const ticketsToSave = uniqueTickets.map(({ originalTicketDataUri, ...ticket }) => ticket);
     saveToLocalStorage(userPostedTicketsKey, ticketsToSave);
 };
@@ -355,7 +365,8 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
     if (storedUserData) {
         try {
             const parsedData: UserData = JSON.parse(storedUserData);
-            sellerIsVerified = !!(parsedData.email && parsedData.contact && parsedData.aadhaarNumber);
+            // Verification now depends only on email and contact
+            sellerIsVerified = !!(parsedData.email && parsedData.contact);
         } catch (e) {
             console.error("Failed to parse userData for seller verification status", e);
         }
@@ -382,8 +393,8 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
   } catch (error) {
     if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
       console.error('LocalStorage quota exceeded while posting ticket.');
-      tickets.pop();
-      throw error;
+      tickets.pop(); 
+      throw error; 
     } else {
       console.error('An unexpected error occurred while posting ticket:', error);
       tickets.pop();
@@ -483,10 +494,12 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
 export function getSimulatedCurrentUserId(): string {
     if (typeof window !== 'undefined') {
         if (localStorage.getItem('isLoggedIn') === 'true') {
-            return localStorage.getItem('userId') || 'currentUser';
+            // For simulation, let's say the logged-in user's ID is 'currentUser'
+            // In a real app, this would come from an auth session
+            return localStorage.getItem('userId') || 'currentUser'; 
         }
     }
-    return 'anonymousUser';
+    return 'anonymousUser'; // Represents a non-logged-in user
 }
 
 export function setSimulatedCurrentUserId(userId: string | null) {
@@ -498,12 +511,14 @@ export function setSimulatedCurrentUserId(userId: string | null) {
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userId');
         }
+        // Dispatch events to notify other parts of the app about login status change
         window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn' }));
         window.dispatchEvent(new StorageEvent('storage', { key: 'userId' }));
     }
 }
 
 
+// Initialize with default tickets if none are in localStorage
 if (typeof window !== 'undefined') {
     window.addEventListener('storage', (event) => {
         if (event.key === marketplaceTicketsKey && event.newValue) {
@@ -520,11 +535,7 @@ if (typeof window !== 'undefined') {
                  console.error('Failed to parse marketplace tickets from storage event', e);
              }
         }
-         if (event.key === userDataKey) { // Listen for changes to userData
-            // If userData changes, we might want to re-evaluate default ticket verification for 'currentUser'
-            // and potentially update marketplaceTickets if default tickets haven't been modified by user actions.
-            // This part can get complex with localStorage simulation.
-            // For now, we'll just log that userData changed.
+         if (event.key === userDataKey) { 
             console.log('User data updated from storage event.');
         }
     });

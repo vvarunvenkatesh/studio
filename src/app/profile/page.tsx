@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, Edit2, Loader2, KeyRound, ShieldCheck, X, Fingerprint, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, LogOut, Edit2, Loader2, KeyRound, ShieldCheck, X, Save, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ interface UserData {
   email: string;
   contact: string;
   gender: 'male' | 'female' | 'other' | string;
-  aadhaarNumber?: string;
+  // aadhaarNumber?: string; // Removed Aadhaar
 }
 
 // Define gender-based avatar URLs
@@ -37,7 +37,7 @@ export default function ProfileBasicInfoPage() {
     email: 'alex.doe@example.com',
     contact: '+1 123 456 7890',
     gender: 'other',
-    aadhaarNumber: '',
+    // aadhaarNumber: '', // Removed Aadhaar
   });
 
   const [profileImage, setProfileImage] = React.useState<string>(DEFAULT_AVATAR_INFO.url);
@@ -48,7 +48,7 @@ export default function ProfileBasicInfoPage() {
   const [isEditingName, setIsEditingName] = React.useState(false);
   const [tempName, setTempName] = React.useState(userData.name);
 
-  const [editingField, setEditingField] = React.useState<'email' | 'contact' | 'aadhaar' | null>(null);
+  const [editingField, setEditingField] = React.useState<'email' | 'contact' | null>(null); // Removed 'aadhaar'
   const [tempValue, setTempValue] = React.useState('');
   const [otp, setOtp] = React.useState('');
   const [otpSent, setOtpSent] = React.useState(false);
@@ -61,10 +61,11 @@ export default function ProfileBasicInfoPage() {
   };
 
   const checkUserVerification = (data: UserData) => {
-    const verified = !!(data.email && data.contact && data.aadhaarNumber && data.aadhaarNumber.length === 12);
+    // Verification now depends only on email and contact
+    const verified = !!(data.email && data.contact);
     setIsUserVerified(verified);
     if (verified && typeof window !== 'undefined') {
-        localStorage.setItem('hasSeenVerificationPrompt', 'true'); // Mark prompt as handled if verified
+        localStorage.setItem('hasSeenVerificationPrompt', 'true'); 
     }
     return verified;
   };
@@ -78,19 +79,23 @@ export default function ProfileBasicInfoPage() {
       if (storedUserData) {
         try {
           const parsedData: UserData = JSON.parse(storedUserData);
-          setUserData(prevData => ({ ...prevData, ...parsedData }));
-          currentName = parsedData.name || userData.name;
+          // Ensure aadhaarNumber is not part of the loaded data if it exists in old storage
+          const { aadhaarNumber, ...restOfParsedData } = parsedData as any; 
+          setUserData(prevData => ({ ...prevData, ...restOfParsedData }));
+          currentName = restOfParsedData.name || userData.name;
           setTempName(currentName);
-          currentGender = parsedData.gender || userData.gender;
-          checkUserVerification(parsedData);
+          currentGender = restOfParsedData.gender || userData.gender;
+          checkUserVerification(restOfParsedData);
         } catch (e) {
           console.error("Failed to parse user data from localStorage", e);
-          localStorage.setItem('userData', JSON.stringify(userData)); // Save default if parsing fails
+          const { aadhaarNumber, ...defaultData } = userData as any;
+          localStorage.setItem('userData', JSON.stringify(defaultData)); 
           setTempName(userData.name);
           checkUserVerification(userData);
         }
       } else {
-        localStorage.setItem('userData', JSON.stringify(userData)); // Save default if no data found
+        const { aadhaarNumber, ...defaultData } = userData as any;
+        localStorage.setItem('userData', JSON.stringify(defaultData));
         setTempName(userData.name);
         checkUserVerification(userData);
       }
@@ -102,22 +107,22 @@ export default function ProfileBasicInfoPage() {
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: avatarInfo.url, storageArea: localStorage }));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs once on mount
+  }, []); 
 
   const saveUserDataToLocalStorage = (updatedData: UserData) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('userData', JSON.stringify(updatedData));
-      const isNowVerified = checkUserVerification(updatedData); // This will also set hasSeenVerificationPrompt if verified
+      const { aadhaarNumber, ...dataToSave } = updatedData as any; // Ensure aadhaarNumber is not saved
+      localStorage.setItem('userData', JSON.stringify(dataToSave));
+      checkUserVerification(dataToSave); 
 
-      const newAvatarInfo = getAvatarInfoForGender(updatedData.gender);
+      const newAvatarInfo = getAvatarInfoForGender(dataToSave.gender);
       if (profileImage !== newAvatarInfo.url) {
         setProfileImage(newAvatarInfo.url);
         setProfileImageHint(newAvatarInfo.hint);
         localStorage.setItem('profileImageUrl', newAvatarInfo.url);
         window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: newAvatarInfo.url, storageArea: localStorage }));
       }
-      // Dispatch a custom event to notify other components (like Header) about user data changes
-      window.dispatchEvent(new CustomEvent('userDataChanged', { detail: updatedData }));
+      window.dispatchEvent(new CustomEvent('userDataChanged', { detail: dataToSave }));
     }
   };
 
@@ -126,7 +131,7 @@ export default function ProfileBasicInfoPage() {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('profileImageUrl');
       localStorage.removeItem('userData');
-      localStorage.removeItem('hasSeenVerificationPrompt'); // Also clear this on logout
+      localStorage.removeItem('hasSeenVerificationPrompt'); 
       window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
       window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
@@ -164,14 +169,14 @@ export default function ProfileBasicInfoPage() {
     toast({ title: "Gender Updated", description: "Your gender selection has been updated.", variant: "success" });
   };
 
-  const handleEditField = (field: 'email' | 'contact' | 'aadhaar') => {
+  const handleEditField = (field: 'email' | 'contact') => { // Removed 'aadhaar'
     setEditingField(field);
     setOtp('');
     setOtpSent(false);
     setOtpError(false);
     if (field === 'email') setTempValue(userData.email);
     if (field === 'contact') setTempValue(userData.contact);
-    if (field === 'aadhaar') setTempValue(userData.aadhaarNumber || '');
+    // Removed aadhaar logic
   };
 
   const handleCancelEditField = () => {
@@ -197,23 +202,17 @@ export default function ProfileBasicInfoPage() {
         }
     } else if (editingField === 'contact') {
         originalValue = userData.contact;
-        const phoneRegex = /^\d{10}$/;
+        const phoneRegex = /^\d{10}$/; 
         if (!phoneRegex.test(valueToVerify)) {
             toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
             return;
         }
-    } else if (editingField === 'aadhaar') {
-        originalValue = userData.aadhaarNumber || '';
-        const aadhaarRegex = /^\d{12}$/;
-        if (!aadhaarRegex.test(valueToVerify)) {
-            toast({title: `Invalid Aadhaar Number`, description: "Aadhaar number must be 12 digits.", variant: "destructive"});
-            return;
-        }
     }
+    // Removed aadhaar validation
 
-    if (valueToVerify === originalValue && !(editingField === 'aadhaar' && !userData.aadhaarNumber) ) {
+    if (valueToVerify === originalValue) {
         toast({title: "No Change", description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} is the same as current.`, variant: "default"});
-        setEditingField(null); // Close editing mode if no change
+        setEditingField(null); 
         return;
     }
     
@@ -239,15 +238,14 @@ export default function ProfileBasicInfoPage() {
 
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (otp === '123456') { // Simulated OTP check
+    if (otp === '123456') { 
       const updatedUserData = { ...userData };
       if (editingField === 'email') {
         updatedUserData.email = tempValue;
       } else if (editingField === 'contact') {
         updatedUserData.contact = tempValue;
-      } else if (editingField === 'aadhaar') {
-        updatedUserData.aadhaarNumber = tempValue;
-      }
+      } 
+      // Removed aadhaar update
       setUserData(updatedUserData);
       saveUserDataToLocalStorage(updatedUserData);
       toast({ title: 'Update Successful', description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} has been updated.`, variant: 'success' });
@@ -445,78 +443,7 @@ export default function ProfileBasicInfoPage() {
           )}
         </div>
 
-        {/* Aadhaar Field */}
-        <div className="space-y-2">
-          <Label htmlFor="aadhaar" className="text-foreground">Aadhaar Number</Label>
-          {editingField === 'aadhaar' ? (
-             <div className="space-y-2">
-              <Input
-                id="aadhaar"
-                type="text"
-                placeholder="Enter 12-digit Aadhaar"
-                value={tempValue}
-                maxLength={12}
-                onChange={(e) => setTempValue(e.target.value.replace(/[^0-9]/g, ''))}
-                className="text-foreground"
-                disabled={otpSent || isSendingOtp || isVerifyingOtp}
-              />
-               {!otpSent ? (
-                 <div className="flex gap-2">
-                    <Button onClick={handleSendOtpForUpdate} disabled={isSendingOtp || (tempValue === userData.aadhaarNumber && !!userData.aadhaarNumber)} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                      {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                      {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
-                    </Button>
-                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
-                 </div>
-                ) : (
-                <div className="space-y-2">
-                  <Label htmlFor="aadhaarOtp" className="text-foreground">Enter OTP for Aadhaar</Label>
-                  <Input
-                    id="aadhaarOtp"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="6-digit OTP"
-                    value={otp}
-                     onChange={(e) => {
-                        setOtp(e.target.value.replace(/[^0-9]/g, ''));
-                        setOtpError(false);
-                    }}
-                    onFocus={() => setOtpError(false)}
-                    className={cn("text-foreground", otpError && "border-destructive focus-visible:ring-destructive")}
-                    disabled={isVerifyingOtp}
-                  />
-                  <div className="flex gap-2">
-                      <Button onClick={handleVerifyOtpForUpdate} disabled={isVerifyingOtp || otp.length !== 6} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                        {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-                        {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
-                      </Button>
-                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-               <div className="flex items-center gap-2 flex-grow">
-                <Input
-                    id="aadhaarDisplay"
-                    value={userData.aadhaarNumber ? `********${userData.aadhaarNumber.slice(-4)}` : 'Not Provided'}
-                    readOnly
-                    className="bg-muted/50 text-foreground flex-grow cursor-pointer"
-                    onClick={() => handleEditField('aadhaar')}
-                />
-                {userData.aadhaarNumber && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
-               </div>
-              <Button variant="outline" size="icon" onClick={() => handleEditField('aadhaar')} aria-label={userData.aadhaarNumber ? "Edit Aadhaar" : "Add Aadhaar"}>
-                 {userData.aadhaarNumber ? <Edit2 className="h-4 w-4" /> : <Fingerprint className="h-4 w-4" />}
-              </Button>
-            </div>
-          )}
-           <p className="text-xs text-muted-foreground">
-             For verification purposes only. Your Aadhaar number will be masked.
-           </p>
-        </div>
+        {/* Aadhaar Field - REMOVED */}
 
         {/* Gender Field */}
         <div className="space-y-1">
@@ -550,5 +477,3 @@ export default function ProfileBasicInfoPage() {
     </Card>
   );
 }
-
-    
