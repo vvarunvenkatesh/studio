@@ -59,6 +59,10 @@ export interface Ticket {
     * The contact email of the seller.
     */
    sellerContactEmail?: string;
+   /**
+    * The contact phone number of the seller.
+    */
+   sellerContactPhone?: string;
 }
 
 // UserData interface now only includes fields relevant after Aadhaar removal
@@ -91,6 +95,7 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
                          status: ticket.status || 'available',
                          sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
                          sellerContactEmail: ticket.sellerContactEmail || undefined,
+                         sellerContactPhone: ticket.sellerContactPhone || undefined,
                       }));
                 } else if (key === userDataKey && parsedData && typeof parsedData === 'object' && 'aadhaarNumber' in parsedData) {
                     // Remove aadhaarNumber from loaded userData if it exists
@@ -110,6 +115,7 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
           status: ticket.status || 'available',
           sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
           sellerContactEmail: ticket.sellerContactEmail || undefined,
+          sellerContactPhone: ticket.sellerContactPhone || undefined,
       })) as T;
     }
     return defaultValue;
@@ -144,6 +150,9 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
                     localStorage.setItem(key, JSON.stringify(trimmedData));
                     console.warn(`Attempted to trim ${key} to last 5 entries due to potential quota issues.`);
                     // Do not re-throw immediately; let the original operation fail if still too large.
+                 } else {
+                   // If not an array or not enough items to trim meaningfully, we might still hit quota
+                   // For simplicity, we'll let the original setItem fail in this case
                  }
             }
             localStorage.setItem(key, stringifiedData);
@@ -197,6 +206,7 @@ const getDefaultTickets = (): Ticket[] => [
         sellerId: 'otherUser1',
         sellerVerified: false,
         sellerContactEmail: 'seller1@example.com',
+        sellerContactPhone: '9876543210',
       },
       {
         id: '2',
@@ -210,6 +220,7 @@ const getDefaultTickets = (): Ticket[] => [
         sellerId: 'otherUser2',
         sellerVerified: true,
         sellerContactEmail: 'seller2_verified@example.com',
+        sellerContactPhone: '9876543211',
       },
        {
         id: '3',
@@ -223,6 +234,7 @@ const getDefaultTickets = (): Ticket[] => [
         sellerId: 'currentUser', // This ID will be dynamically checked for current user
         sellerVerified: isCurrentUserVerifiedForDefault(),
         sellerContactEmail: 'currentuser@example.com', // Placeholder, will be updated if current user posts
+        sellerContactPhone: '1234567890', // Placeholder
       },
       {
         id: '4',
@@ -238,6 +250,7 @@ const getDefaultTickets = (): Ticket[] => [
         sellerId: 'otherUser3',
         sellerVerified: false,
         sellerContactEmail: 'seller3@example.com',
+        sellerContactPhone: '9876543212',
       },
         {
         id: '5',
@@ -253,6 +266,7 @@ const getDefaultTickets = (): Ticket[] => [
         sellerId: 'currentUser',
         sellerVerified: isCurrentUserVerifiedForDefault(),
         sellerContactEmail: 'currentuser@example.com',
+        sellerContactPhone: '1234567890',
       },
        {
         id: '6',
@@ -266,6 +280,7 @@ const getDefaultTickets = (): Ticket[] => [
         sellerId: 'otherUser4',
         sellerVerified: true,
         sellerContactEmail: 'seller4_verified@example.com',
+        sellerContactPhone: '9876543213',
       },
 ];
 
@@ -280,7 +295,7 @@ if (typeof window !== 'undefined' && !localStorage.getItem(marketplaceTicketsKey
                 const currentUserData: UserData = JSON.parse(userDataString);
                 tickets = tickets.map(ticket =>
                     ticket.sellerId === 'currentUser' && currentUserData.email
-                        ? { ...ticket, sellerContactEmail: currentUserData.email, sellerVerified: isCurrentUserVerifiedForDefault() }
+                        ? { ...ticket, sellerContactEmail: currentUserData.email, sellerContactPhone: currentUserData.contact, sellerVerified: isCurrentUserVerifiedForDefault() }
                         : ticket
                 );
             } catch (e) { console.error("Error parsing current user data for default tickets", e); }
@@ -288,14 +303,15 @@ if (typeof window !== 'undefined' && !localStorage.getItem(marketplaceTicketsKey
     }
     saveToLocalStorage(marketplaceTicketsKey, tickets);
 } else {
-    const needsUpdate = tickets.some(ticket => !ticket.sellerId || !ticket.status || ticket.sellerVerified === undefined || ticket.sellerContactEmail === undefined);
+    const needsUpdate = tickets.some(ticket => !ticket.sellerId || !ticket.status || ticket.sellerVerified === undefined || ticket.sellerContactEmail === undefined || ticket.sellerContactPhone === undefined);
     if (needsUpdate) {
         tickets = tickets.map(ticket => ({
             ...ticket,
             sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
             status: ticket.status || 'available',
             sellerVerified: ticket.sellerVerified === undefined ? (ticket.sellerId === 'currentUser' ? isCurrentUserVerifiedForDefault() : false) : ticket.sellerVerified,
-            sellerContactEmail: ticket.sellerContactEmail || (ticket.sellerId === 'currentUser' ? 'currentuser@example.com' : `seller_${ticket.id}@example.com`),
+            sellerContactEmail: ticket.sellerContactEmail || (ticket.sellerId === 'currentUser' ? 'currentuser@example.com' : `seller_email_${ticket.id}@example.com`),
+            sellerContactPhone: ticket.sellerContactPhone || (ticket.sellerId === 'currentUser' ? '1234567890' : `999888${Math.floor(Math.random()*10000).toString().padStart(4, '0')}`),
         }));
         saveToLocalStorage(marketplaceTicketsKey, tickets);
     }
@@ -326,7 +342,7 @@ const saveUserPostedTickets = (postedTickets: Ticket[]) => {
     const uniqueTickets = getUniqueById(postedTickets);
     const ticketsToSave = uniqueTickets.map(ticket => {
         const { originalTicketDataUri, ...rest } = ticket;
-        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) {
+        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { // Example threshold: 100KB
             console.warn(`Removing large originalTicketDataUri for ticket ID ${ticket.id} from userPostedTickets to save space.`);
             return rest;
         }
@@ -362,8 +378,8 @@ export async function getAvailableTickets(filters?: {
   maxPrice?: number;
   startDate?: string;
   endDate?: string;
-  searchTerm?: string; // Added for generic search
-  ticketId?: string; // Added to fetch a specific ticket by ID
+  searchTerm?: string;
+  ticketId?: string;
 }): Promise<Ticket[]> {
   await new Promise(resolve => setTimeout(resolve, 50));
   tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
@@ -378,7 +394,7 @@ export async function getAvailableTickets(filters?: {
   if (filters?.category) {
     if (filters.category === 'transport') {
       filteredTickets = filteredTickets.filter(ticket => ticket.type === 'train' || ticket.type === 'bus');
-    } else if (filters.category !== 'all') { // 'all' or undefined category means no type filtering
+    } else if (filters.category !== 'all') {
       filteredTickets = filteredTickets.filter(ticket => ticket.type === filters.category);
     }
   }
@@ -431,12 +447,13 @@ export async function getTicketById(ticketId: string): Promise<Ticket | null> {
   return ticket || null;
 }
 
-export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId' | 'sellerVerified' | 'sellerContactEmail'> & { originalTicketDataUri?: string }): Promise<Ticket> {
+export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId' | 'sellerVerified' | 'sellerContactEmail' | 'sellerContactPhone'> & { originalTicketDataUri?: string }): Promise<Ticket> {
   await new Promise(resolve => setTimeout(resolve, 100));
 
   const currentUserId = getSimulatedCurrentUserId();
   let sellerIsVerified = false;
   let sellerEmail: string | undefined = undefined;
+  let sellerPhone: string | undefined = undefined;
 
   if (typeof window !== 'undefined' && currentUserId !== 'anonymousUser') {
     const storedUserData = localStorage.getItem(userDataKey);
@@ -444,9 +461,10 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
         try {
             const parsedData: UserData = JSON.parse(storedUserData);
             sellerIsVerified = !!(parsedData.email && parsedData.contact);
-            sellerEmail = parsedData.email; // Get seller's email
+            sellerEmail = parsedData.email;
+            sellerPhone = parsedData.contact;
         } catch (e) {
-            console.error("Failed to parse userData for seller verification status and email", e);
+            console.error("Failed to parse userData for seller verification status and contact info", e);
         }
     }
   }
@@ -458,7 +476,8 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
     status: 'available',
     sellerId: currentUserId,
     sellerVerified: sellerIsVerified,
-    sellerContactEmail: sellerEmail, // Store seller's email
+    sellerContactEmail: sellerEmail,
+    sellerContactPhone: sellerPhone,
   };
 
   tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
@@ -535,9 +554,22 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
   const updatedTicket = await updateTicket(ticketId, { status: 'sold' });
 
   if (updatedTicket) {
-    addUserOrder(updatedTicket);
+    addUserOrder(updatedTicket); // Ensure sellerContactPhone is also saved here if present
     console.log(`Ticket ${ticketId} marked as sold by ${buyerId} (pending offline payment).`);
-    return { success: true, message: `Ticket ${ticketId} purchase initiated! Contact seller for payment.`, ticket: updatedTicket };
+    
+    let contactMessage = "Contact the seller ";
+    if (updatedTicket.sellerContactEmail && updatedTicket.sellerContactPhone) {
+        contactMessage += `at ${updatedTicket.sellerContactEmail} or ${updatedTicket.sellerContactPhone}`;
+    } else if (updatedTicket.sellerContactEmail) {
+        contactMessage += `at ${updatedTicket.sellerContactEmail}`;
+    } else if (updatedTicket.sellerContactPhone) {
+        contactMessage += `at ${updatedTicket.sellerContactPhone}`;
+    } else {
+        contactMessage += "using their listed contact details";
+    }
+    contactMessage += " to complete your purchase.";
+
+    return { success: true, message: `Ticket ${ticketId} purchase initiated! ${contactMessage}`, ticket: updatedTicket };
   } else {
     return { success: false, message: `Failed to update ticket ${ticketId} status.`};
   }
@@ -608,7 +640,8 @@ if (typeof window !== 'undefined') {
                      sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
                      status: ticket.status || 'available',
                      sellerVerified: ticket.sellerVerified === undefined ? (ticket.sellerId === 'currentUser' ? isCurrentUserVerifiedForDefault() : false) : ticket.sellerVerified,
-                     sellerContactEmail: ticket.sellerContactEmail || (ticket.sellerId === 'currentUser' ? 'currentuser@example.com' : `seller_${ticket.id}@example.com`),
+                     sellerContactEmail: ticket.sellerContactEmail || (ticket.sellerId === 'currentUser' ? 'currentuser@example.com' : `seller_email_${ticket.id}@example.com`),
+                     sellerContactPhone: ticket.sellerContactPhone || (ticket.sellerId === 'currentUser' ? '1234567890' : `999888${Math.floor(Math.random()*10000).toString().padStart(4, '0')}`),
                  }));
                  tickets = parsedTickets;
                  console.log('Marketplace tickets updated from storage event.');

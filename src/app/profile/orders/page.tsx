@@ -1,10 +1,11 @@
+
 'use client';
 
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, IndianRupeeIcon, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2 } from 'lucide-react';
+import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, IndianRupeeIcon, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2, Mail, Phone } from 'lucide-react';
 import type { Ticket } from '@/services/ticket-marketplace';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -160,6 +161,27 @@ function OrderItem({ order, onDelete }: OrderItemProps) {
                <span>{order.time}</span>
              </div>
           </div>
+           {(order.sellerContactEmail || order.sellerContactPhone) && (
+              <div className="mt-2 pt-2 border-t border-dashed text-xs">
+                <p className="font-medium text-muted-foreground mb-0.5">Seller Contact:</p>
+                {order.sellerContactEmail && (
+                    <div className="flex items-center">
+                        <Mail className="mr-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        <a href={`mailto:${order.sellerContactEmail}`} className="text-primary hover:underline truncate">
+                            {order.sellerContactEmail}
+                        </a>
+                    </div>
+                )}
+                {order.sellerContactPhone && (
+                     <div className="flex items-center mt-0.5">
+                        <Phone className="mr-1 h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        <a href={`tel:${order.sellerContactPhone}`} className="text-primary hover:underline truncate">
+                            {order.sellerContactPhone}
+                        </a>
+                    </div>
+                )}
+              </div>
+           )}
        </div>
 
        <div className="flex sm:flex-col items-end sm:items-center justify-between sm:justify-start mt-2 sm:mt-0 sm:ml-4 gap-2">
@@ -325,3 +347,4 @@ export default function ProfileOrdersPage() {
     </Card>
   );
 }
+

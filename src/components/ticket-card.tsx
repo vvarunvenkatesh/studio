@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail } from 'lucide-react';
+import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail, Phone } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -122,9 +122,21 @@ export function TicketCard({
       const result = await response.json();
 
       if (response.ok && result.success && result.ticket) {
+        let contactMessage = "Contact the seller ";
+        if (result.ticket.sellerContactEmail && result.ticket.sellerContactPhone) {
+            contactMessage += `at ${result.ticket.sellerContactEmail} or by phone at ${result.ticket.sellerContactPhone}`;
+        } else if (result.ticket.sellerContactEmail) {
+            contactMessage += `at ${result.ticket.sellerContactEmail}`;
+        } else if (result.ticket.sellerContactPhone) {
+            contactMessage += `by phone at ${result.ticket.sellerContactPhone}`;
+        } else {
+            contactMessage += "using their listed contact details";
+        }
+        contactMessage += " to complete your purchase.";
+
         toast({
           title: 'Purchase Initiated!',
-          description: `Contact the seller at ${result.ticket.sellerContactEmail || 'their listed email'} to complete your purchase.`,
+          description: contactMessage,
           variant: 'success',
           duration: 7000,
         });
@@ -349,13 +361,24 @@ export function TicketCard({
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{currentTicket.time}</span>
          </div>
-         {!isSold && !actualIsSeller && currentTicket.sellerContactEmail && (
-             <div className="flex items-center mt-2 pt-2 border-t border-dashed">
-                <Mail className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-xs text-muted-foreground">Seller:</span>
-                <a href={`mailto:${currentTicket.sellerContactEmail}`} className="ml-1 text-xs text-primary hover:underline truncate">
-                    {currentTicket.sellerContactEmail}
-                </a>
+         {!isSold && !actualIsSeller && (currentTicket.sellerContactEmail || currentTicket.sellerContactPhone) && (
+             <div className="mt-2 pt-2 border-t border-dashed space-y-1">
+                {currentTicket.sellerContactEmail && (
+                    <div className="flex items-center">
+                        <Mail className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <a href={`mailto:${currentTicket.sellerContactEmail}`} className="text-xs text-primary hover:underline truncate">
+                            {currentTicket.sellerContactEmail}
+                        </a>
+                    </div>
+                )}
+                {currentTicket.sellerContactPhone && (
+                    <div className="flex items-center">
+                        <Phone className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <a href={`tel:${currentTicket.sellerContactPhone}`} className="text-xs text-primary hover:underline truncate">
+                            {currentTicket.sellerContactPhone}
+                        </a>
+                    </div>
+                )}
              </div>
          )}
       </CardContent>
@@ -417,19 +440,3 @@ export function TicketCard({
     </>
   );
 }
-
-// Helper function (if not already defined elsewhere or if you prefer it scoped here)
-// const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
-//     const seenIds = new Set<string>();
-//     return items.filter(item => {
-//         if (!item || typeof item.id === 'undefined') {
-//             console.warn("Encountered invalid item object:", item);
-//             return false;
-//         }
-//         if (seenIds.has(item.id)) {
-//             return false;
-//         }
-//         seenIds.add(item.id);
-//         return true;
-//     });
-// };
