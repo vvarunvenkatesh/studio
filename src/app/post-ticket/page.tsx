@@ -9,7 +9,7 @@ import type { Ticket } from '@/services/ticket-marketplace';
 import { TicketCard } from '@/components/ticket-card';
 import { Ticket as TicketIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getSimulatedCurrentUserId, deleteTicket as deleteTicketService } from '@/services/ticket-marketplace'; // Import service
+import { getSimulatedCurrentUserId, deleteTicket as deleteTicketService } from '@/services/ticket-marketplace';
 
 export default function PostTicketPage() {
   const [ticketType, setTicketType] = React.useState<string | undefined>(undefined);
@@ -19,14 +19,23 @@ export default function PostTicketPage() {
   const { toast } = useToast();
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
 
+  // Effect to set and update currentUserId based on login state changes
   React.useEffect(() => {
-    setCurrentUserId(getSimulatedCurrentUserId());
-  }, []);
+    const updateCurrentUserId = () => {
+      setCurrentUserId(getSimulatedCurrentUserId());
+    };
+    updateCurrentUserId(); // Initial set
 
-  const handleTypeChange = (type: string | undefined) => {
-    setTicketType(type);
-  };
+    const handleLoginStorageChange = (event: StorageEvent) => {
+      if (event.key === 'isLoggedIn' || event.key === 'userId') {
+        updateCurrentUserId();
+      }
+    };
+    window.addEventListener('storage', handleLoginStorageChange);
+    return () => window.removeEventListener('storage', handleLoginStorageChange);
+  }, []); // Runs once on mount to set ID and listener for login changes
 
+  // Callback to load posted tickets, depends on currentUserId
   const loadPostedTickets = React.useCallback(() => {
     if (typeof window !== 'undefined' && currentUserId && currentUserId !== 'anonymousUser') {
         setIsLoading(true);
@@ -48,37 +57,39 @@ export default function PostTicketPage() {
       setPostedTickets([]); 
       setIsLoading(false);
     }
-  }, [currentUserId]);
+  }, [currentUserId, setIsLoading, setPostedTickets]); // Dependencies: currentUserId and state setters
 
-
+  // Effect to load tickets when currentUserId is available or marketplaceTickets change
   React.useEffect(() => {
-    loadPostedTickets();
-    const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'marketplaceTickets' || event.key === 'userPostedTickets' || event.key === 'isLoggedIn' || event.key === 'userId') {
-           setCurrentUserId(getSimulatedCurrentUserId()); 
-           loadPostedTickets();
-        }
+    if (currentUserId) { // Only load if currentUserId is determined
+      loadPostedTickets();
+    }
+
+    const handleMarketplaceStorageChange = (event: StorageEvent) => {
+      if (event.key === 'marketplaceTickets') {
+        loadPostedTickets(); // Reload tickets if marketplaceTickets itself changes
+      }
     };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [loadPostedTickets]);
+    window.addEventListener('storage', handleMarketplaceStorageChange);
+    return () => window.removeEventListener('storage', handleMarketplaceStorageChange);
+  }, [currentUserId, loadPostedTickets]); // Runs when currentUserId or loadPostedTickets changes
+
+  const handleTypeChange = (type: string | undefined) => {
+    setTicketType(type);
+  };
 
   const handleDeleteTicket = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-        // Call the service function directly on the client-side
-        const result = await deleteTicketService(ticketId);
+        const result = await deleteTicketService(ticketId); // Call service directly
 
         if (result.success) {
             toast({
                 title: 'Listing Cancelled',
                 description: result.message || 'Your ticket listing has been removed.',
             });
-            loadPostedTickets(); // Refresh the list of posted tickets
+            loadPostedTickets(); 
         } else {
-            // If the service returns success: false, throw an error to be caught by the catch block
             throw new Error(result.message || 'Could not cancel the ticket listing.');
         }
     } catch (error: any) {
@@ -92,7 +103,6 @@ export default function PostTicketPage() {
         setIsDeleting(null);
     }
   };
-
 
   return (
     <div className={cn(
@@ -116,10 +126,10 @@ export default function PostTicketPage() {
                             key={ticket.id}
                             ticket={ticket}
                             variant="manage"
-                            isSeller={true} 
+                            isSeller={true} // For "Your Active Listings", the user is always the seller
                             onCancelListing={handleDeleteTicket}
                             isCancelling={isDeleting === ticket.id}
-                            className="ml-0 md:ml-2.5" 
+                            className="ml-0 md:ml-0" 
                         />
                     ))}
                  </div>

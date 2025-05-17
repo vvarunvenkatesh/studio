@@ -17,7 +17,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Label } from '@/components/ui/label';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { getSimulatedCurrentUserId, getAvailableTickets } from '@/services/ticket-marketplace';
+import { getSimulatedCurrentUserId, getAvailableTickets, deleteTicket as deleteTicketService } from '@/services/ticket-marketplace';
 import { BottomSlidingTab } from '@/components/ui/bottom-sliding-tab';
 
 const categoryMap: Record<Ticket['type'], { icon: React.ElementType; name: string }> = {
@@ -64,22 +64,21 @@ export default function TicketsPage() {
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [genericSearchTerm, setGenericSearchTerm] = React.useState(searchParams.get('q') || '');
 
-
+  // Effect to set and update currentUserId based on login state changes
   React.useEffect(() => {
-    const updateUserId = () => setCurrentUserId(getSimulatedCurrentUserId());
-    updateUserId(); // Initial set
+    const updateCurrentUserId = () => {
+      setCurrentUserId(getSimulatedCurrentUserId());
+    };
+    updateCurrentUserId(); // Initial set
 
-    const handleStorageChange = (event: StorageEvent) => {
+    const handleLoginStorageChange = (event: StorageEvent) => {
       if (event.key === 'isLoggedIn' || event.key === 'userId') {
-        updateUserId();
+        updateCurrentUserId();
       }
     };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
+    window.addEventListener('storage', handleLoginStorageChange);
+    return () => window.removeEventListener('storage', handleLoginStorageChange);
+  }, []); // Runs once on mount
 
   const pageTitle = React.useMemo(() => {
     const currentCategory = searchParams.get('category');
@@ -115,50 +114,39 @@ export default function TicketsPage() {
     setIsLoading(true);
     setError(null);
     
+    const currentCategoryParam = searchParams.get('category') as Ticket['type'] | 'transport' | 'all' | null;
+    const currentFromParam = searchParams.get('from');
+    const currentToParam = searchParams.get('to');
+    const currentPriceParam = searchParams.get('price');
+    const currentDateParam = searchParams.get('date');
+    const currentSearchTermParam = searchParams.get('q');
+    
     const filters: any = {};
-    const currentCategory = searchParams.get('category') as Ticket['type'] | 'transport' | 'all' | null;
-    const currentFrom = searchParams.get('from');
-    const currentTo = searchParams.get('to');
-    const currentPrice = searchParams.get('price');
-    const currentDate = searchParams.get('date');
-    const currentSearchTerm = searchParams.get('q');
 
-    if (currentCategory && currentCategory !== 'all' && currentCategory !== 'transport') filters.category = currentCategory;
-    if (currentCategory === 'transport') filters.category = 'transport';
+    if (currentCategoryParam && currentCategoryParam !== 'all' && currentCategoryParam !== 'transport') filters.category = currentCategoryParam;
+    if (currentCategoryParam === 'transport') filters.category = 'transport';
 
+    if (currentFromParam) filters.fromCity = currentFromParam;
+    setFromCityFilter(currentFromParam || '');
+    
+    if (currentToParam) filters.toCity = currentToParam;
+    setToCityFilter(currentToParam || '');
 
-    if (currentFrom) {
-      filters.fromCity = currentFrom;
-      setFromCityFilter(currentFrom);
-    } else {
-      setFromCityFilter('');
-    }
-    if (currentTo) {
-      filters.toCity = currentTo;
-      setToCityFilter(currentTo);
-    } else {
-      setToCityFilter('');
-    }
-
-    const [minPriceState, maxPriceState] = parsePriceRange(currentPrice);
+    const [minPriceState, maxPriceState] = parsePriceRange(currentPriceParam);
     setPriceRange([minPriceState, maxPriceState]);
     if (minPriceState !== undefined) filters.minPrice = minPriceState;
     if (maxPriceState !== undefined) filters.maxPrice = maxPriceState;
 
-    const dateRangeState = parseDateRange(currentDate);
+    const dateRangeState = parseDateRange(currentDateParam);
     setDateRange(dateRangeState);
     if (dateRangeState?.from) filters.startDate = format(dateRangeState.from, 'yyyy-MM-dd');
     if (dateRangeState?.to) filters.endDate = format(dateRangeState.to, 'yyyy-MM-dd');
     
-    if (currentSearchTerm) {
-        filters.searchTerm = currentSearchTerm;
-        setGenericSearchTerm(currentSearchTerm);
-    } else {
-        setGenericSearchTerm('');
-    }
+    if (currentSearchTermParam) filters.searchTerm = currentSearchTermParam;
+    setGenericSearchTerm(currentSearchTermParam || '');
 
     try {
-      const fetchedTickets: Ticket[] = await getAvailableTickets(filters);
+      const fetchedTickets: Ticket[] = await getAvailableTickets(filters); // Call service directly
       setTickets(fetchedTickets.filter(ticket => ticket.status === 'available'));
     } catch (err: any) {
       console.error("Failed to fetch tickets:", err);
@@ -166,40 +154,42 @@ export default function TicketsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams]);
+  }, [searchParams]); // Dependency on searchParams to refetch when URL query changes
 
   React.useEffect(() => {
-    loadTickets();
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'marketplaceTickets' || event.key === 'userPostedTickets' || event.key === 'userOrders') {
-        loadTickets(); 
+    loadTickets(); // Fetch on initial load and when searchParams changes
+
+    const handleMarketplaceStorageChange = (event: StorageEvent) => {
+      if (event.key === 'marketplaceTickets') {
+        loadTickets(); // Reload tickets if marketplaceTickets itself changes
       }
     };
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleMarketplaceStorageChange);
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('storage', handleMarketplaceStorageChange);
     };
-  }, [loadTickets]); 
+  }, [loadTickets]); // loadTickets is memoized and changes when searchParams change
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
     setTickets(prevTickets =>
       prevTickets.filter(ticket => ticket.id !== purchasedTicketId)
     );
+    loadTickets(); // Reload to ensure list is up-to-date
   };
 
   const handleCancelListing = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-      const response = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Could not cancel the ticket listing.');
+      const result = await deleteTicketService(ticketId); // Call service directly
+      if (result.success) {
+        toast({
+          title: 'Listing Cancelled',
+          description: result.message || 'Your ticket listing has been removed.',
+        });
+        loadTickets(); // Refresh the list of tickets
+      } else {
+        throw new Error(result.message || 'Could not cancel the ticket listing.');
       }
-      toast({
-        title: 'Listing Cancelled',
-        description: 'Your ticket listing has been removed.',
-      });
-      setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== ticketId));
     } catch (error: any) {
       console.error('Error cancelling ticket listing:', error);
       toast({
@@ -213,7 +203,7 @@ export default function TicketsPage() {
   };
 
   const handleFilterChange = () => {
-    const query = new URLSearchParams(searchParams.toString()); // Preserve existing params
+    const query = new URLSearchParams(searchParams.toString());
 
     if (genericSearchTerm) query.set('q', genericSearchTerm); 
     else query.delete('q');
@@ -224,7 +214,6 @@ export default function TicketsPage() {
     if (toCityFilter) query.set('to', toCityFilter);
     else query.delete('to');
     
-
     const [minPrice, maxPrice] = priceRange;
     if (minPrice !== undefined || maxPrice !== undefined) {
         const priceParts = [];
@@ -357,7 +346,7 @@ export default function TicketsPage() {
                 </div>
              </div>
             <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full">
-                <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
+                <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
                     <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
                 {hasActiveFilters && (
@@ -392,7 +381,7 @@ export default function TicketsPage() {
                 isSeller={!!currentUserId && ticket.sellerId === currentUserId && currentUserId !== 'anonymousUser'}
                 onCancelListing={handleCancelListing}
                 isCancelling={isDeleting === ticket.id}
-                className="ml-0 md:ml-2.5" 
+                className="ml-0 md:ml-0" 
               />
             ))}
           </div>
