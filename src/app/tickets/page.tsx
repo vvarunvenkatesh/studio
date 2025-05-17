@@ -2,6 +2,8 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Header } from '@/components/header';
 import { TicketCard } from '@/components/ticket-card';
@@ -10,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Search, X, TicketIcon as DefaultTicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon } from 'lucide-react';
+import { Search, X, TicketIcon as DefaultTicketIcon, Bus, Train, Film, Calendar as CalendarIconLucide, ListFilter, Ticket as TicketCategoryIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -47,6 +49,104 @@ const parseDateRange = (dateParam: string | null): DateRange | undefined => {
     return undefined;
 };
 
+const promotionBanners = [
+  { id: 1, src: 'https://picsum.photos/1200/350?random=moviepromo', alt: 'Movie Promotion', hint: 'movie poster action', link: '#' },
+  { id: 2, src: 'https://picsum.photos/1200/350?random=eventpromo', alt: 'Event Promotion', hint: 'concert stage lights', link: '#' },
+  { id: 3, src: 'https://picsum.photos/1200/350?random=sportspromo', alt: 'Sports Promotion', hint: 'sports stadium action', link: '#' },
+];
+
+function CategoryPromotionSlider() {
+  const [currentBanner, setCurrentBanner] = React.useState(0);
+  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const goToNextBanner = React.useCallback(() => {
+    setCurrentBanner((prev) => (prev + 1) % promotionBanners.length);
+    resetInterval();
+  }, []);
+
+  const goToPreviousBanner = () => {
+    setCurrentBanner((prev) => (prev - 1 + promotionBanners.length) % promotionBanners.length);
+    resetInterval();
+  };
+
+  const goToBannerSlide = (index: number) => {
+     setCurrentBanner(index);
+     resetInterval();
+  };
+
+  const resetInterval = () => {
+      if (intervalRef.current) {
+         clearInterval(intervalRef.current);
+      }
+      intervalRef.current = setInterval(goToNextBanner, 5000);
+  }
+
+  React.useEffect(() => {
+    resetInterval();
+    return () => {
+        if (intervalRef.current) {
+           clearInterval(intervalRef.current);
+        }
+    };
+  }, [goToNextBanner]);
+
+  return (
+    <div className="relative w-full h-52 sm:h-60 md:h-72 lg:h-80 xl:h-96 overflow-hidden shadow-lg group mb-8 rounded-lg">
+      {promotionBanners.map((banner, index) => (
+        <Link href={banner.link} key={banner.id} passHref>
+            <Image
+            src={banner.src}
+            alt={banner.alt}
+            fill
+            sizes="(max-width: 768px) 100vw, 1200px"
+            style={{ objectFit: 'cover' }}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentBanner ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            data-ai-hint={banner.hint}
+            priority={index === 0}
+            />
+        </Link>
+      ))}
+       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent z-10"></div>
+
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToPreviousBanner}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 md:h-10 md:w-10"
+            aria-label="Previous promotion banner"
+        >
+            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
+        </Button>
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToNextBanner}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 md:h-10 md:w-10"
+            aria-label="Next promotion banner"
+        >
+            <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
+        </Button>
+
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-2 p-2">
+            {promotionBanners.map((_, index) => (
+                <button
+                    key={index}
+                    onClick={() => goToBannerSlide(index)}
+                    className={cn(
+                        "rounded-full transition-all duration-300 ease-in-out",
+                        index === currentBanner
+                            ? 'h-2 w-2 md:h-2.5 md:w-2.5 bg-white'
+                            : 'h-1.5 w-1.5 md:h-2 md:w-2 bg-white/50 hover:bg-white/75'
+                    )}
+                    aria-label={`Go to promotion slide ${index + 1}`}
+                />
+            ))}
+        </div>
+    </div>
+  );
+}
+
+
 export default function TicketsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -59,7 +159,6 @@ export default function TicketsPage() {
 
   const currentCategory = searchParams.get('category') as Ticket['type'] | 'transport' | 'all' | null;
   const isEventLikeCategory = currentCategory === 'movie' || currentCategory === 'event' || currentCategory === 'sports';
-  const isTransportOrAllCategory = !currentCategory || currentCategory === 'all' || currentCategory === 'transport' || currentCategory === 'train' || currentCategory === 'bus';
 
 
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
@@ -71,12 +170,12 @@ export default function TicketsPage() {
   const [eventLocationFilter, setEventLocationFilter] = React.useState(searchParams.get('location') || '');
 
 
-  // Effect to set and update currentUserId based on login state changes
   React.useEffect(() => {
     const updateCurrentUserId = () => {
-      setCurrentUserId(getSimulatedCurrentUserId());
+      const id = getSimulatedCurrentUserId();
+      setCurrentUserId(id);
     };
-    updateCurrentUserId(); 
+    updateCurrentUserId();
 
     const handleLoginStorageChange = (event: StorageEvent) => {
       if (event.key === 'isLoggedIn' || event.key === 'userId') {
@@ -106,7 +205,7 @@ export default function TicketsPage() {
       let title = `${categoryMap[currentCategory as Ticket['type']].name} Tickets`;
       if (isEventLikeCategory && currentEventLocation) {
         title += ` in ${currentEventLocation}`;
-      } else {
+      } else if (!isEventLikeCategory) { // Only add from/to for non-event like if eventLocation isn't primary
         if (currentFrom) title += ` from ${currentFrom}`;
         if (currentTo) title += ` to ${currentTo}`;
       }
@@ -125,42 +224,28 @@ export default function TicketsPage() {
   }, [searchParams, currentCategory, isEventLikeCategory]);
 
   const loadTickets = React.useCallback(async () => {
-    if (currentUserId === undefined && typeof window !== 'undefined') { 
-        return;
-    }
     setIsLoading(true);
     setError(null);
-    
-    const currentCategoryParam = searchParams.get('category') as Ticket['type'] | 'transport' | 'all' | null;
-    const currentFromParam = searchParams.get('from');
-    const currentToParam = searchParams.get('to');
-    const currentPriceParam = searchParams.get('price');
-    const currentDateParam = searchParams.get('date');
-    const currentSearchTermParam = searchParams.get('q');
-    const currentEventLocationParam = searchParams.get('location');
-    
-    const filters: any = {
-      category: (currentCategoryParam && currentCategoryParam !== 'all') ? currentCategoryParam : undefined,
-      searchTerm: currentSearchTermParam || undefined,
-    };
-    
-    if (isTransportOrAllCategory || (!currentCategoryParam || currentCategoryParam === 'all')) {
-        if (currentFromParam) filters.fromCity = currentFromParam;
-        if (currentToParam) filters.toCity = currentToParam;
-        const [minPriceState, maxPriceState] = parsePriceRange(currentPriceParam);
-        if (minPriceState !== undefined) filters.minPrice = minPriceState;
-        if (maxPriceState !== undefined) filters.maxPrice = maxPriceState;
-    }
-    if (isEventLikeCategory && currentEventLocationParam) {
-        filters.location = currentEventLocationParam;
-    }
 
-    const dateRangeState = parseDateRange(currentDateParam);
+    const params = new URLSearchParams(searchParams.toString());
+    const filters: any = {
+      category: params.get('category') && params.get('category') !== 'all' ? params.get('category') as Ticket['type'] | 'transport' : undefined,
+      searchTerm: params.get('q') || undefined,
+      fromCity: params.get('from') || undefined,
+      toCity: params.get('to') || undefined,
+      location: params.get('location') || undefined,
+    };
+
+    const [minPriceState, maxPriceState] = parsePriceRange(params.get('price'));
+    if (minPriceState !== undefined) filters.minPrice = minPriceState;
+    if (maxPriceState !== undefined) filters.maxPrice = maxPriceState;
+
+    const dateRangeState = parseDateRange(params.get('date'));
     if (dateRangeState?.from) filters.startDate = format(dateRangeState.from, 'yyyy-MM-dd');
     if (dateRangeState?.to) filters.endDate = format(dateRangeState.to, 'yyyy-MM-dd');
-    
+
     try {
-      const fetchedTickets: Ticket[] = await getAvailableTickets(filters); 
+      const fetchedTickets: Ticket[] = await getAvailableTickets(filters);
       setTickets(fetchedTickets);
     } catch (err: any) {
       console.error("Failed to fetch tickets:", err);
@@ -168,41 +253,39 @@ export default function TicketsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams, currentUserId, isTransportOrAllCategory, isEventLikeCategory]); 
+  }, [searchParams]);
 
   React.useEffect(() => {
-    if (currentUserId !== undefined) {
-        loadTickets();
-    }
+    loadTickets();
     const handleMarketplaceStorageChange = (event: StorageEvent) => {
       if (event.key === 'marketplaceTickets') {
-        if (currentUserId !== undefined) {
-            loadTickets(); 
-        }
+        loadTickets();
       }
     };
     window.addEventListener('storage', handleMarketplaceStorageChange);
     return () => {
       window.removeEventListener('storage', handleMarketplaceStorageChange);
     };
-  }, [currentUserId, loadTickets]); 
+  }, [loadTickets]);
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
     toast({
         title: "Ticket Status Updated",
         description: "The ticket list has been refreshed.",
     });
+    // loadTickets will be called by the storage event listener for 'marketplaceTickets'
   };
 
   const handleCancelListing = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-      const result = await deleteTicketService(ticketId); 
+      const result = await deleteTicketService(ticketId);
       if (result.success) {
         toast({
           title: 'Listing Cancelled',
           description: result.message || 'Your ticket listing has been removed.',
         });
+         // loadTickets will be called by the storage event listener for 'marketplaceTickets'
       } else {
         throw new Error(result.message || 'Could not cancel the ticket listing.');
       }
@@ -219,51 +302,33 @@ export default function TicketsPage() {
   };
 
   const handleFilterChange = () => {
-    const query = new URLSearchParams(searchParams.toString());
+    const query = new URLSearchParams(); // Start fresh
 
-    if (genericSearchTerm) query.set('q', genericSearchTerm); 
-    else query.delete('q');
+    const currentCat = searchParams.get('category');
+    if (currentCat) query.set('category', currentCat);
 
-    if (isTransportOrAllCategory || (!currentCategory || currentCategory === 'all')) {
-        if (fromCityFilter) query.set('from', fromCityFilter);
-        else query.delete('from');
-
-        if (toCityFilter) query.set('to', toCityFilter);
-        else query.delete('to');
-        
-        const [minPrice, maxPrice] = priceRange;
-        if (minPrice !== undefined || maxPrice !== undefined) {
-            const priceParts = [];
-            if (minPrice !== undefined) priceParts.push(String(minPrice)); else priceParts.push(''); 
-            if (maxPrice !== undefined) priceParts.push(String(maxPrice));
-            if (priceParts.length > 0 && (priceParts[0] !== '' || priceParts.length > 1)) { 
-              query.set('price', priceParts.join('-'));
-            } else {
-                query.delete('price');
-            }
-        } else {
-            query.delete('price');
-        }
-    } else { // If not transport/all, remove these filters
-        query.delete('from');
-        query.delete('to');
-        query.delete('price');
-    }
+    if (genericSearchTerm) query.set('q', genericSearchTerm);
 
     if (isEventLikeCategory) {
-        if (eventLocationFilter) query.set('location', eventLocationFilter);
-        else query.delete('location');
+      if (eventLocationFilter) query.set('location', eventLocationFilter);
     } else {
-        query.delete('location');
+      if (fromCityFilter) query.set('from', fromCityFilter);
+      if (toCityFilter) query.set('to', toCityFilter);
+      const [minPrice, maxPrice] = priceRange;
+      if (minPrice !== undefined || maxPrice !== undefined) {
+          const priceParts = [];
+          if (minPrice !== undefined) priceParts.push(String(minPrice)); else priceParts.push('');
+          if (maxPrice !== undefined) priceParts.push(String(maxPrice));
+          if (priceParts.length > 0 && (priceParts[0] !== '' || priceParts.length > 1)) {
+            query.set('price', priceParts.join('-'));
+          }
+      }
     }
-
 
     if (dateRange?.from) {
         const fromStr = format(dateRange.from, 'yyyy-MM-dd');
         const toStr = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
         query.set('date', `${fromStr}_${toStr}`);
-    } else {
-        query.delete('date');
     }
     router.push(`${pathname}?${query.toString()}`);
   };
@@ -273,11 +338,11 @@ export default function TicketsPage() {
     setToCityFilter('');
     setPriceRange([undefined, undefined]);
     setDateRange(undefined);
-    setGenericSearchTerm(''); 
+    setGenericSearchTerm('');
     setEventLocationFilter('');
     const category = searchParams.get('category');
     const query = new URLSearchParams();
-    if (category) query.set('category', category); 
+    if (category) query.set('category', category);
     router.push(`${pathname}?${query.toString()}`);
   };
 
@@ -306,21 +371,45 @@ export default function TicketsPage() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-foreground text-center">{pageTitle}</h1>
 
+        {isEventLikeCategory && <CategoryPromotionSlider />}
+
         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-            <div className="w-full lg:col-span-2">
+          <div className={cn(
+              "gap-4", // Common gap
+              isEventLikeCategory
+                ? "flex flex-col md:flex-row md:flex-wrap md:items-end" // Compact layout
+                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end" // Grid layout
+          )}>
+            {/* Generic Search Term */}
+            <div className={cn("w-full", isEventLikeCategory ? "md:flex-grow" : "lg:col-span-2")}>
               <Label htmlFor="genericSearchFilter" className="block text-sm font-medium text-muted-foreground mb-1">Search Term</Label>
               <Input
                 id="genericSearchFilter"
                 type="text"
-                placeholder="Event name, movie, keywords..."
+                placeholder={isEventLikeCategory ? "Event, movie, sports keyword..." : "Event, movie, city, type..."}
                 value={genericSearchTerm}
                 onChange={(e) => setGenericSearchTerm(e.target.value)}
                 className="bg-background text-foreground"
               />
             </div>
 
-            {(isTransportOrAllCategory || (!currentCategory || currentCategory === 'all')) && (
+            {/* Event-specific Location Filter */}
+            {isEventLikeCategory && (
+              <div className="w-full md:flex-grow">
+                <Label htmlFor="eventLocationFilter" className="block text-sm font-medium text-muted-foreground mb-1">Location (City/Venue)</Label>
+                <Input
+                  id="eventLocationFilter"
+                  type="text"
+                  placeholder="Enter city or venue"
+                  value={eventLocationFilter}
+                  onChange={(e) => setEventLocationFilter(e.target.value)}
+                  className="bg-background text-foreground"
+                />
+              </div>
+            )}
+
+            {/* Transport/All Specific Filters */}
+            {!isEventLikeCategory && (
               <>
                 <div className="w-full">
                   <Label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From City</Label>
@@ -344,64 +433,50 @@ export default function TicketsPage() {
                     className="bg-background text-foreground"
                   />
                 </div>
+                 <div className="w-full">
+                    <Label htmlFor="minPriceFilter" className="block text-sm font-medium text-muted-foreground mb-1">Price Range (₹)</Label>
+                    <div className="flex items-center gap-2">
+                        <Input
+                           id="minPriceFilter"
+                           type="number"
+                           placeholder="Min"
+                           value={priceRange[0] ?? ''}
+                           onChange={(e) => setPriceRange([e.target.value ? parseInt(e.target.value) : undefined, priceRange[1]])}
+                           className="bg-background text-foreground"
+                           min="0"
+                         />
+                        <span className="text-muted-foreground">-</span>
+                         <Input
+                           id="maxPriceFilter"
+                           type="number"
+                           placeholder="Max"
+                           value={priceRange[1] ?? ''}
+                           onChange={(e) => setPriceRange([priceRange[0], e.target.value ? parseInt(e.target.value) : undefined])}
+                           className="bg-background text-foreground"
+                           min="0"
+                         />
+                    </div>
+                 </div>
               </>
             )}
 
-            {isEventLikeCategory && (
-              <div className="w-full lg:col-span-2">
-                <Label htmlFor="eventLocationFilter" className="block text-sm font-medium text-muted-foreground mb-1">Location (City/Venue)</Label>
-                <Input
-                  id="eventLocationFilter"
-                  type="text"
-                  placeholder="Enter city or venue"
-                  value={eventLocationFilter}
-                  onChange={(e) => setEventLocationFilter(e.target.value)}
-                  className="bg-background text-foreground"
-                />
-              </div>
-            )}
-            
-            <div className={cn("w-full", isEventLikeCategory ? "lg:col-span-2" : "lg:col-span-4 grid md:grid-cols-2 gap-4")}>
-                 <div className="w-full">
-                    <Label htmlFor="dateRangeFilter" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</Label>
-                    <DateRangePicker
-                        id="dateRangeFilter"
-                        date={dateRange}
-                        onDateChange={setDateRange}
-                        className="bg-background text-foreground [&>button]:text-foreground"
-                        onDateSelect={() => {}} 
-                     />
-                 </div>
+            {/* Date Range Picker (Common) */}
+            <div className={cn("w-full", isEventLikeCategory ? "md:w-auto" : "")}>
+                <Label htmlFor="dateRangeFilter" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</Label>
+                <DateRangePicker
+                    id="dateRangeFilter"
+                    date={dateRange}
+                    onDateChange={setDateRange}
+                    className="bg-background text-foreground [&>button]:text-foreground"
+                    onDateSelect={() => {}}
+                 />
+             </div>
 
-                {(isTransportOrAllCategory || (!currentCategory || currentCategory === 'all')) && (
-                     <div className="w-full">
-                        <Label htmlFor="minPriceFilter" className="block text-sm font-medium text-muted-foreground mb-1">Price Range (₹)</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                               id="minPriceFilter"
-                               type="number"
-                               placeholder="Min"
-                               value={priceRange[0] ?? ''}
-                               onChange={(e) => setPriceRange([e.target.value ? parseInt(e.target.value) : undefined, priceRange[1]])}
-                               className="bg-background text-foreground"
-                               min="0"
-                             />
-                            <span className="text-muted-foreground">-</span>
-                             <Input
-                               id="maxPriceFilter"
-                               type="number"
-                               placeholder="Max"
-                               value={priceRange[1] ?? ''}
-                               onChange={(e) => setPriceRange([priceRange[0], e.target.value ? parseInt(e.target.value) : undefined])}
-                               className="bg-background text-foreground"
-                               min="0"
-                             />
-                        </div>
-                     </div>
-                )}
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full pt-2">
+            {/* Filter Buttons (Common) */}
+            <div className={cn(
+                "flex flex-col sm:flex-row gap-2 w-full pt-2",
+                 isEventLikeCategory ? "md:w-auto md:items-end" : "lg:col-span-4 lg:justify-end"
+            )}>
                 <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
                     <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
@@ -437,7 +512,7 @@ export default function TicketsPage() {
                 isSeller={!!currentUserId && ticket.sellerId === currentUserId && currentUserId !== 'anonymousUser'}
                 onCancelListing={handleCancelListing}
                 isCancelling={isDeleting === ticket.id}
-                className="ml-0 md:ml-0" 
+                className="ml-0 md:ml-0"
               />
             ))}
           </div>
