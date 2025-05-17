@@ -17,7 +17,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Label } from '@/components/ui/label';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { getSimulatedCurrentUserId, getAvailableTickets } from '@/services/ticket-marketplace'; // Import getAvailableTickets
+import { getSimulatedCurrentUserId, getAvailableTickets } from '@/services/ticket-marketplace';
 import { BottomSlidingTab } from '@/components/ui/bottom-sliding-tab';
 
 const categoryMap: Record<Ticket['type'], { icon: React.ElementType; name: string }> = {
@@ -66,7 +66,18 @@ export default function TicketsPage() {
 
 
   React.useEffect(() => {
-    setCurrentUserId(getSimulatedCurrentUserId());
+    const updateUserId = () => setCurrentUserId(getSimulatedCurrentUserId());
+    updateUserId(); // Initial set
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'isLoggedIn' || event.key === 'userId') {
+        updateUserId();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
 
@@ -112,7 +123,10 @@ export default function TicketsPage() {
     const currentDate = searchParams.get('date');
     const currentSearchTerm = searchParams.get('q');
 
-    if (currentCategory && currentCategory !== 'all') filters.category = currentCategory;
+    if (currentCategory && currentCategory !== 'all' && currentCategory !== 'transport') filters.category = currentCategory;
+    if (currentCategory === 'transport') filters.category = 'transport';
+
+
     if (currentFrom) {
       filters.fromCity = currentFrom;
       setFromCityFilter(currentFrom);
@@ -144,7 +158,6 @@ export default function TicketsPage() {
     }
 
     try {
-      // Directly call the service function client-side
       const fetchedTickets: Ticket[] = await getAvailableTickets(filters);
       setTickets(fetchedTickets.filter(ticket => ticket.status === 'available'));
     } catch (err: any) {
@@ -200,15 +213,17 @@ export default function TicketsPage() {
   };
 
   const handleFilterChange = () => {
-    const query = new URLSearchParams();
+    const query = new URLSearchParams(searchParams.toString()); // Preserve existing params
 
-    const category = searchParams.get('category');
-    if (category) query.set('category', category);
-    
     if (genericSearchTerm) query.set('q', genericSearchTerm); 
+    else query.delete('q');
 
     if (fromCityFilter) query.set('from', fromCityFilter);
+    else query.delete('from');
+
     if (toCityFilter) query.set('to', toCityFilter);
+    else query.delete('to');
+    
 
     const [minPrice, maxPrice] = priceRange;
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -217,13 +232,19 @@ export default function TicketsPage() {
         if (maxPrice !== undefined) priceParts.push(String(maxPrice));
         if (priceParts.length > 0 && (priceParts[0] !== '' || priceParts.length > 1)) { 
           query.set('price', priceParts.join('-'));
+        } else {
+            query.delete('price');
         }
+    } else {
+        query.delete('price');
     }
 
     if (dateRange?.from) {
         const fromStr = format(dateRange.from, 'yyyy-MM-dd');
         const toStr = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
         query.set('date', `${fromStr}_${toStr}`);
+    } else {
+        query.delete('date');
     }
     router.push(`${pathname}?${query.toString()}`);
   };
@@ -236,7 +257,7 @@ export default function TicketsPage() {
     setGenericSearchTerm(''); 
     const category = searchParams.get('category');
     const query = new URLSearchParams();
-    if (category && category !== 'transport') query.set('category', category); 
+    if (category && category !== 'transport' && category !== 'all') query.set('category', category); 
     else if (category === 'transport') query.set('category', 'transport'); 
     router.push(`${pathname}?${query.toString()}`);
   };

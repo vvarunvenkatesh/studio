@@ -21,7 +21,7 @@ interface TicketCardProps {
   onCancelListing?: (ticketId: string) => Promise<void> | void;
   isCancelling?: boolean;
   className?: string;
-  isSeller?: boolean;
+  isSeller?: boolean; // Prop passed from parent (e.g., TicketsPage)
 }
 
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
@@ -39,32 +39,33 @@ export function TicketCard({
     onCancelListing,
     isCancelling,
     className,
-    isSeller: propIsSeller
+    isSeller: propIsSeller // Use the prop passed from the parent
 }: TicketCardProps) {
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParamsHook = useNextSearchParams();
 
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [isClientLoggedIn, setIsClientLoggedIn] = React.useState(false);
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isPurchasing, setIsPurchasing] = React.useState(false);
   const [currentTicket, setCurrentTicket] = React.useState<Ticket>(ticket);
   const [isSold, setIsSold] = React.useState(ticket.status === 'sold');
-  const [currentUserId, setCurrentUserIdState] = React.useState<string | null>(null);
+  // Use a state for currentUserId internal to the card for actions, but rely on propIsSeller for display.
+  const [cardInternalCurrentUserId, setCardInternalCurrentUserId] = React.useState<string | null>(null);
 
 
   React.useEffect(() => {
       if (typeof window !== 'undefined') {
           const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-          setIsLoggedIn(loggedInStatus);
-          setCurrentUserIdState(getSimulatedCurrentUserId());
+          setIsClientLoggedIn(loggedInStatus);
+          setCardInternalCurrentUserId(getSimulatedCurrentUserId());
       }
       const handleStorageChange = (event: StorageEvent) => {
-          if (event.key === 'isLoggedIn') {
-              const newLoggedInStatus = event.newValue === 'true';
-              setIsLoggedIn(newLoggedInStatus);
-              setCurrentUserIdState(getSimulatedCurrentUserId());
+          if (event.key === 'isLoggedIn' || event.key === 'userId') {
+              const newLoggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+              setIsClientLoggedIn(newLoggedInStatus);
+              setCardInternalCurrentUserId(getSimulatedCurrentUserId());
           }
            if (event.key === 'marketplaceTickets') {
                 const updatedTickets: Ticket[] = event.newValue ? JSON.parse(event.newValue) : [];
@@ -73,7 +74,9 @@ export function TicketCard({
                     setCurrentTicket(thisTicketUpdate);
                     setIsSold(thisTicketUpdate.status === 'sold');
                 } else {
-                    setIsSold(true); // If ticket no longer in marketplace, assume sold or removed
+                    // If ticket no longer in marketplace, assume sold or removed for this card's view.
+                    // Parent component (TicketsPage/PostTicketPage) will handle removing it from the list.
+                    setIsSold(true);
                 }
             }
       };
@@ -81,7 +84,7 @@ export function TicketCard({
       return () => {
           window.removeEventListener('storage', handleStorageChange);
       };
-  }, [currentTicket.id]);
+  }, [currentTicket.id]); // Effect tied to ticket ID for listener setup/cleanup
 
 
   React.useEffect(() => {
@@ -92,27 +95,25 @@ export function TicketCard({
 
   const formattedDate = format(new Date(currentTicket.date), 'PPP');
   const CategorySpecificIcon = categoryIconMap[currentTicket.type] || TicketIconLucide;
-  const actualIsSeller = !!currentUserId && currentTicket.sellerId === currentUserId && currentUserId !== 'anonymousUser';
+  
+  // This is for actions within the card, like initiating a purchase or cancel.
+  const isUserActuallyTheSellerForActions = !!cardInternalCurrentUserId && currentTicket.sellerId === cardInternalCurrentUserId && cardInternalCurrentUserId !== 'anonymousUser';
 
 
   const redirectToLogin = () => {
-    // If on tickets page, include current search params for redirect
-    // Otherwise, just redirect to login
     const baseRedirectPath = pathname.startsWith('/tickets') ? pathname + '?' + searchParamsHook.toString() : pathname;
     router.push(`/login?redirect=${encodeURIComponent(baseRedirectPath)}`);
   };
 
 
   const handlePurchase = async () => {
-    if (!isLoggedIn) {
+    if (!isClientLoggedIn) {
         setShowLoginDialog(true);
         return;
     }
-    if (isSold || actualIsSeller) return; // Should not happen if button is disabled, but good check
+    if (isSold || isUserActuallyTheSellerForActions) return;
     setIsPurchasing(true);
     try {
-      // In a real app, this would go to an API endpoint that handles payment.
-      // For now, it directly calls the service function.
       const response = await fetch('/api/orders/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,7 +141,7 @@ export function TicketCard({
           variant: 'success',
           duration: 7000,
         });
-        setIsSold(true); // Mark as sold to update UI
+        setIsSold(true);
         setCurrentTicket(result.ticket);
         if (onPurchaseSuccess) {
           onPurchaseSuccess(result.ticket.id);
@@ -151,11 +152,10 @@ export function TicketCard({
           description: result.message || 'Could not initiate purchase for the ticket.',
           variant: 'destructive',
         });
-        // If server confirms it's already sold, update UI
         if (result.ticket && result.message?.includes('already sold')) {
            setIsSold(true);
            setCurrentTicket(result.ticket);
-           if (onPurchaseSuccess) { // Notify parent to re-filter if needed
+           if (onPurchaseSuccess) {
               onPurchaseSuccess(result.ticket.id);
            }
         }
@@ -163,9 +163,9 @@ export function TicketCard({
     } catch (error: any) {
       console.error('Error initiating purchase:', error);
       toast({
-        title: 'Purchase Error',
-        description: error.message || 'Something went wrong during the purchase initiation.',
-        variant: 'destructive',
+          title: 'Purchase Error',
+          description: error.message || 'Something went wrong during the purchase initiation.',
+          variant: 'destructive',
       });
     } finally {
       setIsPurchasing(false);
@@ -299,7 +299,7 @@ export function TicketCard({
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500 px-2 py-1"
-      style={{ backgroundColor: '#FFCE54' }} // Keep original yellow for pending
+      style={{ backgroundColor: '#FFCE54' }}
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -361,7 +361,7 @@ export function TicketCard({
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{currentTicket.time}</span>
          </div>
-         {!isSold && !actualIsSeller && (currentTicket.sellerContactEmail || currentTicket.sellerContactPhone) && (
+         {!isSold && !(propIsSeller && variant === 'browse') && (currentTicket.sellerContactEmail || currentTicket.sellerContactPhone) && (
              <div className="mt-2 pt-2 border-t border-dashed space-y-1">
                 {currentTicket.sellerContactEmail && (
                     <div className="flex items-center">
@@ -401,8 +401,10 @@ export function TicketCard({
              ) : (
                  <Badge variant="destructive">Sold</Badge>
              )
-         ) : actualIsSeller ? (
-             variant === 'manage' ? renderCancelButton() : renderPendingIndicator()
+         ) : variant === 'manage' ? (
+             isUserActuallyTheSellerForActions ? renderCancelButton() : <Badge>Error: Not your listing</Badge>
+         ) : propIsSeller ? (
+             renderPendingIndicator()
          ) : (
              <Button
                  size="sm"
