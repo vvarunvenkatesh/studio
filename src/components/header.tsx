@@ -177,15 +177,7 @@ export function Header({className}: HeaderProps) {
                     </div>
 
                     {/* Scrollable area for menu items and location selector */}
-                    <div className="flex-grow overflow-y-auto">
-                        {/* Menu Heading */}
-                        <div className="p-4 pb-2">
-                            <h3 className="text-lg font-semibold text-foreground flex items-center">
-                                <Menu className="h-5 w-5 mr-2 text-muted-foreground" />
-                                Menu
-                            </h3>
-                        </div>
-
+                    <div className="flex-grow overflow-y-auto pt-2">
                         {/* Navigation Links */}
                         <nav className="px-4 pb-4 space-y-1">
                           <Button asChild variant="ghost" className="w-full justify-start text-base text-foreground" onClick={() => setMobileMenuOpen(false)}>
@@ -223,7 +215,7 @@ export function Header({className}: HeaderProps) {
                     </div>
 
                     {/* Login/Logout Button (Stays at bottom) */}
-                    <div className="p-4 border-t">
+                    <div className="p-4 border-t mt-auto">
                        {isLoggedIn ? (
                            <Button variant="outline" className="w-full text-base gap-2 text-foreground" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
                              <LogOut className="h-4 w-4" /> Logout
@@ -240,11 +232,12 @@ export function Header({className}: HeaderProps) {
 
             <div className="flex-grow flex justify-center overflow-hidden px-2">
               <div className="flex flex-col items-center text-center">
-                <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
+                 {/* No Link component around the title for mobile to prevent navigation */}
+                <span className="whitespace-nowrap flex items-baseline justify-center gap-1">
                   <span className="text-2xl font-bold text-foreground">
                      <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                   </span>
-                </Link>
+                </span>
                 <span className="text-[10px] text-foreground opacity-80 truncate max-w-[150px]">
                   Ticket Reselling Platform
                 </span>
@@ -295,7 +288,7 @@ export function Header({className}: HeaderProps) {
             </div>
 
             <div className="flex items-center gap-3 md:gap-4">
-               {isLoggedIn ? (
+              {isLoggedIn ? (
                 <Link href="/profile" className="mr-1 md:mr-0">
                   <Avatar className="h-8 w-8 cursor-pointer">
                     <AvatarImage src={profileImageUrl || undefined} alt="User profile picture" data-ai-hint="user avatar" />
