@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -14,10 +15,9 @@ import {
 } from '@/components/ui/select';
 import {cn} from '@/lib/utils';
 import {useIsMobile} from '@/hooks/use-mobile';
-import {Sheet, SheetContent, SheetTrigger, SheetClose} from '@/components/ui/sheet';
-import {Label} from '@/components/ui/label';
-import { DialogTitle } from "@/components/ui/dialog";
-import { TermsAndConditionsDialog } from './terms-and-conditions-dialog'; // Import T&C Dialog
+import {Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle} from '@/components/ui/sheet'; // Changed DialogTitle to SheetTitle
+import { Label } from '@/components/ui/label';
+import { TermsAndConditionsDialog } from './terms-and-conditions-dialog';
 
 interface HeaderProps {
   className?: string;
@@ -34,7 +34,7 @@ const availableLocations = [
   'Ahmedabad',
   'Jaipur',
   'Lucknow',
-  'Online', // Added Online for events that might not be city-specific
+  'Online',
 ];
 
 export function Header({className}: HeaderProps) {
@@ -43,9 +43,8 @@ export function Header({className}: HeaderProps) {
   const [selectedLocation, setSelectedLocation] = React.useState<string>('');
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-
   const [showTnCDialog, setShowTnCDialog] = React.useState(false);
-  const [tncAccepted, setTncAccepted] = React.useState(true); // Assume accepted initially to avoid flicker
+  const [tncAccepted, setTncAccepted] = React.useState(true); // Default to true to avoid initial popup if not logged in
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -64,7 +63,6 @@ export function Header({className}: HeaderProps) {
         setProfileImageUrl(null);
       }
       
-      // Show T&C dialog if logged in and not accepted
       if (loggedInStatus && !accepted) {
         setShowTnCDialog(true);
       }
@@ -81,7 +79,7 @@ export function Header({className}: HeaderProps) {
           } else {
             const updatedImageUrl = localStorage.getItem('profileImageUrl');
             setProfileImageUrl(updatedImageUrl);
-            if (!currentTncAccepted) { // Check again if T&C needs to be shown
+            if (!currentTncAccepted) { // Only show T&C if newly logged in and not accepted
                 setShowTnCDialog(true);
             }
           }
@@ -99,7 +97,7 @@ export function Header({className}: HeaderProps) {
         if (event.key === 'tncAccepted') {
             const newTncStatus = event.newValue === 'true';
             setTncAccepted(newTncStatus);
-            if (newTncStatus) { // if accepted in another tab, close dialog here
+            if (newTncStatus) { // if T&C accepted, close the dialog
                 setShowTnCDialog(false);
             }
         }
@@ -117,6 +115,8 @@ export function Header({className}: HeaderProps) {
     setSelectedLocation(newLocation);
     if (typeof window !== 'undefined') {
       localStorage.setItem('selectedLocation', newLocation);
+      // Optionally, dispatch a custom event if other components need to react instantly
+      // to location changes without relying on localStorage polling.
       window.dispatchEvent(
         new StorageEvent('storage', {
           key: 'selectedLocation',
@@ -136,16 +136,18 @@ export function Header({className}: HeaderProps) {
   };
 
   const handleLogout = () => {
+     // Perform logout actions
      if (typeof window !== 'undefined') {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('profileImageUrl');
-        localStorage.removeItem('userData'); // Also clear userData
-        // Note: tncAccepted is NOT cleared on logout, user accepts once per browser
+        localStorage.removeItem('userData'); // Also remove userData if it exists
+        // Potentially remove tncAccepted if you want it re-prompted on next login for this user
+        // localStorage.removeItem('tncAccepted');
         window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
         window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
         window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
-        // Toast for logout is handled on profile page itself for better UX
-        window.location.href = '/'; // Redirect to home
+        // Redirect to home or login page
+        window.location.href = '/'; // Or router.push('/') if preferred and router is available
     }
   };
 
@@ -159,14 +161,13 @@ export function Header({className}: HeaderProps) {
             <div className="flex-shrink-0">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="p-2">
+                  <Button variant="ghost" size="icon" className="p-2 text-foreground">
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Open menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-full xs:w-3/4 sm:w-64 p-0">
-                 <DialogTitle className="sr-only">Navigation Menu</DialogTitle>
-                  <div className="flex flex-col h-full">
+                <SheetContent side="left" className="w-full xs:w-3/4 sm:max-w-xs p-0 flex flex-col">
+                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     <div className="p-4 border-b">
                       <Link href="/" className="flex flex-col items-start" onClick={() => setMobileMenuOpen(false)}>
                         <span className="text-xl font-bold text-foreground">
@@ -177,25 +178,27 @@ export function Header({className}: HeaderProps) {
                         </span>
                       </Link>
                     </div>
-                    <nav className="flex-grow p-4 space-y-2">
-                      <Button asChild variant="ghost" className="w-full justify-start text-base" onClick={() => setMobileMenuOpen(false)}>
+                    <nav className="flex-grow p-4 space-y-1">
+                      <Button asChild variant="ghost" className="w-full justify-start text-base text-foreground" onClick={() => setMobileMenuOpen(false)}>
                         <Link href="/post-ticket">Post Ticket</Link>
                       </Button>
-                      <Button asChild variant="ghost" className="w-full justify-start text-base" onClick={() => setMobileMenuOpen(false)}>
+                      <Button asChild variant="ghost" className="w-full justify-start text-base text-foreground" onClick={() => setMobileMenuOpen(false)}>
                         <Link href="/tickets">Browse Tickets</Link>
                       </Button>
                       {isLoggedIn && (
-                        <Button asChild variant="ghost" className="w-full justify-start text-base" onClick={() => setMobileMenuOpen(false)}>
+                        <Button asChild variant="ghost" className="w-full justify-start text-base text-foreground" onClick={() => setMobileMenuOpen(false)}>
                           <Link href="/profile">My Profile</Link>
                         </Button>
                       )}
-                       <div className='p-2'>
-                         <Label className="text-sm font-medium text-muted-foreground mb-1">Location</Label>
+                       {/* Location Selector in Mobile Menu */}
+                       <div className='pt-2'>
+                         <Label className="text-sm font-medium text-muted-foreground mb-1 block px-1">Location</Label>
                          <Select value={selectedLocation} onValueChange={(newLocation) => {
                            handleLocationChange(newLocation);
-                           setMobileMenuOpen(false); 
+                           setMobileMenuOpen(false); // Close menu on selection
                          }}>
-                           <SelectTrigger className="w-full h-9 px-3 py-1 text-sm border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                           <SelectTrigger className="w-full h-9 text-sm border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-transparent focus:ring-offset-0 gap-1">
+                             {/* <MapPin className="h-4 w-4 flex-shrink-0 mr-1" /> */}
                              <SelectValue placeholder="Select Location" />
                            </SelectTrigger>
                            <SelectContent>
@@ -210,7 +213,7 @@ export function Header({className}: HeaderProps) {
                     </nav>
                     <div className="p-4 border-t mt-auto">
                        {isLoggedIn ? (
-                           <Button variant="outline" className="w-full text-base gap-2" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
+                           <Button variant="outline" className="w-full text-base gap-2 text-foreground" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
                              <LogOut className="h-4 w-4" /> Logout
                            </Button>
                         ) : (
@@ -219,7 +222,6 @@ export function Header({className}: HeaderProps) {
                           </Button>
                         )}
                     </div>
-                  </div>
                 </SheetContent>
               </Sheet>
             </div>
@@ -227,7 +229,7 @@ export function Header({className}: HeaderProps) {
             <div className="flex-grow flex justify-center overflow-hidden px-2">
               <div className="flex flex-col items-center text-center">
                 <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
-                  <span className="text-2xl font-bold text-foreground">
+                  <span className="text-2xl font-bold text-foreground"> {/* Ensured consistency with Desktop */}
                      <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
                   </span>
                 </Link>
@@ -257,7 +259,7 @@ export function Header({className}: HeaderProps) {
           </>
         ) : (
           <>
-            {/* Desktop View - Refactored for better centering and right-alignment */}
+            {/* Desktop View */}
             <div className="flex items-center flex-shrink-0">
               <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                 <Link href="/post-ticket">
