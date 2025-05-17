@@ -57,19 +57,26 @@ export default function TicketsPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
 
+  const currentCategory = searchParams.get('category') as Ticket['type'] | 'transport' | 'all' | null;
+  const isEventLikeCategory = currentCategory === 'movie' || currentCategory === 'event' || currentCategory === 'sports';
+  const isTransportOrAllCategory = !currentCategory || currentCategory === 'all' || currentCategory === 'transport' || currentCategory === 'train' || currentCategory === 'bus';
+
+
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
   const [toCityFilter, setToCityFilter] = React.useState(searchParams.get('to') || '');
   const [priceRange, setPriceRange] = React.useState<[number | undefined, number | undefined]>(parsePriceRange(searchParams.get('price')));
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(parseDateRange(searchParams.get('date')));
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [genericSearchTerm, setGenericSearchTerm] = React.useState(searchParams.get('q') || '');
+  const [eventLocationFilter, setEventLocationFilter] = React.useState(searchParams.get('location') || '');
+
 
   // Effect to set and update currentUserId based on login state changes
   React.useEffect(() => {
     const updateCurrentUserId = () => {
       setCurrentUserId(getSimulatedCurrentUserId());
     };
-    updateCurrentUserId(); // Initial set
+    updateCurrentUserId(); 
 
     const handleLoginStorageChange = (event: StorageEvent) => {
       if (event.key === 'isLoggedIn' || event.key === 'userId') {
@@ -81,10 +88,10 @@ export default function TicketsPage() {
   }, []);
 
   const pageTitle = React.useMemo(() => {
-    const currentCategory = searchParams.get('category');
     const currentFrom = searchParams.get('from');
     const currentTo = searchParams.get('to');
     const currentSearchTerm = searchParams.get('q');
+    const currentEventLocation = searchParams.get('location');
 
     if (currentSearchTerm) {
         return `Results for "${currentSearchTerm}"`;
@@ -97,8 +104,12 @@ export default function TicketsPage() {
     }
     if (currentCategory && categoryMap[currentCategory as Ticket['type']]) {
       let title = `${categoryMap[currentCategory as Ticket['type']].name} Tickets`;
-      if (currentFrom) title += ` from ${currentFrom}`;
-      if (currentTo) title += ` to ${currentTo}`;
+      if (isEventLikeCategory && currentEventLocation) {
+        title += ` in ${currentEventLocation}`;
+      } else {
+        if (currentFrom) title += ` from ${currentFrom}`;
+        if (currentTo) title += ` to ${currentTo}`;
+      }
       return title;
     }
     if (currentFrom || currentTo) {
@@ -107,17 +118,16 @@ export default function TicketsPage() {
       if (currentTo) title += ` to ${currentTo}`;
       return title;
     }
+    if (isEventLikeCategory && currentEventLocation) {
+      return `Tickets in ${currentEventLocation}`;
+    }
     return 'Available Tickets';
-  }, [searchParams]);
+  }, [searchParams, currentCategory, isEventLikeCategory]);
 
   const loadTickets = React.useCallback(async () => {
-    // Ensure currentUserId is at least initialized (even if null for anonymous) before loading
     if (currentUserId === undefined && typeof window !== 'undefined') { 
-        // If currentUserId is undefined (initial state before first useEffect sets it), wait.
-        // This check might be overly cautious if the useEffect for currentUserId runs fast enough.
         return;
     }
-
     setIsLoading(true);
     setError(null);
     
@@ -127,49 +137,43 @@ export default function TicketsPage() {
     const currentPriceParam = searchParams.get('price');
     const currentDateParam = searchParams.get('date');
     const currentSearchTermParam = searchParams.get('q');
+    const currentEventLocationParam = searchParams.get('location');
     
-    const filters: any = {};
-
-    if (currentCategoryParam && currentCategoryParam !== 'all' && currentCategoryParam !== 'transport') filters.category = currentCategoryParam;
-    if (currentCategoryParam === 'transport') filters.category = 'transport'; // Handled by getAvailableTickets
-
-    if (currentFromParam) filters.fromCity = currentFromParam;
-    // No need to setFromCityFilter here as it's for the input field controlled state
+    const filters: any = {
+      category: (currentCategoryParam && currentCategoryParam !== 'all') ? currentCategoryParam : undefined,
+      searchTerm: currentSearchTermParam || undefined,
+    };
     
-    if (currentToParam) filters.toCity = currentToParam;
-    // No need to setToCityFilter here
-
-    const [minPriceState, maxPriceState] = parsePriceRange(currentPriceParam);
-    // No need to setPriceRange here for the input field
-    if (minPriceState !== undefined) filters.minPrice = minPriceState;
-    if (maxPriceState !== undefined) filters.maxPrice = maxPriceState;
+    if (isTransportOrAllCategory || (!currentCategoryParam || currentCategoryParam === 'all')) {
+        if (currentFromParam) filters.fromCity = currentFromParam;
+        if (currentToParam) filters.toCity = currentToParam;
+        const [minPriceState, maxPriceState] = parsePriceRange(currentPriceParam);
+        if (minPriceState !== undefined) filters.minPrice = minPriceState;
+        if (maxPriceState !== undefined) filters.maxPrice = maxPriceState;
+    }
+    if (isEventLikeCategory && currentEventLocationParam) {
+        filters.location = currentEventLocationParam;
+    }
 
     const dateRangeState = parseDateRange(currentDateParam);
-    // No need to setDateRange here for the input field
     if (dateRangeState?.from) filters.startDate = format(dateRangeState.from, 'yyyy-MM-dd');
     if (dateRangeState?.to) filters.endDate = format(dateRangeState.to, 'yyyy-MM-dd');
     
-    if (currentSearchTermParam) filters.searchTerm = currentSearchTermParam;
-    // No need to setGenericSearchTerm here
-
     try {
       const fetchedTickets: Ticket[] = await getAvailableTickets(filters); 
-      setTickets(fetchedTickets); // getAvailableTickets already filters by status 'available'
+      setTickets(fetchedTickets);
     } catch (err: any) {
       console.error("Failed to fetch tickets:", err);
       setError(err.message || "Failed to load tickets. Please try refreshing the page.");
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams, currentUserId]); // Add currentUserId as dependency if its value influences loading logic directly (though not directly used in filters here)
+  }, [searchParams, currentUserId, isTransportOrAllCategory, isEventLikeCategory]); 
 
-  // Effect to load tickets when relevant dependencies change
   React.useEffect(() => {
-    // Load tickets if currentUserId is known (not undefined which is initial) or if it's anonymous
     if (currentUserId !== undefined) {
         loadTickets();
     }
-    
     const handleMarketplaceStorageChange = (event: StorageEvent) => {
       if (event.key === 'marketplaceTickets') {
         if (currentUserId !== undefined) {
@@ -181,13 +185,9 @@ export default function TicketsPage() {
     return () => {
       window.removeEventListener('storage', handleMarketplaceStorageChange);
     };
-  }, [currentUserId, loadTickets]); // loadTickets callback depends on searchParams
+  }, [currentUserId, loadTickets]); 
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
-    // The loadTickets will be re-triggered by the marketplaceTickets storage event,
-    // which should update the list naturally.
-    // Optionally, you could filter locally for instant UI update, but storage event is more robust.
-    // setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== purchasedTicketId));
     toast({
         title: "Ticket Status Updated",
         description: "The ticket list has been refreshed.",
@@ -203,7 +203,6 @@ export default function TicketsPage() {
           title: 'Listing Cancelled',
           description: result.message || 'Your ticket listing has been removed.',
         });
-        // loadTickets will be called due to marketplaceTickets storage event
       } else {
         throw new Error(result.message || 'Could not cancel the ticket listing.');
       }
@@ -225,25 +224,39 @@ export default function TicketsPage() {
     if (genericSearchTerm) query.set('q', genericSearchTerm); 
     else query.delete('q');
 
-    if (fromCityFilter) query.set('from', fromCityFilter);
-    else query.delete('from');
+    if (isTransportOrAllCategory || (!currentCategory || currentCategory === 'all')) {
+        if (fromCityFilter) query.set('from', fromCityFilter);
+        else query.delete('from');
 
-    if (toCityFilter) query.set('to', toCityFilter);
-    else query.delete('to');
-    
-    const [minPrice, maxPrice] = priceRange;
-    if (minPrice !== undefined || maxPrice !== undefined) {
-        const priceParts = [];
-        if (minPrice !== undefined) priceParts.push(String(minPrice)); else priceParts.push(''); 
-        if (maxPrice !== undefined) priceParts.push(String(maxPrice));
-        if (priceParts.length > 0 && (priceParts[0] !== '' || priceParts.length > 1)) { 
-          query.set('price', priceParts.join('-'));
+        if (toCityFilter) query.set('to', toCityFilter);
+        else query.delete('to');
+        
+        const [minPrice, maxPrice] = priceRange;
+        if (minPrice !== undefined || maxPrice !== undefined) {
+            const priceParts = [];
+            if (minPrice !== undefined) priceParts.push(String(minPrice)); else priceParts.push(''); 
+            if (maxPrice !== undefined) priceParts.push(String(maxPrice));
+            if (priceParts.length > 0 && (priceParts[0] !== '' || priceParts.length > 1)) { 
+              query.set('price', priceParts.join('-'));
+            } else {
+                query.delete('price');
+            }
         } else {
             query.delete('price');
         }
-    } else {
+    } else { // If not transport/all, remove these filters
+        query.delete('from');
+        query.delete('to');
         query.delete('price');
     }
+
+    if (isEventLikeCategory) {
+        if (eventLocationFilter) query.set('location', eventLocationFilter);
+        else query.delete('location');
+    } else {
+        query.delete('location');
+    }
+
 
     if (dateRange?.from) {
         const fromStr = format(dateRange.from, 'yyyy-MM-dd');
@@ -261,10 +274,10 @@ export default function TicketsPage() {
     setPriceRange([undefined, undefined]);
     setDateRange(undefined);
     setGenericSearchTerm(''); 
+    setEventLocationFilter('');
     const category = searchParams.get('category');
     const query = new URLSearchParams();
-    if (category && category !== 'transport' && category !== 'all') query.set('category', category); 
-    else if (category === 'transport') query.set('category', 'transport'); 
+    if (category) query.set('category', category); 
     router.push(`${pathname}?${query.toString()}`);
   };
 
@@ -285,7 +298,7 @@ export default function TicketsPage() {
     ))
   );
 
-  const hasActiveFilters = fromCityFilter || toCityFilter || priceRange[0] !== undefined || priceRange[1] !== undefined || dateRange?.from || genericSearchTerm;
+  const hasActiveFilters = genericSearchTerm || fromCityFilter || toCityFilter || eventLocationFilter || priceRange[0] !== undefined || priceRange[1] !== undefined || dateRange?.from;
 
   return (
     <div className="flex min-h-screen flex-col bg-background pb-32 md:pb-16">
@@ -300,69 +313,95 @@ export default function TicketsPage() {
               <Input
                 id="genericSearchFilter"
                 type="text"
-                placeholder="Event, city, type..."
+                placeholder="Event name, movie, keywords..."
                 value={genericSearchTerm}
                 onChange={(e) => setGenericSearchTerm(e.target.value)}
                 className="bg-background text-foreground"
               />
             </div>
-            <div className="w-full">
-              <Label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From City</Label>
-              <Input
-                id="fromCityFilter"
-                type="text"
-                placeholder="Departure City"
-                value={fromCityFilter}
-                onChange={(e) => setFromCityFilter(e.target.value)}
-                className="bg-background text-foreground"
-              />
-            </div>
-            <div className="w-full">
-              <Label htmlFor="toCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">To City</Label>
-              <Input
-                id="toCityFilter"
-                type="text"
-                placeholder="Destination City"
-                value={toCityFilter}
-                onChange={(e) => setToCityFilter(e.target.value)}
-                className="bg-background text-foreground"
-              />
-            </div>
-             <div className="w-full lg:col-span-2">
-                <Label htmlFor="dateRangeFilter" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</Label>
-                <DateRangePicker
-                    id="dateRangeFilter"
-                    date={dateRange}
-                    onDateChange={setDateRange}
-                    className="bg-background text-foreground [&>button]:text-foreground"
-                    onDateSelect={() => {}} 
-                 />
-             </div>
-             <div className="w-full lg:col-span-2">
-                <Label htmlFor="minPriceFilter" className="block text-sm font-medium text-muted-foreground mb-1">Price Range (₹)</Label>
-                <div className="flex items-center gap-2">
-                    <Input
-                       id="minPriceFilter"
-                       type="number"
-                       placeholder="Min"
-                       value={priceRange[0] ?? ''}
-                       onChange={(e) => setPriceRange([e.target.value ? parseInt(e.target.value) : undefined, priceRange[1]])}
-                       className="bg-background text-foreground"
-                       min="0"
-                     />
-                    <span className="text-muted-foreground">-</span>
-                     <Input
-                       id="maxPriceFilter"
-                       type="number"
-                       placeholder="Max"
-                       value={priceRange[1] ?? ''}
-                       onChange={(e) => setPriceRange([priceRange[0], e.target.value ? parseInt(e.target.value) : undefined])}
-                       className="bg-background text-foreground"
-                       min="0"
-                     />
+
+            {(isTransportOrAllCategory || (!currentCategory || currentCategory === 'all')) && (
+              <>
+                <div className="w-full">
+                  <Label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From City</Label>
+                  <Input
+                    id="fromCityFilter"
+                    type="text"
+                    placeholder="Departure City"
+                    value={fromCityFilter}
+                    onChange={(e) => setFromCityFilter(e.target.value)}
+                    className="bg-background text-foreground"
+                  />
                 </div>
-             </div>
-            <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full">
+                <div className="w-full">
+                  <Label htmlFor="toCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">To City</Label>
+                  <Input
+                    id="toCityFilter"
+                    type="text"
+                    placeholder="Destination City"
+                    value={toCityFilter}
+                    onChange={(e) => setToCityFilter(e.target.value)}
+                    className="bg-background text-foreground"
+                  />
+                </div>
+              </>
+            )}
+
+            {isEventLikeCategory && (
+              <div className="w-full lg:col-span-2">
+                <Label htmlFor="eventLocationFilter" className="block text-sm font-medium text-muted-foreground mb-1">Location (City/Venue)</Label>
+                <Input
+                  id="eventLocationFilter"
+                  type="text"
+                  placeholder="Enter city or venue"
+                  value={eventLocationFilter}
+                  onChange={(e) => setEventLocationFilter(e.target.value)}
+                  className="bg-background text-foreground"
+                />
+              </div>
+            )}
+            
+            <div className={cn("w-full", isEventLikeCategory ? "lg:col-span-2" : "lg:col-span-4 grid md:grid-cols-2 gap-4")}>
+                 <div className="w-full">
+                    <Label htmlFor="dateRangeFilter" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</Label>
+                    <DateRangePicker
+                        id="dateRangeFilter"
+                        date={dateRange}
+                        onDateChange={setDateRange}
+                        className="bg-background text-foreground [&>button]:text-foreground"
+                        onDateSelect={() => {}} 
+                     />
+                 </div>
+
+                {(isTransportOrAllCategory || (!currentCategory || currentCategory === 'all')) && (
+                     <div className="w-full">
+                        <Label htmlFor="minPriceFilter" className="block text-sm font-medium text-muted-foreground mb-1">Price Range (₹)</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                               id="minPriceFilter"
+                               type="number"
+                               placeholder="Min"
+                               value={priceRange[0] ?? ''}
+                               onChange={(e) => setPriceRange([e.target.value ? parseInt(e.target.value) : undefined, priceRange[1]])}
+                               className="bg-background text-foreground"
+                               min="0"
+                             />
+                            <span className="text-muted-foreground">-</span>
+                             <Input
+                               id="maxPriceFilter"
+                               type="number"
+                               placeholder="Max"
+                               value={priceRange[1] ?? ''}
+                               onChange={(e) => setPriceRange([priceRange[0], e.target.value ? parseInt(e.target.value) : undefined])}
+                               className="bg-background text-foreground"
+                               min="0"
+                             />
+                        </div>
+                     </div>
+                )}
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full pt-2">
                 <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
                     <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
@@ -433,5 +472,3 @@ export default function TicketsPage() {
     </div>
   );
 }
-
-    

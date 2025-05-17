@@ -75,7 +75,6 @@ interface UserData {
 
 
 const marketplaceTicketsKey = 'marketplaceTickets';
-const userPostedTicketsKey = 'userPostedTickets'; // This key seems redundant if marketplaceTickets holds all data
 const userOrdersKey = 'userOrders';
 const userDataKey = 'userData';
 
@@ -88,11 +87,10 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
         if (stored) {
             try {
                 let parsedData = JSON.parse(stored);
-                 // Ensure sellerId and status defaults for ticket arrays
-                if (Array.isArray(parsedData) && (key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey)) {
+                if (Array.isArray(parsedData) && (key === marketplaceTicketsKey || key === userOrdersKey)) {
                       parsedData = parsedData.map((ticket: Partial<Ticket>) => ({
                          ...ticket,
-                         id: ticket.id || Math.random().toString(36).substring(2, 15), // Ensure ID if missing
+                         id: ticket.id || Math.random().toString(36).substring(2, 15),
                          sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
                          status: ticket.status || 'available',
                          sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
@@ -106,11 +104,10 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
             }
         }
     }
-     // Ensure sellerId and status defaults for default ticket arrays being returned
-    if ((key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) && Array.isArray(defaultValue)) {
+    if ((key === marketplaceTicketsKey || key === userOrdersKey) && Array.isArray(defaultValue)) {
       return defaultValue.map((ticket: Partial<Ticket>) => ({
           ...ticket,
-          id: ticket.id || Math.random().toString(36).substring(2, 15), // Ensure ID if missing
+          id: ticket.id || Math.random().toString(36).substring(2, 15),
           sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
           status: ticket.status || 'available',
           sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
@@ -131,7 +128,7 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
             if (stringifiedData.length > quotaCheckLength) {
                  console.warn(`Data for ${key} is large (${(stringifiedData.length / (1024*1024)).toFixed(2)}MB) and might exceed localStorage quota.`);
 
-                 if ((key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) && Array.isArray(dataToSave) && dataToSave.length > 5) {
+                 if ((key === marketplaceTicketsKey || key === userOrdersKey) && Array.isArray(dataToSave) && dataToSave.length > 5) {
                     console.warn(`Attempting to trim ${key} data to save space.`);
                     const trimmedData = dataToSave.slice(-5).map((ticket: any) => {
                         const { originalTicketDataUri, ...rest } = ticket;
@@ -153,7 +150,7 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
 
             window.dispatchEvent(new StorageEvent('storage', {
                 key: key,
-                newValue: localStorage.getItem(key),
+                newValue: localStorage.getItem(key), // Get the potentially trimmed value
                 storageArea: localStorage,
             }));
         } catch (e) {
@@ -180,7 +177,7 @@ const getDefaultTickets = (): Ticket[] => [
         toCity: 'Boston',
         status: 'available',
         originalTicketDataUri: undefined,
-        sellerId: 'defaultSellerExample1', // Unique default seller ID
+        sellerId: 'defaultSellerExample1',
         sellerVerified: false,
         sellerContactEmail: 'seller1@example.com',
         sellerContactPhone: '9876543210',
@@ -194,7 +191,7 @@ const getDefaultTickets = (): Ticket[] => [
         time: '20:00',
         location: 'Boston Arena',
         status: 'available',
-        sellerId: 'defaultSellerExample2', // Unique default seller ID
+        sellerId: 'defaultSellerExample2',
         sellerVerified: true,
         sellerContactEmail: 'seller2_verified@example.com',
         sellerContactPhone: '9876543211',
@@ -208,7 +205,7 @@ const getDefaultTickets = (): Ticket[] => [
         time: '19:00',
         location: 'Downtown Cinema',
         status: 'available',
-        sellerId: 'defaultSellerExampleMovie', // Unique default seller ID
+        sellerId: 'defaultSellerExampleMovie',
         sellerVerified: true,
         sellerContactEmail: 'movie_seller@example.com',
         sellerContactPhone: '1234509876',
@@ -224,7 +221,7 @@ const getDefaultTickets = (): Ticket[] => [
         fromCity: 'Philadelphia',
         toCity: 'Washington DC',
         status: 'available',
-        sellerId: 'defaultSellerExample3', // Unique default seller ID
+        sellerId: 'defaultSellerExample3',
         sellerVerified: false,
         sellerContactEmail: 'seller3@example.com',
         sellerContactPhone: '9876543212',
@@ -240,7 +237,7 @@ const getDefaultTickets = (): Ticket[] => [
         fromCity: 'Chicago',
         toCity: 'Denver',
         status: 'available',
-        sellerId: 'defaultSellerExampleTrain', // Unique default seller ID
+        sellerId: 'defaultSellerExampleTrain',
         sellerVerified: true,
         sellerContactEmail: 'train_seller_verified@example.com',
         sellerContactPhone: '1234567890',
@@ -254,7 +251,7 @@ const getDefaultTickets = (): Ticket[] => [
         time: '19:30',
         location: 'City Stadium',
         status: 'available',
-        sellerId: 'defaultSellerExample4', // Unique default seller ID
+        sellerId: 'defaultSellerExample4',
         sellerVerified: true,
         sellerContactEmail: 'seller4_verified@example.com',
         sellerContactPhone: '9876543213',
@@ -302,6 +299,7 @@ export async function getAvailableTickets(filters?: {
   endDate?: string;
   searchTerm?: string;
   ticketId?: string;
+  location?: string; // Added location filter
 }): Promise<Ticket[]> {
   await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async operation
 
@@ -332,6 +330,11 @@ export async function getAvailableTickets(filters?: {
     const toLower = filters.toCity.toLowerCase();
     filteredTickets = filteredTickets.filter(ticket => ticket.toCity?.toLowerCase().includes(toLower));
   }
+  
+  if (filters?.location) { // Added filter for specific location
+    const locationLower = filters.location.toLowerCase();
+    filteredTickets = filteredTickets.filter(ticket => ticket.location?.toLowerCase().includes(locationLower));
+  }
 
   if (filters?.minPrice !== undefined) {
       filteredTickets = filteredTickets.filter(ticket => ticket.price >= filters!.minPrice!);
@@ -353,7 +356,7 @@ export async function getAvailableTickets(filters?: {
     const term = filters.searchTerm.toLowerCase();
     filteredTickets = filteredTickets.filter(ticket =>
         ticket.description.toLowerCase().includes(term) ||
-        (ticket.location && ticket.location.toLowerCase().includes(term)) ||
+        (ticket.location && ticket.location.toLowerCase().includes(term)) || // searchTerm can still search location
         (ticket.fromCity && ticket.fromCity.toLowerCase().includes(term)) ||
         (ticket.toCity && ticket.toCity.toLowerCase().includes(term)) ||
         (ticket.type.toLowerCase().includes(term))
@@ -468,11 +471,11 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
 
     let contactMessage = "Contact the seller ";
     if (updatedTicket.sellerContactEmail && updatedTicket.sellerContactPhone) {
-        contactMessage += `at ${updatedTicket.sellerContactEmail} or ${updatedTicket.sellerContactPhone}`;
+        contactMessage += `at ${updatedTicket.sellerContactEmail} or by phone at ${updatedTicket.sellerContactPhone}`;
     } else if (updatedTicket.sellerContactEmail) {
         contactMessage += `at ${updatedTicket.sellerContactEmail}`;
     } else if (updatedTicket.sellerContactPhone) {
-        contactMessage += `at ${updatedTicket.sellerContactPhone}`;
+        contactMessage += `by phone at ${updatedTicket.sellerContactPhone}`;
     } else {
         contactMessage += "using their listed contact details";
     }
@@ -515,7 +518,7 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
 export function getSimulatedCurrentUserId(): string {
     if (typeof window !== 'undefined') {
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const userId = localStorage.getItem('userId'); // This should be the email/phone
+        const userId = localStorage.getItem('userId'); 
         if (isLoggedIn && userId) {
             return userId;
         }
@@ -551,8 +554,6 @@ if (typeof window !== 'undefined') {
                      sellerContactEmail: ticket.sellerContactEmail || undefined,
                      sellerContactPhone: ticket.sellerContactPhone || undefined,
                  }));
-                 // This line was removed as 'tickets' module-level variable isn't the source of truth.
-                 // Components should re-fetch or re-load from localStorage via their own mechanisms.
                  console.log('Marketplace tickets updated from storage event.');
              } catch (e) {
                  console.error('Failed to parse marketplace tickets from storage event', e);
