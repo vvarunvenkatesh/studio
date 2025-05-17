@@ -75,7 +75,7 @@ interface UserData {
 
 
 const marketplaceTicketsKey = 'marketplaceTickets';
-const userPostedTicketsKey = 'userPostedTickets';
+const userPostedTicketsKey = 'userPostedTickets'; // This key seems redundant if marketplaceTickets holds all data
 const userOrdersKey = 'userOrders';
 const userDataKey = 'userData';
 
@@ -88,19 +88,17 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
         if (stored) {
             try {
                 let parsedData = JSON.parse(stored);
+                 // Ensure sellerId and status defaults for ticket arrays
                 if (Array.isArray(parsedData) && (key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey)) {
                       parsedData = parsedData.map((ticket: Partial<Ticket>) => ({
                          ...ticket,
+                         id: ticket.id || Math.random().toString(36).substring(2, 15), // Ensure ID if missing
                          sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
                          status: ticket.status || 'available',
                          sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
                          sellerContactEmail: ticket.sellerContactEmail || undefined,
                          sellerContactPhone: ticket.sellerContactPhone || undefined,
                       }));
-                } else if (key === userDataKey && parsedData && typeof parsedData === 'object' && 'aadhaarNumber' in parsedData) {
-                    // Remove aadhaarNumber from loaded userData if it exists
-                    const { aadhaarNumber, ...restOfData } = parsedData as any;
-                    parsedData = restOfData;
                 }
                 return parsedData as T;
             } catch (e) {
@@ -108,9 +106,11 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
             }
         }
     }
+     // Ensure sellerId and status defaults for default ticket arrays being returned
     if ((key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) && Array.isArray(defaultValue)) {
       return defaultValue.map((ticket: Partial<Ticket>) => ({
           ...ticket,
+          id: ticket.id || Math.random().toString(36).substring(2, 15), // Ensure ID if missing
           sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
           status: ticket.status || 'available',
           sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
@@ -125,21 +125,17 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
     if (typeof window !== 'undefined') {
         try {
             let dataToSave = data;
-            if (key === userDataKey && typeof data === 'object' && data !== null && 'aadhaarNumber' in data) {
-                 const { aadhaarNumber, ...restOfData } = data as any; // Ensure aadhaarNumber is not saved
-                 dataToSave = restOfData as T;
-            }
             const stringifiedData = JSON.stringify(dataToSave);
-            
-            const quotaCheckLength = 4.5 * 1024 * 1024; 
+
+            const quotaCheckLength = 4.5 * 1024 * 1024;
             if (stringifiedData.length > quotaCheckLength) {
                  console.warn(`Data for ${key} is large (${(stringifiedData.length / (1024*1024)).toFixed(2)}MB) and might exceed localStorage quota.`);
-                 
+
                  if ((key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) && Array.isArray(dataToSave) && dataToSave.length > 5) {
                     console.warn(`Attempting to trim ${key} data to save space.`);
-                    const trimmedData = dataToSave.slice(-5).map((ticket: any) => { 
+                    const trimmedData = dataToSave.slice(-5).map((ticket: any) => {
                         const { originalTicketDataUri, ...rest } = ticket;
-                        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { 
+                        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) {
                             console.warn(`Removing large originalTicketDataUri for ticket ID ${ticket.id} from ${key} during quota save.`);
                             return rest;
                         }
@@ -157,37 +153,20 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
 
             window.dispatchEvent(new StorageEvent('storage', {
                 key: key,
-                newValue: localStorage.getItem(key), 
+                newValue: localStorage.getItem(key),
                 storageArea: localStorage,
             }));
         } catch (e) {
              console.error(`Failed to save ${key} to localStorage`, e);
              if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22)) {
-                 throw e; 
+                 throw e;
              }
         }
     }
 };
 
+
 // --- Initial Data ---
-const isCurrentUserVerifiedForDefault = (): boolean => {
-    if (typeof window === 'undefined') return false;
-    const storedUserData = localStorage.getItem(userDataKey);
-    if (storedUserData) {
-        try {
-            const parsedData: UserData = JSON.parse(storedUserData);
-            const currentUserId = getSimulatedCurrentUserId();
-            if (currentUserId === 'currentUser') {
-                 return !!(parsedData.email && parsedData.contact);
-            }
-        } catch (e) {
-            console.error("Failed to parse userData for default ticket verification check", e);
-        }
-    }
-    return false;
-};
-
-
 const getDefaultTickets = (): Ticket[] => [
     {
         id: '1',
@@ -201,7 +180,7 @@ const getDefaultTickets = (): Ticket[] => [
         toCity: 'Boston',
         status: 'available',
         originalTicketDataUri: undefined,
-        sellerId: 'otherUser1',
+        sellerId: 'defaultSellerExample1', // Unique default seller ID
         sellerVerified: false,
         sellerContactEmail: 'seller1@example.com',
         sellerContactPhone: '9876543210',
@@ -215,7 +194,7 @@ const getDefaultTickets = (): Ticket[] => [
         time: '20:00',
         location: 'Boston Arena',
         status: 'available',
-        sellerId: 'otherUser2',
+        sellerId: 'defaultSellerExample2', // Unique default seller ID
         sellerVerified: true,
         sellerContactEmail: 'seller2_verified@example.com',
         sellerContactPhone: '9876543211',
@@ -229,10 +208,10 @@ const getDefaultTickets = (): Ticket[] => [
         time: '19:00',
         location: 'Downtown Cinema',
         status: 'available',
-        sellerId: 'currentUser', 
-        sellerVerified: isCurrentUserVerifiedForDefault(),
-        sellerContactEmail: 'currentuser@example.com', 
-        sellerContactPhone: '1234567890', 
+        sellerId: 'defaultSellerExampleMovie', // Unique default seller ID
+        sellerVerified: true,
+        sellerContactEmail: 'movie_seller@example.com',
+        sellerContactPhone: '1234509876',
       },
       {
         id: '4',
@@ -245,7 +224,7 @@ const getDefaultTickets = (): Ticket[] => [
         fromCity: 'Philadelphia',
         toCity: 'Washington DC',
         status: 'available',
-        sellerId: 'otherUser3',
+        sellerId: 'defaultSellerExample3', // Unique default seller ID
         sellerVerified: false,
         sellerContactEmail: 'seller3@example.com',
         sellerContactPhone: '9876543212',
@@ -261,9 +240,9 @@ const getDefaultTickets = (): Ticket[] => [
         fromCity: 'Chicago',
         toCity: 'Denver',
         status: 'available',
-        sellerId: 'currentUser',
-        sellerVerified: isCurrentUserVerifiedForDefault(),
-        sellerContactEmail: 'currentuser@example.com',
+        sellerId: 'defaultSellerExampleTrain', // Unique default seller ID
+        sellerVerified: true,
+        sellerContactEmail: 'train_seller_verified@example.com',
         sellerContactPhone: '1234567890',
       },
        {
@@ -275,46 +254,17 @@ const getDefaultTickets = (): Ticket[] => [
         time: '19:30',
         location: 'City Stadium',
         status: 'available',
-        sellerId: 'otherUser4',
+        sellerId: 'defaultSellerExample4', // Unique default seller ID
         sellerVerified: true,
         sellerContactEmail: 'seller4_verified@example.com',
         sellerContactPhone: '9876543213',
       },
 ];
 
-// Module-level tickets variable - primarily used for initial load and by functions that modify it.
-// Functions that only read tickets should ideally re-load from localStorage for freshness.
-let tickets: Ticket[] = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
 
+// --- Initialize Marketplace Tickets ---
 if (typeof window !== 'undefined' && !localStorage.getItem(marketplaceTicketsKey)) {
-    const currentUserId = getSimulatedCurrentUserId();
-    if (currentUserId === 'currentUser') {
-        const userDataString = localStorage.getItem(userDataKey);
-        if (userDataString) {
-            try {
-                const currentUserData: UserData = JSON.parse(userDataString);
-                tickets = tickets.map(ticket =>
-                    ticket.sellerId === 'currentUser' && currentUserData.email
-                        ? { ...ticket, sellerContactEmail: currentUserData.email, sellerContactPhone: currentUserData.contact, sellerVerified: isCurrentUserVerifiedForDefault() }
-                        : ticket
-                );
-            } catch (e) { console.error("Error parsing current user data for default tickets", e); }
-        }
-    }
-    saveToLocalStorage(marketplaceTicketsKey, tickets);
-} else {
-    const needsUpdate = tickets.some(ticket => !ticket.sellerId || !ticket.status || ticket.sellerVerified === undefined || ticket.sellerContactEmail === undefined || ticket.sellerContactPhone === undefined);
-    if (needsUpdate) {
-        tickets = tickets.map(ticket => ({
-            ...ticket,
-            sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
-            status: ticket.status || 'available',
-            sellerVerified: ticket.sellerVerified === undefined ? (ticket.sellerId === 'currentUser' ? isCurrentUserVerifiedForDefault() : false) : ticket.sellerVerified,
-            sellerContactEmail: ticket.sellerContactEmail || (ticket.sellerId === 'currentUser' ? 'currentuser@example.com' : `seller_email_${ticket.id}@example.com`),
-            sellerContactPhone: ticket.sellerContactPhone || (ticket.sellerId === 'currentUser' ? '1234567890' : `999888${Math.floor(Math.random()*10000).toString().padStart(4, '0')}`),
-        }));
-        saveToLocalStorage(marketplaceTicketsKey, tickets);
-    }
+    saveToLocalStorage(marketplaceTicketsKey, getDefaultTickets());
 }
 
 
@@ -323,7 +273,7 @@ const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
     return items.filter(item => {
         if (!item || typeof item.id === 'undefined') {
             console.warn("Encountered invalid item object:", item);
-            return false; 
+            return false;
         }
         if (seenIds.has(item.id)) {
             return false;
@@ -334,41 +284,13 @@ const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
 };
 
 
-const getUserPostedTickets = (): Ticket[] => {
-    return getUniqueById(loadFromLocalStorage<Ticket[]>(userPostedTicketsKey, []));
-};
-
-const saveUserPostedTickets = (postedTickets: Ticket[]) => {
-    const uniqueTickets = getUniqueById(postedTickets);
-    const ticketsToSave = uniqueTickets.map(ticket => {
-        const { originalTicketDataUri, ...rest } = ticket;
-        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { 
-            console.warn(`Removing large originalTicketDataUri for ticket ID ${ticket.id} from userPostedTickets to save space.`);
-            return rest;
-        }
-        return ticket;
-    });
-    saveToLocalStorage(userPostedTicketsKey, ticketsToSave);
-};
-
-const addUserPostedTicket = (ticket: Ticket) => {
-    saveUserPostedTickets([...getUserPostedTickets(), ticket]);
-};
-
-const removeUserPostedTicket = (ticketId: string) => {
-    const currentPosted = getUserPostedTickets();
-    saveUserPostedTickets(currentPosted.filter(t => t.id !== ticketId));
-};
-
-const updateUserPostedTicket = (ticketId: string, updatedData: Partial<Ticket>) => {
-    const currentPosted = getUserPostedTickets();
-    saveUserPostedTickets(currentPosted.map(t => t.id === ticketId ? { ...t, ...updatedData } : t));
-};
-
+// --- User Orders ---
 const getUserOrders = (): Ticket[] => getUniqueById(loadFromLocalStorage<Ticket[]>(userOrdersKey, []));
 const saveUserOrders = (orders: Ticket[]) => saveToLocalStorage(userOrdersKey, getUniqueById(orders));
 const addUserOrder = (ticket: Ticket) => saveUserOrders([...getUserOrders(), ticket]);
 
+
+// --- Ticket Marketplace Service Functions ---
 
 export async function getAvailableTickets(filters?: {
   category?: Ticket['type'] | 'transport' | 'all';
@@ -383,15 +305,14 @@ export async function getAvailableTickets(filters?: {
 }): Promise<Ticket[]> {
   await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async operation
 
-  // Always load fresh from localStorage for this read operation
-  const currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+  const allCurrentTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
 
   if (filters?.ticketId) {
-    const ticket = currentMarketplaceTickets.find(t => t.id === filters.ticketId);
+    const ticket = allCurrentTickets.find(t => t.id === filters.ticketId);
     return ticket ? [ticket] : [];
   }
 
-  let filteredTickets = currentMarketplaceTickets.filter(ticket => ticket.status === 'available');
+  let filteredTickets = allCurrentTickets.filter(ticket => ticket.status === 'available');
 
   if (filters?.category) {
     if (filters.category === 'transport') {
@@ -435,7 +356,7 @@ export async function getAvailableTickets(filters?: {
         (ticket.location && ticket.location.toLowerCase().includes(term)) ||
         (ticket.fromCity && ticket.fromCity.toLowerCase().includes(term)) ||
         (ticket.toCity && ticket.toCity.toLowerCase().includes(term)) ||
-        ticket.type.toLowerCase().includes(term)
+        (ticket.type.toLowerCase().includes(term))
     );
   }
 
@@ -444,7 +365,6 @@ export async function getAvailableTickets(filters?: {
 
 export async function getTicketById(ticketId: string): Promise<Ticket | null> {
   await new Promise(resolve => setTimeout(resolve, 50));
-  // Load fresh for this specific lookup
   const currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
   const ticket = currentMarketplaceTickets.find(t => t.id === ticketId);
   return ticket || null;
@@ -483,27 +403,20 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
     sellerContactPhone: sellerPhone,
   };
 
-  // Load current tickets, add the new one, then save
   let currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
   currentMarketplaceTickets.push(newTicket);
 
   try {
     saveToLocalStorage(marketplaceTicketsKey, currentMarketplaceTickets);
-    if (currentUserId !== 'anonymousUser') {
-        addUserPostedTicket(newTicket);
-    }
   } catch (error) {
     if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
       console.error('LocalStorage quota exceeded while posting ticket.');
-      // No need to pop here as currentMarketplaceTickets was a local copy for modification
       throw error;
     } else {
       console.error('An unexpected error occurred while posting ticket:', error);
       throw error;
     }
   }
-
-  console.log('Posted Ticket:', newTicket);
   return newTicket;
 }
 
@@ -515,13 +428,8 @@ export async function updateTicket(ticketId: string, updates: Partial<Ticket>): 
   if (ticketIndex === -1) {
     return null;
   }
-  const originalTicket = currentMarketplaceTickets[ticketIndex];
-  currentMarketplaceTickets[ticketIndex] = { ...originalTicket, ...updates };
+  currentMarketplaceTickets[ticketIndex] = { ...currentMarketplaceTickets[ticketIndex], ...updates };
   saveToLocalStorage(marketplaceTicketsKey, currentMarketplaceTickets);
-
-  if (originalTicket.sellerId === getSimulatedCurrentUserId() && originalTicket.sellerId !== 'anonymousUser') {
-    updateUserPostedTicket(ticketId, updates);
-  }
 
   return currentMarketplaceTickets[ticketIndex];
 }
@@ -552,13 +460,12 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
       return { success: false, message: `You cannot purchase your own ticket.` };
   }
 
-  // ticketToUpdate.status = 'sold'; // Don't modify the local copy directly before calling updateTicket
   const updatedTicket = await updateTicket(ticketId, { status: 'sold' });
 
   if (updatedTicket) {
-    addUserOrder(updatedTicket); 
+    addUserOrder(updatedTicket);
     console.log(`Ticket ${ticketId} marked as sold by ${buyerId} (pending offline payment).`);
-    
+
     let contactMessage = "Contact the seller ";
     if (updatedTicket.sellerContactEmail && updatedTicket.sellerContactPhone) {
         contactMessage += `at ${updatedTicket.sellerContactEmail} or ${updatedTicket.sellerContactPhone}`;
@@ -573,7 +480,6 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
 
     return { success: true, message: `Ticket ${ticketId} purchase initiated! ${contactMessage}`, ticket: updatedTicket };
   } else {
-    // This case should ideally not be reached if updateTicket finds the ticket.
     return { success: false, message: `Failed to update ticket ${ticketId} status.`};
   }
 }
@@ -590,7 +496,6 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
     const ticketIndex = currentMarketplaceTickets.findIndex(ticket => ticket.id === ticketId);
 
     if (ticketIndex === -1) {
-        removeUserPostedTicket(ticketId); 
         return { success: false, message: `Ticket ${ticketId} not found in marketplace.` };
     }
 
@@ -600,27 +505,29 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
 
     currentMarketplaceTickets.splice(ticketIndex, 1);
     saveToLocalStorage(marketplaceTicketsKey, currentMarketplaceTickets);
-    removeUserPostedTicket(ticketId);
 
     console.log(`Ticket ${ticketId} deleted successfully by ${currentUserId}.`);
     return { success: true, message: `Your ticket listing has been removed.` };
 }
 
 
+// --- User Authentication Simulation ---
 export function getSimulatedCurrentUserId(): string {
     if (typeof window !== 'undefined') {
-        if (localStorage.getItem('isLoggedIn') === 'true') {
-            return localStorage.getItem('userId') || 'currentUser';
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const userId = localStorage.getItem('userId'); // This should be the email/phone
+        if (isLoggedIn && userId) {
+            return userId;
         }
     }
-    return 'anonymousUser'; 
+    return 'anonymousUser';
 }
 
 export function setSimulatedCurrentUserId(userId: string | null) {
     if (typeof window !== 'undefined') {
         if (userId) {
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('userId', userId); 
+            localStorage.setItem('userId', userId);
         } else {
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userId');
@@ -630,27 +537,28 @@ export function setSimulatedCurrentUserId(userId: string | null) {
     }
 }
 
-
+// --- Storage Event Listener ---
 if (typeof window !== 'undefined') {
     window.addEventListener('storage', (event) => {
         if (event.key === marketplaceTicketsKey && event.newValue) {
              try {
                  const parsedTickets = JSON.parse(event.newValue).map((ticket: Partial<Ticket>) => ({
                      ...ticket,
+                     id: ticket.id || Math.random().toString(36).substring(2, 15),
                      sellerId: ticket.sellerId || `unknown_${ticket.id || Math.random().toString(36).substring(7)}`,
                      status: ticket.status || 'available',
-                     sellerVerified: ticket.sellerVerified === undefined ? (ticket.sellerId === 'currentUser' ? isCurrentUserVerifiedForDefault() : false) : ticket.sellerVerified,
-                     sellerContactEmail: ticket.sellerContactEmail || (ticket.sellerId === 'currentUser' ? 'currentuser@example.com' : `seller_email_${ticket.id}@example.com`),
-                     sellerContactPhone: ticket.sellerContactPhone || (ticket.sellerId === 'currentUser' ? '1234567890' : `999888${Math.floor(Math.random()*10000).toString().padStart(4, '0')}`),
+                     sellerVerified: ticket.sellerVerified === undefined ? false : ticket.sellerVerified,
+                     sellerContactEmail: ticket.sellerContactEmail || undefined,
+                     sellerContactPhone: ticket.sellerContactPhone || undefined,
                  }));
-                 // Update the module-level tickets variable if needed, or rely on components re-fetching
-                 tickets = parsedTickets; 
+                 // This line was removed as 'tickets' module-level variable isn't the source of truth.
+                 // Components should re-fetch or re-load from localStorage via their own mechanisms.
                  console.log('Marketplace tickets updated from storage event.');
              } catch (e) {
                  console.error('Failed to parse marketplace tickets from storage event', e);
              }
         }
-         if (event.key === userDataKey) { 
+         if (event.key === userDataKey) {
             console.log('User data updated from storage event.');
         }
     });

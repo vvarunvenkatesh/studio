@@ -86,9 +86,17 @@ export default function LoginPage() {
       try {
           if (typeof window !== 'undefined') {
             localStorage.setItem('isLoggedIn', 'true');
+            // Set a unique userId for the simulation, using the identifier
+            localStorage.setItem('userId', identifier);
+
              window.dispatchEvent(new StorageEvent('storage', {
                 key: 'isLoggedIn',
                 newValue: 'true',
+                storageArea: localStorage,
+             }));
+             window.dispatchEvent(new StorageEvent('storage', { // Dispatch event for userId change
+                key: 'userId',
+                newValue: identifier,
                 storageArea: localStorage,
              }));
           }
