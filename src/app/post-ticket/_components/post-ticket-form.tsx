@@ -31,10 +31,10 @@ import { CalendarIcon, Sparkles, Loader2, Clock, Upload, FileCheck, LogIn } from
 import { format, startOfToday } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { checkTicketDescription } from '@/ai/flows/check-ticket-description';
-// Removed direct import of postTicket service
 import { useRouter, usePathname, useSearchParams as useNextSearchParams } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import type { Ticket } from '@/services/ticket-marketplace'; // Keep for type definition
+import type { Ticket } from '@/services/ticket-marketplace';
+import { postTicket as postTicketService } from '@/services/ticket-marketplace'; // Import service directly
 
 const formSchema = z.object({
   type: z.enum(['train', 'event', 'movie', 'bus', 'sports'], { required_error: 'Ticket type is required.' }),
@@ -83,7 +83,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParamsHook = useNextSearchParams(); // Renamed to avoid conflict with searchParams variable
+  const searchParamsHook = useNextSearchParams(); 
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -180,7 +180,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-        if (file.size > 5 * 1024 * 1024) {
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
             toast({
                 title: 'File Too Large',
                 description: 'Please select a file smaller than 5MB.',
@@ -239,34 +239,25 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     }
     setIsSubmitting(true);
     try {
-      const ticketPayload = {
-        ...values,
-        date: format(values.date, 'yyyy-MM-dd'), // Format date for API
+      // Prepare payload for the service function
+      const ticketPayloadForService = {
+        type: values.type,
+        description: values.description,
+        price: values.price,
+        date: format(values.date, 'yyyy-MM-dd'), // Format date for service
+        time: values.time,
+        location: values.location || '', // Ensure location is string, even if optional and not provided for some types
+        fromCity: values.fromCity,
+        toCity: values.toCity,
+        originalTicketDataUri: values.originalTicketDataUri,
       };
 
-      const response = await fetch('/api/tickets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(ticketPayload),
-      });
+      // Call the service function directly
+      const createdTicket = await postTicketService(ticketPayloadForService);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (response.status === 507) { // Quota exceeded
-            toast({
-                title: 'Storage Limit Reached',
-                description: errorData.message || 'Could not post ticket because browser storage is full. Please clear some space or try removing the uploaded file.',
-                variant: 'destructive',
-            });
-        } else {
-            throw new Error(errorData.message || 'Failed to post ticket');
-        }
-        return; // Stop further execution
+      if (!createdTicket || !createdTicket.id) {
+         throw new Error('Failed to post ticket: No ticket data returned from service.');
       }
-
-      const createdTicket: Ticket = await response.json();
 
       toast({
         title: 'Ticket Posted!',
@@ -278,15 +269,22 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
        if (fileInputRef.current) {
           fileInputRef.current.value = '';
        }
+      // Navigate after a short delay to allow toast to be seen
       setTimeout(() => {
           router.push(`/tickets?category=${createdTicket.type}`);
       }, 1500);
 
     } catch (error: any) {
       console.error('Error posting ticket:', error);
+      let description = 'Something went wrong while posting your ticket. Please check the details and try again.';
+      if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
+        description = 'Storage limit reached. Could not post ticket. Please clear some space or try removing the uploaded file.';
+      } else if (error.message) {
+        description = error.message;
+      }
       toast({
           title: 'Error Posting Ticket',
-          description: error.message || 'Something went wrong while posting your ticket. Please check the details and try again.',
+          description: description,
           variant: 'destructive',
       });
     } finally {
@@ -494,7 +492,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
             )}
           />
        </div>
-        {ticketType === 'train' || ticketType === 'bus' ? (
+        {(ticketType === 'train' || ticketType === 'bus') && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
@@ -529,8 +527,8 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
               )}
             />
           </div>
-        ) : null}
-         {ticketType === 'event' || ticketType === 'movie' || ticketType === 'sports' ? (
+        )}
+         {(ticketType === 'event' || ticketType === 'movie' || ticketType === 'sports') && (
             <FormField
               control={form.control}
               name="location"
@@ -548,11 +546,11 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                 </FormItem>
               )}
             />
-         ) : null }
-         {ticketType === 'train' || ticketType === 'bus' ? (
+         )}
+         {(ticketType === 'train' || ticketType === 'bus') && (
              <FormField
                control={form.control}
-               name="location"
+               name="location" // This location is for platform/gate for train/bus
                render={({ field }) => (
                  <FormItem>
                     <FormLabel className="text-foreground">Platform / Gate / Terminal (Optional)</FormLabel>
@@ -567,10 +565,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
                  </FormItem>
                )}
              />
-         ) : null}
+         )}
          <Button
             type="submit"
-            className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90" // Using primary theme color for this main action
             disabled={isSubmitting || isCheckingGrammar}>
           {isSubmitting ? (
             <>
@@ -594,7 +592,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={redirectToLogin} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+            <AlertDialogAction onClick={redirectToLogin} className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
               <LogIn className="h-4 w-4" /> Go to Login
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -603,3 +601,5 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     </>
   );
 }
+
+    

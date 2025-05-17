@@ -64,11 +64,12 @@ export default function TicketsPage() {
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [genericSearchTerm, setGenericSearchTerm] = React.useState(searchParams.get('q') || '');
 
+  // Effect to set and update currentUserId based on login state changes
   React.useEffect(() => {
     const updateCurrentUserId = () => {
       setCurrentUserId(getSimulatedCurrentUserId());
     };
-    updateCurrentUserId(); 
+    updateCurrentUserId(); // Initial set
 
     const handleLoginStorageChange = (event: StorageEvent) => {
       if (event.key === 'isLoggedIn' || event.key === 'userId') {
@@ -77,7 +78,7 @@ export default function TicketsPage() {
     };
     window.addEventListener('storage', handleLoginStorageChange);
     return () => window.removeEventListener('storage', handleLoginStorageChange);
-  }, []); 
+  }, []);
 
   const pageTitle = React.useMemo(() => {
     const currentCategory = searchParams.get('category');
@@ -110,6 +111,13 @@ export default function TicketsPage() {
   }, [searchParams]);
 
   const loadTickets = React.useCallback(async () => {
+    // Ensure currentUserId is at least initialized (even if null for anonymous) before loading
+    if (currentUserId === undefined && typeof window !== 'undefined') { 
+        // If currentUserId is undefined (initial state before first useEffect sets it), wait.
+        // This check might be overly cautious if the useEffect for currentUserId runs fast enough.
+        return;
+    }
+
     setIsLoading(true);
     setError(null);
     
@@ -123,57 +131,67 @@ export default function TicketsPage() {
     const filters: any = {};
 
     if (currentCategoryParam && currentCategoryParam !== 'all' && currentCategoryParam !== 'transport') filters.category = currentCategoryParam;
-    if (currentCategoryParam === 'transport') filters.category = 'transport';
+    if (currentCategoryParam === 'transport') filters.category = 'transport'; // Handled by getAvailableTickets
 
     if (currentFromParam) filters.fromCity = currentFromParam;
-    setFromCityFilter(currentFromParam || '');
+    // No need to setFromCityFilter here as it's for the input field controlled state
     
     if (currentToParam) filters.toCity = currentToParam;
-    setToCityFilter(currentToParam || '');
+    // No need to setToCityFilter here
 
     const [minPriceState, maxPriceState] = parsePriceRange(currentPriceParam);
-    setPriceRange([minPriceState, maxPriceState]);
+    // No need to setPriceRange here for the input field
     if (minPriceState !== undefined) filters.minPrice = minPriceState;
     if (maxPriceState !== undefined) filters.maxPrice = maxPriceState;
 
     const dateRangeState = parseDateRange(currentDateParam);
-    setDateRange(dateRangeState);
+    // No need to setDateRange here for the input field
     if (dateRangeState?.from) filters.startDate = format(dateRangeState.from, 'yyyy-MM-dd');
     if (dateRangeState?.to) filters.endDate = format(dateRangeState.to, 'yyyy-MM-dd');
     
     if (currentSearchTermParam) filters.searchTerm = currentSearchTermParam;
-    setGenericSearchTerm(currentSearchTermParam || '');
+    // No need to setGenericSearchTerm here
 
     try {
       const fetchedTickets: Ticket[] = await getAvailableTickets(filters); 
-      setTickets(fetchedTickets); // Simplified: getAvailableTickets already filters by status 'available'
+      setTickets(fetchedTickets); // getAvailableTickets already filters by status 'available'
     } catch (err: any) {
       console.error("Failed to fetch tickets:", err);
       setError(err.message || "Failed to load tickets. Please try refreshing the page.");
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams]); 
+  }, [searchParams, currentUserId]); // Add currentUserId as dependency if its value influences loading logic directly (though not directly used in filters here)
 
+  // Effect to load tickets when relevant dependencies change
   React.useEffect(() => {
-    loadTickets(); 
-
+    // Load tickets if currentUserId is known (not undefined which is initial) or if it's anonymous
+    if (currentUserId !== undefined) {
+        loadTickets();
+    }
+    
     const handleMarketplaceStorageChange = (event: StorageEvent) => {
       if (event.key === 'marketplaceTickets') {
-        loadTickets(); 
+        if (currentUserId !== undefined) {
+            loadTickets(); 
+        }
       }
     };
     window.addEventListener('storage', handleMarketplaceStorageChange);
     return () => {
       window.removeEventListener('storage', handleMarketplaceStorageChange);
     };
-  }, [loadTickets]); 
+  }, [currentUserId, loadTickets]); // loadTickets callback depends on searchParams
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
-    setTickets(prevTickets =>
-      prevTickets.filter(ticket => ticket.id !== purchasedTicketId)
-    );
-    loadTickets(); 
+    // The loadTickets will be re-triggered by the marketplaceTickets storage event,
+    // which should update the list naturally.
+    // Optionally, you could filter locally for instant UI update, but storage event is more robust.
+    // setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== purchasedTicketId));
+    toast({
+        title: "Ticket Status Updated",
+        description: "The ticket list has been refreshed.",
+    });
   };
 
   const handleCancelListing = async (ticketId: string) => {
@@ -185,7 +203,7 @@ export default function TicketsPage() {
           title: 'Listing Cancelled',
           description: result.message || 'Your ticket listing has been removed.',
         });
-        loadTickets(); 
+        // loadTickets will be called due to marketplaceTickets storage event
       } else {
         throw new Error(result.message || 'Could not cancel the ticket listing.');
       }
@@ -415,3 +433,5 @@ export default function TicketsPage() {
     </div>
   );
 }
+
+    

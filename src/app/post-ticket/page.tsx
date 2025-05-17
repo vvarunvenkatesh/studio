@@ -17,7 +17,7 @@ export default function PostTicketPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
   const { toast } = useToast();
-  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // Initialize as null
 
   // Effect to set and update currentUserId based on login state changes
   React.useEffect(() => {
@@ -33,7 +33,7 @@ export default function PostTicketPage() {
     };
     window.addEventListener('storage', handleLoginStorageChange);
     return () => window.removeEventListener('storage', handleLoginStorageChange);
-  }, []); // Runs once on mount to set ID and listener for login changes
+  }, []); 
 
   // Callback to load posted tickets, depends on currentUserId
   const loadPostedTickets = React.useCallback(() => {
@@ -57,22 +57,28 @@ export default function PostTicketPage() {
       setPostedTickets([]); 
       setIsLoading(false);
     }
-  }, [currentUserId, setIsLoading, setPostedTickets]); // Dependencies: currentUserId and state setters
+  }, [currentUserId, setIsLoading, setPostedTickets]);
 
   // Effect to load tickets when currentUserId is available or marketplaceTickets change
   React.useEffect(() => {
-    if (currentUserId) { // Only load if currentUserId is determined
+    // Only load if currentUserId is determined (not null)
+    // This ensures loadPostedTickets runs with the correct ID for filtering
+    if (currentUserId !== null) { 
       loadPostedTickets();
     }
 
     const handleMarketplaceStorageChange = (event: StorageEvent) => {
       if (event.key === 'marketplaceTickets') {
-        loadPostedTickets(); // Reload tickets if marketplaceTickets itself changes
+        // Reload tickets if marketplaceTickets itself changes,
+        // but only if currentUserId is already determined.
+        if (currentUserId !== null) {
+            loadPostedTickets(); 
+        }
       }
     };
     window.addEventListener('storage', handleMarketplaceStorageChange);
     return () => window.removeEventListener('storage', handleMarketplaceStorageChange);
-  }, [currentUserId, loadPostedTickets]); // Runs when currentUserId or loadPostedTickets changes
+  }, [currentUserId, loadPostedTickets]); 
 
   const handleTypeChange = (type: string | undefined) => {
     setTicketType(type);
@@ -81,14 +87,15 @@ export default function PostTicketPage() {
   const handleDeleteTicket = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-        const result = await deleteTicketService(ticketId); // Call service directly
+        // Call service directly
+        const result = await deleteTicketService(ticketId); 
 
         if (result.success) {
             toast({
                 title: 'Listing Cancelled',
                 description: result.message || 'Your ticket listing has been removed.',
             });
-            loadPostedTickets(); 
+            // loadPostedTickets will be called by the storage event listener for 'marketplaceTickets'
         } else {
             throw new Error(result.message || 'Could not cancel the ticket listing.');
         }
@@ -125,8 +132,8 @@ export default function PostTicketPage() {
                        <TicketCard
                             key={ticket.id}
                             ticket={ticket}
-                            variant="manage"
-                            isSeller={true} // For "Your Active Listings", the user is always the seller
+                            variant="manage" // For "Your Active Listings", the user is always the seller
+                            isSeller={true} 
                             onCancelListing={handleDeleteTicket}
                             isCancelling={isDeleting === ticket.id}
                             className="ml-0 md:ml-0" 
@@ -144,3 +151,5 @@ export default function PostTicketPage() {
     </div>
   );
 }
+
+    

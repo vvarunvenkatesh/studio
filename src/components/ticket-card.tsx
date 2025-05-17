@@ -21,7 +21,7 @@ interface TicketCardProps {
   onCancelListing?: (ticketId: string) => Promise<void> | void;
   isCancelling?: boolean;
   className?: string;
-  isSeller?: boolean; // Prop passed from parent (e.g., TicketsPage)
+  isSeller?: boolean; 
 }
 
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
@@ -33,13 +33,13 @@ const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
 };
 
 export function TicketCard({
-    ticket,
+    ticket: ticketProp, // Rename to avoid conflict with internal state if any (though we are removing internal state)
     variant = 'browse',
     onPurchaseSuccess,
     onCancelListing,
     isCancelling,
     className,
-    isSeller: propIsSeller // Use the prop passed from the parent
+    isSeller: propIsSeller 
 }: TicketCardProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -49,55 +49,32 @@ export function TicketCard({
   const [isClientLoggedIn, setIsClientLoggedIn] = React.useState(false);
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isPurchasing, setIsPurchasing] = React.useState(false);
-  const [currentTicket, setCurrentTicket] = React.useState<Ticket>(ticket);
-  const [isSold, setIsSold] = React.useState(ticket.status === 'sold');
-  // Use a state for currentUserId internal to the card for actions, but rely on propIsSeller for display.
-  const [cardInternalCurrentUserId, setCardInternalCurrentUserId] = React.useState<string | null>(null);
-
+  // No local 'currentTicket' or 'isSold' state; use ticketProp directly.
 
   React.useEffect(() => {
       if (typeof window !== 'undefined') {
           const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
           setIsClientLoggedIn(loggedInStatus);
-          setCardInternalCurrentUserId(getSimulatedCurrentUserId());
+          // No need to set cardInternalCurrentUserId if propIsSeller is reliable
       }
       const handleStorageChange = (event: StorageEvent) => {
           if (event.key === 'isLoggedIn' || event.key === 'userId') {
               const newLoggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
               setIsClientLoggedIn(newLoggedInStatus);
-              setCardInternalCurrentUserId(getSimulatedCurrentUserId());
           }
-           if (event.key === 'marketplaceTickets') {
-                const updatedTickets: Ticket[] = event.newValue ? JSON.parse(event.newValue) : [];
-                const thisTicketUpdate = updatedTickets.find(t => t.id === currentTicket.id);
-                if (thisTicketUpdate) {
-                    setCurrentTicket(thisTicketUpdate);
-                    setIsSold(thisTicketUpdate.status === 'sold');
-                } else {
-                    // If ticket no longer in marketplace, assume sold or removed for this card's view.
-                    // Parent component (TicketsPage/PostTicketPage) will handle removing it from the list.
-                    setIsSold(true);
-                }
-            }
+          // If marketplaceTickets changes, the parent (TicketsPage/PostTicketPage)
+          // should update its list and re-render this card with a new 'ticketProp'.
       };
       window.addEventListener('storage', handleStorageChange);
       return () => {
           window.removeEventListener('storage', handleStorageChange);
       };
-  }, [currentTicket.id]); // Effect tied to ticket ID for listener setup/cleanup
+  }, []); // Effect runs once on mount
 
-
-  React.useEffect(() => {
-      setCurrentTicket(ticket);
-      setIsSold(ticket.status === 'sold');
-  }, [ticket]);
-
-
-  const formattedDate = format(new Date(currentTicket.date), 'PPP');
-  const CategorySpecificIcon = categoryIconMap[currentTicket.type] || TicketIconLucide;
+  const formattedDate = format(new Date(ticketProp.date), 'PPP');
+  const CategorySpecificIcon = categoryIconMap[ticketProp.type] || TicketIconLucide;
   
-  // This is for actions within the card, like initiating a purchase or cancel.
-  const isUserActuallyTheSellerForActions = !!cardInternalCurrentUserId && currentTicket.sellerId === cardInternalCurrentUserId && cardInternalCurrentUserId !== 'anonymousUser';
+  const isTicketSold = ticketProp.status === 'sold';
 
 
   const redirectToLogin = () => {
@@ -111,13 +88,16 @@ export function TicketCard({
         setShowLoginDialog(true);
         return;
     }
-    if (isSold || isUserActuallyTheSellerForActions) return;
+    if (isTicketSold || propIsSeller) return; // User cannot buy their own ticket or an already sold ticket
     setIsPurchasing(true);
     try {
+      // Call service directly if API route is problematic for localStorage
+      // For now, assuming API route can work if it delegates to service that uses localStorage correctly
+      // This might need changing if API routes cannot reliably trigger localStorage updates for all users.
       const response = await fetch('/api/orders/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId: currentTicket.id }),
+        body: JSON.stringify({ ticketId: ticketProp.id }),
       });
 
       const result = await response.json();
@@ -141,8 +121,8 @@ export function TicketCard({
           variant: 'success',
           duration: 7000,
         });
-        setIsSold(true);
-        setCurrentTicket(result.ticket);
+        // Parent component (TicketsPage) should re-fetch/update its list due to localStorage change,
+        // which will re-render this card with the updated ticketProp.
         if (onPurchaseSuccess) {
           onPurchaseSuccess(result.ticket.id);
         }
@@ -153,9 +133,7 @@ export function TicketCard({
           variant: 'destructive',
         });
         if (result.ticket && result.message?.includes('already sold')) {
-           setIsSold(true);
-           setCurrentTicket(result.ticket);
-           if (onPurchaseSuccess) {
+           if (onPurchaseSuccess) { // Still call to update parent list
               onPurchaseSuccess(result.ticket.id);
            }
         }
@@ -177,13 +155,13 @@ export function TicketCard({
        toast({ title: 'Download Failed', description: 'No file available.', variant: 'destructive' });
        return;
      }
-
+   
      const link = document.createElement('a');
      let fileExtension = 'file';
      const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
      let isImage = false;
      let mimeType = '';
-
+   
      if (mimeMatch && mimeMatch[1]) {
        mimeType = mimeMatch[1];
        const extensionMap: Record<string, string> = {
@@ -197,7 +175,7 @@ export function TicketCard({
      const baseFilename = `ticket_${ticketType}_${ticketId}`;
      const watermarkedFilename = `${baseFilename}_watermarked.${fileExtension}`;
      const originalFilename = `${baseFilename}.${fileExtension}`;
-
+   
      if (isImage) {
        try {
          const img = new Image();
@@ -215,22 +193,22 @@ export function TicketCard({
              document.body.removeChild(link);
              return;
            }
-
+   
            ctx.drawImage(img, 0, 0);
-
+           
            const fontSize = Math.max(12, Math.min(img.width / 20, img.height / 15));
            ctx.font = `bold ${fontSize}px Arial`;
            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
            ctx.textAlign = 'center';
            ctx.textBaseline = 'middle';
-
+           
            const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`;
            const x = canvas.width / 2;
            const y = canvas.height / 2;
-
+           
            ctx.fillText(watermarkText, x, y);
 
-           link.href = canvas.toDataURL(mimeType);
+           link.href = canvas.toDataURL(mimeType); 
            link.download = watermarkedFilename;
            document.body.appendChild(link);
            link.click();
@@ -287,7 +265,7 @@ export function TicketCard({
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>Keep Listing</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onCancelListing?.(currentTicket.id)} className={cn(buttonVariants({ variant: "destructive" }))}>
+                <AlertDialogAction onClick={() => onCancelListing?.(ticketProp.id)} className={cn(buttonVariants({ variant: "destructive" }))}>
                     Cancel Listing
                 </AlertDialogAction>
             </AlertDialogFooter>
@@ -299,7 +277,7 @@ export function TicketCard({
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500 px-2 py-1"
-      style={{ backgroundColor: '#FFCE54' }}
+      style={{ backgroundColor: '#FFCE54' }} 
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -318,39 +296,39 @@ export function TicketCard({
            <div className="flex items-center mr-2">
              <CategorySpecificIcon className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
              <CardTitle className="text-lg font-semibold capitalize truncate text-foreground">
-               {currentTicket.type} Ticket
+               {ticketProp.type} Ticket
              </CardTitle>
-             {currentTicket.sellerVerified && (
+             {ticketProp.sellerVerified && (
                 <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-primary/30 gap-1 text-xs px-1.5 py-0.5 shrink-0">
                     <ShieldCheck className="h-3 w-3" />
                     Verified
                 </Badge>
              )}
            </div>
-           <Badge variant={isSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {currentTicket.id.substring(0, 6)}</Badge>
+           <Badge variant={isTicketSold ? 'destructive' : 'secondary'} className={cn("text-xs whitespace-nowrap flex-shrink-0", (variant === 'manage') ? 'mr-1' : '')}>ID: {ticketProp.id.substring(0, 6)}</Badge>
         </div>
          <CardDescription className="text-sm text-muted-foreground line-clamp-2 h-10">
-             {currentTicket.description}
+             {ticketProp.description}
          </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1.5 text-sm pt-2 flex-grow text-foreground">
-         {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.fromCity && currentTicket.toCity && (
+         {(ticketProp.type === 'train' || ticketProp.type === 'bus') && ticketProp.fromCity && ticketProp.toCity && (
              <div className="flex items-center font-medium">
-                <span className="truncate">{currentTicket.fromCity}</span>
+                <span className="truncate">{ticketProp.fromCity}</span>
                 <ArrowRight className="mx-1 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="truncate">{currentTicket.toCity}</span>
+                <span className="truncate">{ticketProp.toCity}</span>
              </div>
          )}
-          {(currentTicket.type === 'event' || currentTicket.type === 'movie' || currentTicket.type === 'sports') && currentTicket.location && (
+          {(ticketProp.type === 'event' || ticketProp.type === 'movie' || ticketProp.type === 'sports') && ticketProp.location && (
              <div className="flex items-center">
                 <MapPin className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="truncate">{currentTicket.location}</span>
+                <span className="truncate">{ticketProp.location}</span>
              </div>
          )}
-         {(currentTicket.type === 'train' || currentTicket.type === 'bus') && currentTicket.location && (!currentTicket.fromCity || !currentTicket.toCity) && (
+         {(ticketProp.type === 'train' || ticketProp.type === 'bus') && ticketProp.location && (!ticketProp.fromCity || !ticketProp.toCity) && (
              <div className="flex items-center text-xs text-muted-foreground">
                 <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{currentTicket.location}</span>
+                <span className="truncate">{ticketProp.location}</span> {/* Platform/Gate for transport */}
              </div>
           )}
          <div className="flex items-center">
@@ -359,23 +337,23 @@ export function TicketCard({
          </div>
          <div className="flex items-center">
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span>{currentTicket.time}</span>
+            <span>{ticketProp.time}</span>
          </div>
-         {!isSold && !(propIsSeller && variant === 'browse') && (currentTicket.sellerContactEmail || currentTicket.sellerContactPhone) && (
+         {!isTicketSold && !(propIsSeller && variant === 'browse') && (ticketProp.sellerContactEmail || ticketProp.sellerContactPhone) && (
              <div className="mt-2 pt-2 border-t border-dashed space-y-1">
-                {currentTicket.sellerContactEmail && (
+                {ticketProp.sellerContactEmail && (
                     <div className="flex items-center">
                         <Mail className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <a href={`mailto:${currentTicket.sellerContactEmail}`} className="text-xs text-primary hover:underline truncate">
-                            {currentTicket.sellerContactEmail}
+                        <a href={`mailto:${ticketProp.sellerContactEmail}`} className="text-xs text-primary hover:underline truncate">
+                            {ticketProp.sellerContactEmail}
                         </a>
                     </div>
                 )}
-                {currentTicket.sellerContactPhone && (
+                {ticketProp.sellerContactPhone && (
                     <div className="flex items-center">
                         <Phone className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <a href={`tel:${currentTicket.sellerContactPhone}`} className="text-xs text-primary hover:underline truncate">
-                            {currentTicket.sellerContactPhone}
+                        <a href={`tel:${ticketProp.sellerContactPhone}`} className="text-xs text-primary hover:underline truncate">
+                            {ticketProp.sellerContactPhone}
                         </a>
                     </div>
                 )}
@@ -385,13 +363,13 @@ export function TicketCard({
       <CardFooter className="flex justify-between items-center border-t pt-4 mt-auto">
          <div className="flex items-center font-semibold text-lg text-primary">
              <IndianRupeeIcon className="mr-1 h-5 w-5" />
-             {currentTicket.price.toFixed(2)}
+             {ticketProp.price.toFixed(2)}
          </div>
-         {isSold ? (
-             currentTicket.originalTicketDataUri ? (
+         {isTicketSold ? (
+             ticketProp.originalTicketDataUri ? (
                  <Button
                      size="sm"
-                     onClick={() => handleDownload(currentTicket.originalTicketDataUri, currentTicket.id, currentTicket.type)}
+                     onClick={() => handleDownload(ticketProp.originalTicketDataUri, ticketProp.id, ticketProp.type)}
                      aria-label="Download original ticket"
                      className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
                  >
@@ -401,16 +379,16 @@ export function TicketCard({
              ) : (
                  <Badge variant="destructive">Sold</Badge>
              )
-         ) : variant === 'manage' ? (
-             isUserActuallyTheSellerForActions ? renderCancelButton() : <Badge>Error: Not your listing</Badge>
-         ) : propIsSeller ? (
+         ) : variant === 'manage' ? ( // From PostTicketPage's "Your Active Listings"
+             renderCancelButton()
+         ) : propIsSeller ? ( // From TicketsPage (browse) IF current user is the seller
              renderPendingIndicator()
-         ) : (
+         ) : ( // From TicketsPage (browse) IF current user is NOT the seller
              <Button
                  size="sm"
                  onClick={handlePurchase}
                  disabled={isPurchasing}
-                 aria-label={`Buy ${currentTicket.type} ticket for ₹${currentTicket.price.toFixed(2)}`}
+                 aria-label={`Buy ${ticketProp.type} ticket for ₹${ticketProp.price.toFixed(2)}`}
                  className="gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
              >
                  {isPurchasing ? (
@@ -442,3 +420,5 @@ export function TicketCard({
     </>
   );
 }
+
+    
