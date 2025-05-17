@@ -9,7 +9,7 @@ import type { Ticket } from '@/services/ticket-marketplace';
 import { TicketCard } from '@/components/ticket-card';
 import { Ticket as TicketIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getSimulatedCurrentUserId } from '@/services/ticket-marketplace'; // Import helper
+import { getSimulatedCurrentUserId, deleteTicket as deleteTicketService } from '@/services/ticket-marketplace'; // Import service
 
 export default function PostTicketPage() {
   const [ticketType, setTicketType] = React.useState<string | undefined>(undefined);
@@ -33,7 +33,7 @@ export default function PostTicketPage() {
         try {
             const allMarketplaceTicketsString = localStorage.getItem('marketplaceTickets');
             const allMarketplaceTickets: Ticket[] = allMarketplaceTicketsString ? JSON.parse(allMarketplaceTicketsString) : [];
-            // Filter for tickets posted by the current user and are still available
+            
             const userActiveListings = allMarketplaceTickets.filter(
                 ticket => ticket.sellerId === currentUserId && ticket.status === 'available'
             );
@@ -45,7 +45,7 @@ export default function PostTicketPage() {
             setIsLoading(false);
         }
     } else {
-      setPostedTickets([]); // Clear if not logged in or no currentUserId
+      setPostedTickets([]); 
       setIsLoading(false);
     }
   }, [currentUserId]);
@@ -55,7 +55,7 @@ export default function PostTicketPage() {
     loadPostedTickets();
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'marketplaceTickets' || event.key === 'userPostedTickets' || event.key === 'isLoggedIn' || event.key === 'userId') {
-           setCurrentUserId(getSimulatedCurrentUserId()); // Re-check user on login/logout
+           setCurrentUserId(getSimulatedCurrentUserId()); 
            loadPostedTickets();
         }
     };
@@ -68,28 +68,23 @@ export default function PostTicketPage() {
   const handleDeleteTicket = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-        // Call the API endpoint to delete the ticket
-        const response = await fetch(`/api/tickets/${ticketId}`, {
-            method: 'DELETE',
-            // Add authorization headers if your API requires them
-        });
+        // Call the service function directly on the client-side
+        const result = await deleteTicketService(ticketId);
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Could not cancel the ticket listing.');
+        if (result.success) {
+            toast({
+                title: 'Listing Cancelled',
+                description: result.message || 'Your ticket listing has been removed.',
+            });
+            loadPostedTickets(); // Refresh the list of posted tickets
+        } else {
+            // If the service returns success: false, throw an error to be caught by the catch block
+            throw new Error(result.message || 'Could not cancel the ticket listing.');
         }
-        const result = await response.json();
-
-        toast({
-            title: 'Listing Cancelled',
-            description: result.message || 'Your ticket listing has been removed.',
-        });
-        // Refresh the list of posted tickets
-        loadPostedTickets();
     } catch (error: any) {
         console.error('Error cancelling ticket listing:', error);
         toast({
-            title: 'Error',
+            title: 'Error Cancelling Listing',
             description: error.message || 'An error occurred while cancelling the listing.',
             variant: 'destructive',
         });
@@ -121,10 +116,10 @@ export default function PostTicketPage() {
                             key={ticket.id}
                             ticket={ticket}
                             variant="manage"
-                            isSeller={true} // On this page, the user is always the seller of these tickets
+                            isSeller={true} 
                             onCancelListing={handleDeleteTicket}
                             isCancelling={isDeleting === ticket.id}
-                            className="ml-0 md:ml-2.5" // Adjusted margin for mobile
+                            className="ml-0 md:ml-2.5" 
                         />
                     ))}
                  </div>

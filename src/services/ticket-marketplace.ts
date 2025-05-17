@@ -130,17 +130,16 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
                  dataToSave = restOfData as T;
             }
             const stringifiedData = JSON.stringify(dataToSave);
+            
             // Check for quota before attempting to save
-            // A more sophisticated approach might involve trying to remove older/less important data
-            // if quota is an issue, but for now, we'll just check the length.
-            // This is a very rough estimate as localStorage limits vary and depend on encoding.
-            if ((key === marketplaceTicketsKey || key === userPostedTicketsKey) && stringifiedData.length > 4.5 * 1024 * 1024) { // Approx 4.5MB
+            const quotaCheckLength = 4.5 * 1024 * 1024; // Approx 4.5MB for safety margin
+            if (stringifiedData.length > quotaCheckLength) {
                  console.warn(`Data for ${key} is large (${(stringifiedData.length / (1024*1024)).toFixed(2)}MB) and might exceed localStorage quota.`);
-                 // Attempt to trim data if it's one of the ticket arrays and quota is likely exceeded
-                 if (Array.isArray(dataToSave) && dataToSave.length > 10) { // Example: if more than 10 tickets
-                    const trimmedData = dataToSave.slice(-5).map((ticket: any) => {
+                 
+                 if ((key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) && Array.isArray(dataToSave) && dataToSave.length > 5) {
+                    console.warn(`Attempting to trim ${key} data to save space.`);
+                    const trimmedData = dataToSave.slice(-5).map((ticket: any) => { // Keep last 5, for example
                         const { originalTicketDataUri, ...rest } = ticket;
-                        // Keep originalTicketDataUri only if it's small enough, otherwise remove it
                         if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { // e.g., > 100KB
                             console.warn(`Removing large originalTicketDataUri for ticket ID ${ticket.id} from ${key} during quota save.`);
                             return rest;
@@ -148,17 +147,19 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
                         return ticket;
                     });
                     localStorage.setItem(key, JSON.stringify(trimmedData));
-                    console.warn(`Attempted to trim ${key} to last 5 entries due to potential quota issues.`);
-                    // Do not re-throw immediately; let the original operation fail if still too large.
+                    console.warn(`${key} trimmed to last 5 entries. Some older data may have been removed to avoid quota issues.`);
                  } else {
-                   // If not an array or not enough items to trim meaningfully, we might still hit quota
-                   // For simplicity, we'll let the original setItem fail in this case
+                    // If not an array we can easily trim, or too few items, throw the quota error to be handled by the caller
+                    console.error(`Could not save ${key} to localStorage due to size constraints without a clear trimming strategy.`);
+                    throw new DOMException('QuotaExceededError', 'QuotaExceededError');
                  }
+            } else {
+                 localStorage.setItem(key, stringifiedData);
             }
-            localStorage.setItem(key, stringifiedData);
+
             window.dispatchEvent(new StorageEvent('storage', {
                 key: key,
-                newValue: stringifiedData,
+                newValue: localStorage.getItem(key), // send the potentially trimmed data
                 storageArea: localStorage,
             }));
         } catch (e) {
@@ -323,7 +324,7 @@ const getUniqueById = <T extends { id: string }>(items: T[]): T[] => {
     return items.filter(item => {
         if (!item || typeof item.id === 'undefined') {
             console.warn("Encountered invalid item object:", item);
-            return false;
+            return false; 
         }
         if (seenIds.has(item.id)) {
             return false;
@@ -491,11 +492,11 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
   } catch (error) {
     if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
       console.error('LocalStorage quota exceeded while posting ticket.');
-      tickets.pop();
+      tickets.pop(); // Remove the ticket if saving failed
       throw error;
     } else {
       console.error('An unexpected error occurred while posting ticket:', error);
-      tickets.pop();
+      tickets.pop(); // Remove the ticket if saving failed
       throw error;
     }
   }
@@ -548,13 +549,11 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
       return { success: false, message: `You cannot purchase your own ticket.` };
   }
 
-  // In a real scenario with offline payment, 'sold' status might be set after seller confirms payment.
-  // For now, we'll mark it as sold immediately upon "purchase" (which means intent to contact).
   ticketToUpdate.status = 'sold';
   const updatedTicket = await updateTicket(ticketId, { status: 'sold' });
 
   if (updatedTicket) {
-    addUserOrder(updatedTicket); // Ensure sellerContactPhone is also saved here if present
+    addUserOrder(updatedTicket); 
     console.log(`Ticket ${ticketId} marked as sold by ${buyerId} (pending offline payment).`);
     
     let contactMessage = "Contact the seller ";
@@ -587,8 +586,8 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
     const ticketIndex = tickets.findIndex(ticket => ticket.id === ticketId);
 
     if (ticketIndex === -1) {
-        removeUserPostedTicket(ticketId); // Ensure it's removed from user's list too
-        return { success: true, message: `Ticket ${ticketId} not found or already deleted from marketplace.` };
+        removeUserPostedTicket(ticketId); 
+        return { success: false, message: `Ticket ${ticketId} not found in marketplace.` };
     }
 
     if (tickets[ticketIndex].sellerId !== currentUserId) {
@@ -600,37 +599,34 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
     removeUserPostedTicket(ticketId);
 
     console.log(`Ticket ${ticketId} deleted successfully by ${currentUserId}.`);
-    return { success: true, message: `Ticket ${ticketId} deleted successfully.` };
+    return { success: true, message: `Your ticket listing has been removed.` };
 }
 
 
 export function getSimulatedCurrentUserId(): string {
     if (typeof window !== 'undefined') {
         if (localStorage.getItem('isLoggedIn') === 'true') {
-            // Try to get a more specific userId if available, otherwise default to 'currentUser'
             return localStorage.getItem('userId') || 'currentUser';
         }
     }
-    return 'anonymousUser'; // Represents a non-logged-in user
+    return 'anonymousUser'; 
 }
 
 export function setSimulatedCurrentUserId(userId: string | null) {
     if (typeof window !== 'undefined') {
         if (userId) {
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('userId', userId); // Store the specific userId
+            localStorage.setItem('userId', userId); 
         } else {
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userId');
         }
-        // Dispatch events to notify other parts of the app about the change
-        window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn' }));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'userId' }));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn' , storageArea: localStorage}));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'userId', storageArea: localStorage }));
     }
 }
 
 
-// Add an event listener to keep the local 'tickets' array in sync with localStorage changes from other tabs/windows.
 if (typeof window !== 'undefined') {
     window.addEventListener('storage', (event) => {
         if (event.key === marketplaceTicketsKey && event.newValue) {
@@ -649,9 +645,8 @@ if (typeof window !== 'undefined') {
                  console.error('Failed to parse marketplace tickets from storage event', e);
              }
         }
-         if (event.key === userDataKey) { // Listen for userData changes as well
+         if (event.key === userDataKey) { 
             console.log('User data updated from storage event.');
-            // Potentially re-evaluate sellerVerified status for default tickets if currentUser's data changed
         }
     });
 }
