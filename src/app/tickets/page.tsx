@@ -17,8 +17,8 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Label } from '@/components/ui/label';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { getSimulatedCurrentUserId } from '@/services/ticket-marketplace';
-import { BottomSlidingTab } from '@/components/ui/bottom-sliding-tab'; // New import
+import { getSimulatedCurrentUserId, getAvailableTickets } from '@/services/ticket-marketplace'; // Import getAvailableTickets
+import { BottomSlidingTab } from '@/components/ui/bottom-sliding-tab';
 
 const categoryMap: Record<Ticket['type'], { icon: React.ElementType; name: string }> = {
     bus: { icon: Bus, name: 'Bus' },
@@ -103,46 +103,49 @@ export default function TicketsPage() {
   const loadTickets = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const query = new URLSearchParams(searchParams);
+    
+    const filters: any = {};
+    const currentCategory = searchParams.get('category') as Ticket['type'] | 'transport' | 'all' | null;
+    const currentFrom = searchParams.get('from');
+    const currentTo = searchParams.get('to');
+    const currentPrice = searchParams.get('price');
+    const currentDate = searchParams.get('date');
+    const currentSearchTerm = searchParams.get('q');
 
-    if (query.get('from')) setFromCityFilter(query.get('from')!); else query.delete('from');
-    if (query.get('to')) setToCityFilter(query.get('to')!); else query.delete('to');
+    if (currentCategory && currentCategory !== 'all') filters.category = currentCategory;
+    if (currentFrom) {
+      filters.fromCity = currentFrom;
+      setFromCityFilter(currentFrom);
+    } else {
+      setFromCityFilter('');
+    }
+    if (currentTo) {
+      filters.toCity = currentTo;
+      setToCityFilter(currentTo);
+    } else {
+      setToCityFilter('');
+    }
 
-    const priceParam = query.get('price');
-    const [minPriceState, maxPriceState] = parsePriceRange(priceParam);
+    const [minPriceState, maxPriceState] = parsePriceRange(currentPrice);
     setPriceRange([minPriceState, maxPriceState]);
-    if (minPriceState !== undefined) query.set('minPrice', String(minPriceState)); else query.delete('minPrice');
-    if (maxPriceState !== undefined) query.set('maxPrice', String(maxPriceState)); else query.delete('maxPrice');
-    query.delete('price');
+    if (minPriceState !== undefined) filters.minPrice = minPriceState;
+    if (maxPriceState !== undefined) filters.maxPrice = maxPriceState;
 
-    const dateParam = query.get('date');
-    const dateRangeState = parseDateRange(dateParam);
+    const dateRangeState = parseDateRange(currentDate);
     setDateRange(dateRangeState);
-    if (dateRangeState?.from) query.set('startDate', format(dateRangeState.from, 'yyyy-MM-dd')); else query.delete('startDate');
-    if (dateRangeState?.to) query.set('endDate', format(dateRangeState.to, 'yyyy-MM-dd')); else query.delete('endDate');
-    query.delete('date');
-
-    // Get generic search term from URL
-    const currentSearchTerm = query.get('q');
+    if (dateRangeState?.from) filters.startDate = format(dateRangeState.from, 'yyyy-MM-dd');
+    if (dateRangeState?.to) filters.endDate = format(dateRangeState.to, 'yyyy-MM-dd');
+    
     if (currentSearchTerm) {
+        filters.searchTerm = currentSearchTerm;
         setGenericSearchTerm(currentSearchTerm);
-        // Add searchTerm to the API query if present
-        query.set('searchTerm', currentSearchTerm);
     } else {
         setGenericSearchTerm('');
-        query.delete('searchTerm'); // Ensure it's removed if not in URL
     }
-    query.delete('q'); // Remove 'q' as 'searchTerm' is used for API
-
 
     try {
-      const response = await fetch(`/api/tickets?${query.toString()}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch tickets');
-      }
-      const fetchedTickets: Ticket[] = await response.json();
-      // Filter out sold tickets on the client-side after fetching
+      // Directly call the service function client-side
+      const fetchedTickets: Ticket[] = await getAvailableTickets(filters);
       setTickets(fetchedTickets.filter(ticket => ticket.status === 'available'));
     } catch (err: any) {
       console.error("Failed to fetch tickets:", err);
@@ -156,17 +159,16 @@ export default function TicketsPage() {
     loadTickets();
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'marketplaceTickets' || event.key === 'userPostedTickets' || event.key === 'userOrders') {
-        loadTickets(); // Reload if any relevant ticket data changes
+        loadTickets(); 
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [loadTickets]); // loadTickets itself depends on searchParams
+  }, [loadTickets]); 
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
-    // Remove the purchased ticket from the current view
     setTickets(prevTickets =>
       prevTickets.filter(ticket => ticket.id !== purchasedTicketId)
     );
@@ -184,7 +186,6 @@ export default function TicketsPage() {
         title: 'Listing Cancelled',
         description: 'Your ticket listing has been removed.',
       });
-      // Remove the cancelled ticket from the current view
       setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== ticketId));
     } catch (error: any) {
       console.error('Error cancelling ticket listing:', error);
@@ -204,7 +205,7 @@ export default function TicketsPage() {
     const category = searchParams.get('category');
     if (category) query.set('category', category);
     
-    if (genericSearchTerm) query.set('q', genericSearchTerm); // Use 'q' for URL persistence
+    if (genericSearchTerm) query.set('q', genericSearchTerm); 
 
     if (fromCityFilter) query.set('from', fromCityFilter);
     if (toCityFilter) query.set('to', toCityFilter);
@@ -370,7 +371,7 @@ export default function TicketsPage() {
                 isSeller={!!currentUserId && ticket.sellerId === currentUserId && currentUserId !== 'anonymousUser'}
                 onCancelListing={handleCancelListing}
                 isCancelling={isDeleting === ticket.id}
-                className="ml-0"
+                className="ml-0 md:ml-2.5" 
               />
             ))}
           </div>
