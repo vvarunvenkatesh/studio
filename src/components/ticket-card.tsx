@@ -5,9 +5,9 @@ import * as React from 'react';
 import type { Ticket } from '@/services/ticket-marketplace';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail, Phone } from 'lucide-react';
+import { Button, buttonVariants } from "@/components/ui/button"; // Import buttonVariants
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; // Import AlertDialog
+import { Calendar, MapPin, Clock, Ticket as TicketIconLucide, IndianRupeeIcon, ShoppingCart, Loader2, ArrowRight, Bus, Train, Film, Calendar as CalendarIconLucideElement, Ticket as TicketCategoryIcon, Download, XCircle, Hourglass, LogIn, ShieldCheck, Mail, Phone } from 'lucide-react'; // Changed DollarSign to IndianRupeeIcon
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,7 @@ interface TicketCardProps {
   onCancelListing?: (ticketId: string) => Promise<void> | void;
   isCancelling?: boolean;
   className?: string;
-  isSeller?: boolean; 
+  isSeller?: boolean;
 }
 
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
@@ -33,13 +33,13 @@ const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
 };
 
 export function TicketCard({
-    ticket: ticketProp, // Rename to avoid conflict with internal state if any (though we are removing internal state)
+    ticket: ticketProp,
     variant = 'browse',
     onPurchaseSuccess,
     onCancelListing,
     isCancelling,
     className,
-    isSeller: propIsSeller 
+    isSeller: propIsSeller
 }: TicketCardProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -49,37 +49,44 @@ export function TicketCard({
   const [isClientLoggedIn, setIsClientLoggedIn] = React.useState(false);
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isPurchasing, setIsPurchasing] = React.useState(false);
-  // No local 'currentTicket' or 'isSold' state; use ticketProp directly.
+  const [cardInternalCurrentUserId, setCardInternalCurrentUserId] = React.useState<string | null>(null);
+
 
   React.useEffect(() => {
-      if (typeof window !== 'undefined') {
-          const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-          setIsClientLoggedIn(loggedInStatus);
-          // No need to set cardInternalCurrentUserId if propIsSeller is reliable
+      const updateLoginStatus = () => {
+        if (typeof window !== 'undefined') {
+            const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+            setIsClientLoggedIn(loggedInStatus);
+            setCardInternalCurrentUserId(getSimulatedCurrentUserId());
+        }
       }
+      updateLoginStatus();
+
       const handleStorageChange = (event: StorageEvent) => {
           if (event.key === 'isLoggedIn' || event.key === 'userId') {
-              const newLoggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-              setIsClientLoggedIn(newLoggedInStatus);
+              updateLoginStatus();
           }
-          // If marketplaceTickets changes, the parent (TicketsPage/PostTicketPage)
-          // should update its list and re-render this card with a new 'ticketProp'.
       };
       window.addEventListener('storage', handleStorageChange);
       return () => {
           window.removeEventListener('storage', handleStorageChange);
       };
-  }, []); // Effect runs once on mount
+  }, []);
 
   const formattedDate = format(new Date(ticketProp.date), 'PPP');
   const CategorySpecificIcon = categoryIconMap[ticketProp.type] || TicketIconLucide;
-  
+
   const isTicketSold = ticketProp.status === 'sold';
+  // Determine actual seller status based on card's internal user ID understanding, mainly for manage variant
+  const actualIsSeller = !!cardInternalCurrentUserId && ticketProp.sellerId === cardInternalCurrentUserId && cardInternalCurrentUserId !== 'anonymousUser';
 
 
   const redirectToLogin = () => {
-    const baseRedirectPath = pathname.startsWith('/tickets') ? pathname + '?' + searchParamsHook.toString() : pathname;
-    router.push(`/login?redirect=${encodeURIComponent(baseRedirectPath)}`);
+    let currentRedirectPath = pathname;
+    if (pathname.startsWith('/tickets')) {
+        currentRedirectPath += '?' + searchParamsHook.toString();
+    }
+    router.push(`/login?redirect=${encodeURIComponent(currentRedirectPath)}`);
   };
 
 
@@ -88,12 +95,12 @@ export function TicketCard({
         setShowLoginDialog(true);
         return;
     }
-    if (isTicketSold || propIsSeller) return; // User cannot buy their own ticket or an already sold ticket
+    // Use propIsSeller for browse view, actualIsSeller for stricter check if needed elsewhere
+    const sellerCheck = variant === 'browse' ? propIsSeller : actualIsSeller;
+    if (isTicketSold || sellerCheck) return;
+
     setIsPurchasing(true);
     try {
-      // Call service directly if API route is problematic for localStorage
-      // For now, assuming API route can work if it delegates to service that uses localStorage correctly
-      // This might need changing if API routes cannot reliably trigger localStorage updates for all users.
       const response = await fetch('/api/orders/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,14 +122,13 @@ export function TicketCard({
         }
         contactMessage += " to complete your purchase.";
 
+
         toast({
           title: 'Purchase Initiated!',
           description: contactMessage,
           variant: 'success',
           duration: 7000,
         });
-        // Parent component (TicketsPage) should re-fetch/update its list due to localStorage change,
-        // which will re-render this card with the updated ticketProp.
         if (onPurchaseSuccess) {
           onPurchaseSuccess(result.ticket.id);
         }
@@ -133,7 +139,7 @@ export function TicketCard({
           variant: 'destructive',
         });
         if (result.ticket && result.message?.includes('already sold')) {
-           if (onPurchaseSuccess) { // Still call to update parent list
+           if (onPurchaseSuccess) {
               onPurchaseSuccess(result.ticket.id);
            }
         }
@@ -155,13 +161,13 @@ export function TicketCard({
        toast({ title: 'Download Failed', description: 'No file available.', variant: 'destructive' });
        return;
      }
-   
+
      const link = document.createElement('a');
      let fileExtension = 'file';
      const mimeMatch = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
      let isImage = false;
      let mimeType = '';
-   
+
      if (mimeMatch && mimeMatch[1]) {
        mimeType = mimeMatch[1];
        const extensionMap: Record<string, string> = {
@@ -175,7 +181,7 @@ export function TicketCard({
      const baseFilename = `ticket_${ticketType}_${ticketId}`;
      const watermarkedFilename = `${baseFilename}_watermarked.${fileExtension}`;
      const originalFilename = `${baseFilename}.${fileExtension}`;
-   
+
      if (isImage) {
        try {
          const img = new Image();
@@ -193,22 +199,22 @@ export function TicketCard({
              document.body.removeChild(link);
              return;
            }
-   
+
            ctx.drawImage(img, 0, 0);
-           
+
            const fontSize = Math.max(12, Math.min(img.width / 20, img.height / 15));
            ctx.font = `bold ${fontSize}px Arial`;
            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
            ctx.textAlign = 'center';
            ctx.textBaseline = 'middle';
-           
+
            const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`;
            const x = canvas.width / 2;
            const y = canvas.height / 2;
-           
+
            ctx.fillText(watermarkText, x, y);
 
-           link.href = canvas.toDataURL(mimeType); 
+           link.href = canvas.toDataURL(mimeType);
            link.download = watermarkedFilename;
            document.body.appendChild(link);
            link.click();
@@ -277,7 +283,7 @@ export function TicketCard({
     <Badge
       variant="outline"
       className="text-xs text-black gap-1.5 border-amber-500 px-2 py-1"
-      style={{ backgroundColor: '#FFCE54' }} 
+      style={{ backgroundColor: '#FFCE54' }}
     >
       <Hourglass className="h-3 w-3" />
       Pending Sale
@@ -339,6 +345,7 @@ export function TicketCard({
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{ticketProp.time}</span>
          </div>
+         {/* Seller Contact Information Section */}
          {!isTicketSold && !(propIsSeller && variant === 'browse') && (ticketProp.sellerContactEmail || ticketProp.sellerContactPhone) && (
              <div className="mt-2 pt-2 border-t border-dashed space-y-1">
                 {ticketProp.sellerContactEmail && (
@@ -365,6 +372,7 @@ export function TicketCard({
              <IndianRupeeIcon className="mr-1 h-5 w-5" />
              {ticketProp.price.toFixed(2)}
          </div>
+
          {isTicketSold ? (
              ticketProp.originalTicketDataUri ? (
                  <Button
@@ -379,11 +387,11 @@ export function TicketCard({
              ) : (
                  <Badge variant="destructive">Sold</Badge>
              )
-         ) : variant === 'manage' ? ( // From PostTicketPage's "Your Active Listings"
+         ) : variant === 'manage' ? (
              renderCancelButton()
-         ) : propIsSeller ? ( // From TicketsPage (browse) IF current user is the seller
+         ) : propIsSeller ? (
              renderPendingIndicator()
-         ) : ( // From TicketsPage (browse) IF current user is NOT the seller
+         ) : (
              <Button
                  size="sm"
                  onClick={handlePurchase}
@@ -420,5 +428,3 @@ export function TicketCard({
     </>
   );
 }
-
-    
