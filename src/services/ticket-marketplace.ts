@@ -131,16 +131,15 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
             }
             const stringifiedData = JSON.stringify(dataToSave);
             
-            // Check for quota before attempting to save
-            const quotaCheckLength = 4.5 * 1024 * 1024; // Approx 4.5MB for safety margin
+            const quotaCheckLength = 4.5 * 1024 * 1024; 
             if (stringifiedData.length > quotaCheckLength) {
                  console.warn(`Data for ${key} is large (${(stringifiedData.length / (1024*1024)).toFixed(2)}MB) and might exceed localStorage quota.`);
                  
                  if ((key === marketplaceTicketsKey || key === userPostedTicketsKey || key === userOrdersKey) && Array.isArray(dataToSave) && dataToSave.length > 5) {
                     console.warn(`Attempting to trim ${key} data to save space.`);
-                    const trimmedData = dataToSave.slice(-5).map((ticket: any) => { // Keep last 5, for example
+                    const trimmedData = dataToSave.slice(-5).map((ticket: any) => { 
                         const { originalTicketDataUri, ...rest } = ticket;
-                        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { // e.g., > 100KB
+                        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { 
                             console.warn(`Removing large originalTicketDataUri for ticket ID ${ticket.id} from ${key} during quota save.`);
                             return rest;
                         }
@@ -149,7 +148,6 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
                     localStorage.setItem(key, JSON.stringify(trimmedData));
                     console.warn(`${key} trimmed to last 5 entries. Some older data may have been removed to avoid quota issues.`);
                  } else {
-                    // If not an array we can easily trim, or too few items, throw the quota error to be handled by the caller
                     console.error(`Could not save ${key} to localStorage due to size constraints without a clear trimming strategy.`);
                     throw new DOMException('QuotaExceededError', 'QuotaExceededError');
                  }
@@ -159,13 +157,13 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
 
             window.dispatchEvent(new StorageEvent('storage', {
                 key: key,
-                newValue: localStorage.getItem(key), // send the potentially trimmed data
+                newValue: localStorage.getItem(key), 
                 storageArea: localStorage,
             }));
         } catch (e) {
              console.error(`Failed to save ${key} to localStorage`, e);
              if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22)) {
-                 throw e; // Re-throw to be caught by the caller
+                 throw e; 
              }
         }
     }
@@ -180,7 +178,6 @@ const isCurrentUserVerifiedForDefault = (): boolean => {
             const parsedData: UserData = JSON.parse(storedUserData);
             const currentUserId = getSimulatedCurrentUserId();
             if (currentUserId === 'currentUser') {
-                 // Verification now depends only on email and contact
                  return !!(parsedData.email && parsedData.contact);
             }
         } catch (e) {
@@ -232,10 +229,10 @@ const getDefaultTickets = (): Ticket[] => [
         time: '19:00',
         location: 'Downtown Cinema',
         status: 'available',
-        sellerId: 'currentUser', // This ID will be dynamically checked for current user
+        sellerId: 'currentUser', 
         sellerVerified: isCurrentUserVerifiedForDefault(),
-        sellerContactEmail: 'currentuser@example.com', // Placeholder, will be updated if current user posts
-        sellerContactPhone: '1234567890', // Placeholder
+        sellerContactEmail: 'currentuser@example.com', 
+        sellerContactPhone: '1234567890', 
       },
       {
         id: '4',
@@ -285,9 +282,11 @@ const getDefaultTickets = (): Ticket[] => [
       },
 ];
 
+// Module-level tickets variable - primarily used for initial load and by functions that modify it.
+// Functions that only read tickets should ideally re-load from localStorage for freshness.
 let tickets: Ticket[] = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+
 if (typeof window !== 'undefined' && !localStorage.getItem(marketplaceTicketsKey)) {
-    // On first load, ensure sellerContactEmail for 'currentUser' tickets matches actual current user's email if logged in
     const currentUserId = getSimulatedCurrentUserId();
     if (currentUserId === 'currentUser') {
         const userDataString = localStorage.getItem(userDataKey);
@@ -343,7 +342,7 @@ const saveUserPostedTickets = (postedTickets: Ticket[]) => {
     const uniqueTickets = getUniqueById(postedTickets);
     const ticketsToSave = uniqueTickets.map(ticket => {
         const { originalTicketDataUri, ...rest } = ticket;
-        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { // Example threshold: 100KB
+        if (originalTicketDataUri && originalTicketDataUri.length > 100 * 1024) { 
             console.warn(`Removing large originalTicketDataUri for ticket ID ${ticket.id} from userPostedTickets to save space.`);
             return rest;
         }
@@ -382,15 +381,17 @@ export async function getAvailableTickets(filters?: {
   searchTerm?: string;
   ticketId?: string;
 }): Promise<Ticket[]> {
-  await new Promise(resolve => setTimeout(resolve, 50));
-  tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+  await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async operation
+
+  // Always load fresh from localStorage for this read operation
+  const currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
 
   if (filters?.ticketId) {
-    const ticket = tickets.find(t => t.id === filters.ticketId);
+    const ticket = currentMarketplaceTickets.find(t => t.id === filters.ticketId);
     return ticket ? [ticket] : [];
   }
 
-  let filteredTickets = tickets.filter(ticket => ticket.status === 'available');
+  let filteredTickets = currentMarketplaceTickets.filter(ticket => ticket.status === 'available');
 
   if (filters?.category) {
     if (filters.category === 'transport') {
@@ -431,7 +432,7 @@ export async function getAvailableTickets(filters?: {
     const term = filters.searchTerm.toLowerCase();
     filteredTickets = filteredTickets.filter(ticket =>
         ticket.description.toLowerCase().includes(term) ||
-        ticket.location.toLowerCase().includes(term) ||
+        (ticket.location && ticket.location.toLowerCase().includes(term)) ||
         (ticket.fromCity && ticket.fromCity.toLowerCase().includes(term)) ||
         (ticket.toCity && ticket.toCity.toLowerCase().includes(term)) ||
         ticket.type.toLowerCase().includes(term)
@@ -443,8 +444,9 @@ export async function getAvailableTickets(filters?: {
 
 export async function getTicketById(ticketId: string): Promise<Ticket | null> {
   await new Promise(resolve => setTimeout(resolve, 50));
-  tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
-  const ticket = tickets.find(t => t.id === ticketId);
+  // Load fresh for this specific lookup
+  const currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+  const ticket = currentMarketplaceTickets.find(t => t.id === ticketId);
   return ticket || null;
 }
 
@@ -481,22 +483,22 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
     sellerContactPhone: sellerPhone,
   };
 
-  tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
-  tickets.push(newTicket);
+  // Load current tickets, add the new one, then save
+  let currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+  currentMarketplaceTickets.push(newTicket);
 
   try {
-    saveToLocalStorage(marketplaceTicketsKey, tickets);
+    saveToLocalStorage(marketplaceTicketsKey, currentMarketplaceTickets);
     if (currentUserId !== 'anonymousUser') {
         addUserPostedTicket(newTicket);
     }
   } catch (error) {
     if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
       console.error('LocalStorage quota exceeded while posting ticket.');
-      tickets.pop(); // Remove the ticket if saving failed
+      // No need to pop here as currentMarketplaceTickets was a local copy for modification
       throw error;
     } else {
       console.error('An unexpected error occurred while posting ticket:', error);
-      tickets.pop(); // Remove the ticket if saving failed
       throw error;
     }
   }
@@ -507,20 +509,21 @@ export async function postTicket(ticketData: Omit<Ticket, 'id' | 'status' | 'sel
 
 export async function updateTicket(ticketId: string, updates: Partial<Ticket>): Promise<Ticket | null> {
   await new Promise(resolve => setTimeout(resolve, 50));
-  tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
-  const ticketIndex = tickets.findIndex(t => t.id === ticketId);
+  let currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+  const ticketIndex = currentMarketplaceTickets.findIndex(t => t.id === ticketId);
+
   if (ticketIndex === -1) {
     return null;
   }
-  const originalTicket = tickets[ticketIndex];
-  tickets[ticketIndex] = { ...originalTicket, ...updates };
-  saveToLocalStorage(marketplaceTicketsKey, tickets);
+  const originalTicket = currentMarketplaceTickets[ticketIndex];
+  currentMarketplaceTickets[ticketIndex] = { ...originalTicket, ...updates };
+  saveToLocalStorage(marketplaceTicketsKey, currentMarketplaceTickets);
 
   if (originalTicket.sellerId === getSimulatedCurrentUserId() && originalTicket.sellerId !== 'anonymousUser') {
     updateUserPostedTicket(ticketId, updates);
   }
 
-  return tickets[ticketIndex];
+  return currentMarketplaceTickets[ticketIndex];
 }
 
 
@@ -532,14 +535,14 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
       return { success: false, message: "User must be logged in to purchase." };
   }
 
-  tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
-  const ticketIndex = tickets.findIndex(ticket => ticket.id === ticketId);
+  let currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+  const ticketIndex = currentMarketplaceTickets.findIndex(ticket => ticket.id === ticketId);
 
   if (ticketIndex === -1) {
     return { success: false, message: `Ticket with ID ${ticketId} not found.` };
   }
 
-  const ticketToUpdate = tickets[ticketIndex];
+  const ticketToUpdate = currentMarketplaceTickets[ticketIndex];
 
   if (ticketToUpdate.status === 'sold') {
     return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: ticketToUpdate };
@@ -549,7 +552,7 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
       return { success: false, message: `You cannot purchase your own ticket.` };
   }
 
-  ticketToUpdate.status = 'sold';
+  // ticketToUpdate.status = 'sold'; // Don't modify the local copy directly before calling updateTicket
   const updatedTicket = await updateTicket(ticketId, { status: 'sold' });
 
   if (updatedTicket) {
@@ -570,6 +573,7 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
 
     return { success: true, message: `Ticket ${ticketId} purchase initiated! ${contactMessage}`, ticket: updatedTicket };
   } else {
+    // This case should ideally not be reached if updateTicket finds the ticket.
     return { success: false, message: `Failed to update ticket ${ticketId} status.`};
   }
 }
@@ -582,20 +586,20 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
         return { success: false, message: "User must be logged in to delete a ticket." };
     }
 
-    tickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
-    const ticketIndex = tickets.findIndex(ticket => ticket.id === ticketId);
+    let currentMarketplaceTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+    const ticketIndex = currentMarketplaceTickets.findIndex(ticket => ticket.id === ticketId);
 
     if (ticketIndex === -1) {
         removeUserPostedTicket(ticketId); 
         return { success: false, message: `Ticket ${ticketId} not found in marketplace.` };
     }
 
-    if (tickets[ticketIndex].sellerId !== currentUserId) {
+    if (currentMarketplaceTickets[ticketIndex].sellerId !== currentUserId) {
         return { success: false, message: `You are not authorized to delete this ticket.` };
     }
 
-    tickets.splice(ticketIndex, 1);
-    saveToLocalStorage(marketplaceTicketsKey, tickets);
+    currentMarketplaceTickets.splice(ticketIndex, 1);
+    saveToLocalStorage(marketplaceTicketsKey, currentMarketplaceTickets);
     removeUserPostedTicket(ticketId);
 
     console.log(`Ticket ${ticketId} deleted successfully by ${currentUserId}.`);
@@ -639,7 +643,8 @@ if (typeof window !== 'undefined') {
                      sellerContactEmail: ticket.sellerContactEmail || (ticket.sellerId === 'currentUser' ? 'currentuser@example.com' : `seller_email_${ticket.id}@example.com`),
                      sellerContactPhone: ticket.sellerContactPhone || (ticket.sellerId === 'currentUser' ? '1234567890' : `999888${Math.floor(Math.random()*10000).toString().padStart(4, '0')}`),
                  }));
-                 tickets = parsedTickets;
+                 // Update the module-level tickets variable if needed, or rely on components re-fetching
+                 tickets = parsedTickets; 
                  console.log('Marketplace tickets updated from storage event.');
              } catch (e) {
                  console.error('Failed to parse marketplace tickets from storage event', e);

@@ -64,12 +64,11 @@ export default function TicketsPage() {
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [genericSearchTerm, setGenericSearchTerm] = React.useState(searchParams.get('q') || '');
 
-  // Effect to set and update currentUserId based on login state changes
   React.useEffect(() => {
     const updateCurrentUserId = () => {
       setCurrentUserId(getSimulatedCurrentUserId());
     };
-    updateCurrentUserId(); // Initial set
+    updateCurrentUserId(); 
 
     const handleLoginStorageChange = (event: StorageEvent) => {
       if (event.key === 'isLoggedIn' || event.key === 'userId') {
@@ -78,7 +77,7 @@ export default function TicketsPage() {
     };
     window.addEventListener('storage', handleLoginStorageChange);
     return () => window.removeEventListener('storage', handleLoginStorageChange);
-  }, []); // Runs once on mount
+  }, []); 
 
   const pageTitle = React.useMemo(() => {
     const currentCategory = searchParams.get('category');
@@ -146,47 +145,47 @@ export default function TicketsPage() {
     setGenericSearchTerm(currentSearchTermParam || '');
 
     try {
-      const fetchedTickets: Ticket[] = await getAvailableTickets(filters); // Call service directly
-      setTickets(fetchedTickets.filter(ticket => ticket.status === 'available'));
+      const fetchedTickets: Ticket[] = await getAvailableTickets(filters); 
+      setTickets(fetchedTickets); // Simplified: getAvailableTickets already filters by status 'available'
     } catch (err: any) {
       console.error("Failed to fetch tickets:", err);
       setError(err.message || "Failed to load tickets. Please try refreshing the page.");
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams]); // Dependency on searchParams to refetch when URL query changes
+  }, [searchParams]); 
 
   React.useEffect(() => {
-    loadTickets(); // Fetch on initial load and when searchParams changes
+    loadTickets(); 
 
     const handleMarketplaceStorageChange = (event: StorageEvent) => {
       if (event.key === 'marketplaceTickets') {
-        loadTickets(); // Reload tickets if marketplaceTickets itself changes
+        loadTickets(); 
       }
     };
     window.addEventListener('storage', handleMarketplaceStorageChange);
     return () => {
       window.removeEventListener('storage', handleMarketplaceStorageChange);
     };
-  }, [loadTickets]); // loadTickets is memoized and changes when searchParams change
+  }, [loadTickets]); 
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
     setTickets(prevTickets =>
       prevTickets.filter(ticket => ticket.id !== purchasedTicketId)
     );
-    loadTickets(); // Reload to ensure list is up-to-date
+    loadTickets(); 
   };
 
   const handleCancelListing = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-      const result = await deleteTicketService(ticketId); // Call service directly
+      const result = await deleteTicketService(ticketId); 
       if (result.success) {
         toast({
           title: 'Listing Cancelled',
           description: result.message || 'Your ticket listing has been removed.',
         });
-        loadTickets(); // Refresh the list of tickets
+        loadTickets(); 
       } else {
         throw new Error(result.message || 'Could not cancel the ticket listing.');
       }
@@ -346,7 +345,7 @@ export default function TicketsPage() {
                 </div>
              </div>
             <div className="flex flex-col sm:flex-row gap-2 lg:col-span-4 lg:justify-end w-full">
-                <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
                     <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
                 {hasActiveFilters && (
