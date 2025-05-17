@@ -175,7 +175,7 @@ export default function TicketsPage() {
       const id = getSimulatedCurrentUserId();
       setCurrentUserId(id);
     };
-    updateCurrentUserId();
+    updateCurrentUserId(); // Initial set
 
     const handleLoginStorageChange = (event: StorageEvent) => {
       if (event.key === 'isLoggedIn' || event.key === 'userId') {
@@ -256,24 +256,25 @@ export default function TicketsPage() {
   }, [searchParams]);
 
   React.useEffect(() => {
-    loadTickets();
+    loadTickets(); // Load tickets on initial render or when searchParams change
+    // Listener for when marketplaceTickets in localStorage changes
     const handleMarketplaceStorageChange = (event: StorageEvent) => {
       if (event.key === 'marketplaceTickets') {
-        loadTickets();
+        loadTickets(); // Reload tickets if marketplaceTickets itself changes
       }
     };
     window.addEventListener('storage', handleMarketplaceStorageChange);
     return () => {
       window.removeEventListener('storage', handleMarketplaceStorageChange);
     };
-  }, [loadTickets]);
+  }, [loadTickets]); // loadTickets is stable due to useCallback and its dependencies
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
     toast({
         title: "Ticket Status Updated",
         description: "The ticket list has been refreshed.",
     });
-    // loadTickets will be called by the storage event listener for 'marketplaceTickets'
+    // No need to manually call loadTickets here, storage event listener will handle it
   };
 
   const handleCancelListing = async (ticketId: string) => {
@@ -285,7 +286,7 @@ export default function TicketsPage() {
           title: 'Listing Cancelled',
           description: result.message || 'Your ticket listing has been removed.',
         });
-         // loadTickets will be called by the storage event listener for 'marketplaceTickets'
+         // No need to manually call loadTickets here, storage event listener will handle it
       } else {
         throw new Error(result.message || 'Could not cancel the ticket listing.');
       }
@@ -375,13 +376,16 @@ export default function TicketsPage() {
 
         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
           <div className={cn(
-              "gap-4", // Common gap
+              "gap-4",
               isEventLikeCategory
-                ? "flex flex-col md:flex-row md:flex-wrap md:items-end" // Compact layout
-                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end" // Grid layout
+                ? "flex flex-col md:flex-row md:items-end" // For movie/event/sports: horizontal on md+
+                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end" // For train/bus/all: grid layout
           )}>
-            {/* Generic Search Term */}
-            <div className={cn("w-full", isEventLikeCategory ? "md:flex-grow" : "lg:col-span-2")}>
+            {/* Generic Search Term Input */}
+            <div className={cn(
+                "w-full",
+                isEventLikeCategory ? "md:flex-1" : "lg:col-span-2"
+            )}>
               <Label htmlFor="genericSearchFilter" className="block text-sm font-medium text-muted-foreground mb-1">Search Term</Label>
               <Input
                 id="genericSearchFilter"
@@ -393,24 +397,25 @@ export default function TicketsPage() {
               />
             </div>
 
-            {/* Event-specific Location Filter */}
-            {isEventLikeCategory && (
-              <div className="w-full md:flex-grow">
-                <Label htmlFor="eventLocationFilter" className="block text-sm font-medium text-muted-foreground mb-1">Location (City/Venue)</Label>
-                <Input
-                  id="eventLocationFilter"
-                  type="text"
-                  placeholder="Enter city or venue"
-                  value={eventLocationFilter}
-                  onChange={(e) => setEventLocationFilter(e.target.value)}
-                  className="bg-background text-foreground"
-                />
-              </div>
-            )}
-
-            {/* Transport/All Specific Filters */}
-            {!isEventLikeCategory && (
+            {/* Conditional Filters based on category */}
+            {isEventLikeCategory ? (
               <>
+                {/* Event-specific Location Filter */}
+                <div className="w-full md:flex-1">
+                  <Label htmlFor="eventLocationFilter" className="block text-sm font-medium text-muted-foreground mb-1">Location (City/Venue)</Label>
+                  <Input
+                    id="eventLocationFilter"
+                    type="text"
+                    placeholder="Enter city or venue"
+                    value={eventLocationFilter}
+                    onChange={(e) => setEventLocationFilter(e.target.value)}
+                    className="bg-background text-foreground"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Transport/All Specific Filters */}
                 <div className="w-full">
                   <Label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From City</Label>
                   <Input
@@ -460,8 +465,11 @@ export default function TicketsPage() {
               </>
             )}
 
-            {/* Date Range Picker (Common) */}
-            <div className={cn("w-full", isEventLikeCategory ? "md:w-auto" : "")}>
+            {/* Date Range Picker (Common to all) */}
+            <div className={cn(
+                "w-full",
+                isEventLikeCategory ? "md:w-auto" : ""
+            )}>
                 <Label htmlFor="dateRangeFilter" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</Label>
                 <DateRangePicker
                     id="dateRangeFilter"
@@ -472,10 +480,10 @@ export default function TicketsPage() {
                  />
              </div>
 
-            {/* Filter Buttons (Common) */}
+            {/* Filter Buttons (Common to all) */}
             <div className={cn(
                 "flex flex-col sm:flex-row gap-2 w-full pt-2",
-                 isEventLikeCategory ? "md:w-auto md:items-end" : "lg:col-span-4 lg:justify-end"
+                 isEventLikeCategory ? "md:w-auto" : "lg:col-span-4 lg:justify-end"
             )}>
                 <Button onClick={handleFilterChange} className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
                     <ListFilter className="mr-2 h-4 w-4" /> Apply Filters
