@@ -160,7 +160,7 @@ function SearchForm() {
                 className="bg-background text-foreground"
             />
         </div>
-        <Button type="submit" className="w-full sm:w-auto gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90">
+        <Button type="submit" className="w-full sm:w-auto gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
        </form>
