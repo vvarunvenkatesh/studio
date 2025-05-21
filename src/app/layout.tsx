@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { BottomNavigation } from '@/components/bottom-navigation';
+import { ClientOnly } from '@/components/client-only'; // Import ClientOnly
 
 const inter = Inter({
   subsets: ['latin'],
@@ -27,7 +28,9 @@ export default function RootLayout({
            {children}
          </div>
          <Toaster />
-         <BottomNavigation />
+         <ClientOnly>
+           <BottomNavigation />
+         </ClientOnly>
       </body>
     </html>
   );
