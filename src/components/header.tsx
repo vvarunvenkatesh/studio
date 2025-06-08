@@ -4,7 +4,7 @@
 import * as _React from 'react'; // _React to avoid conflict with React namespace
 import Link from 'next/link';
 import {Button} from '@/components/ui/button';
-import {User, MapPin, Menu, LogIn, LogOut, Building } from 'lucide-react'; // Added Menu, LogIn, LogOut, Building
+import {User, MapPin, Menu, LogIn, LogOut } from 'lucide-react'; // Added Menu, LogIn, LogOut
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   Select,
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import {cn} from '@/lib/utils';
 import {useIsMobile} from '@/hooks/use-mobile';
-import {Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose} from '@/components/ui/sheet'; // Added DialogTitle
+import {Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { TermsAndConditionsDialog } from './terms-and-conditions-dialog';
 
@@ -163,12 +163,11 @@ export function Header({className}: HeaderProps) {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-full xs:w-3/4 sm:max-w-xs p-0 flex flex-col">
-                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     {/* Brand Title Section */}
                     <div className="p-4 border-b">
                       <Link href="/" className="flex flex-col items-start" onClick={() => setMobileMenuOpen(false)}>
                         <span className="text-xl font-bold text-foreground">
-                          <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                          <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                         </span>
                         <span className="text-xs text-muted-foreground">
                           Ticket Reselling Platform
@@ -234,7 +233,7 @@ export function Header({className}: HeaderProps) {
               <div className="flex flex-col items-center text-center">
                 <span className="whitespace-nowrap flex items-baseline justify-center gap-1">
                   <span className="text-2xl font-bold text-foreground">
-                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                   </span>
                 </span>
                 <span className="text-[10px] text-foreground opacity-80 truncate max-w-[150px]">
@@ -249,7 +248,7 @@ export function Header({className}: HeaderProps) {
                   className="w-auto h-auto p-1.5 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-foreground hover:bg-accent hover:text-accent-foreground"
                   aria-label="Select Location"
                 >
-                   <MapPin className="h-5 w-5 flex-shrink-0" /> {/* Changed to MapPin */}
+                   <MapPin className="h-5 w-5 flex-shrink-0" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableLocations.map((location) => (
@@ -278,7 +277,7 @@ export function Header({className}: HeaderProps) {
                 className="whitespace-nowrap flex items-baseline justify-center gap-1"
               >
                 <span className="text-3xl font-bold text-foreground">
-                  <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                  <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                 </span>
               </Link>
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
@@ -286,7 +285,7 @@ export function Header({className}: HeaderProps) {
               </span>
             </div>
 
-            <div className="flex items-center gap-4"> {/* Increased gap for desktop */}
+            <div className="flex items-center gap-4">
                 {isLoggedIn ? (
                     <Link href="/profile" className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary">
                     <Avatar className="h-8 w-8 cursor-pointer">

@@ -75,9 +75,9 @@ export default function SignupPage() {
            {/* CardTitle now contains the brand name and slogan */}
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Consistent LastMiniT styling - Use text-foreground defined in globals.css */}
+                 {/* Consistent LastMinIT styling - Use text-foreground defined in globals.css */}
                  <span className="text-3xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                  </span>
              </Link>
               {/* Slogan - Use text-foreground defined in globals.css */}
