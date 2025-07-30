@@ -163,17 +163,18 @@ export async function postTicket(
   const sellerIsNowVerified = (existingUserTicketsCount + 1) >= 3;
 
   // Sanitize the input data to ensure no `undefined` values are sent to Firestore.
+  // This is the critical fix.
   const newTicketDataForFirestore = {
     type: ticketData.type,
     description: ticketData.description,
     price: ticketData.price,
-    date: Timestamp.fromDate(new Date(ticketData.date as string)),
+    date: Timestamp.fromDate(new Date(ticketData.date)), // Correctly use the string date
     time: ticketData.time,
-    title: ticketData.title || null,
-    location: ticketData.location || null,
-    fromCity: ticketData.fromCity || null,
-    toCity: ticketData.toCity || null,
-    originalTicketDataUri: ticketData.originalTicketDataUri || null,
+    title: ticketData.title || null, // Convert falsy to null
+    location: ticketData.location || null, // Convert falsy to null
+    fromCity: ticketData.fromCity || null, // Convert falsy to null
+    toCity: ticketData.toCity || null, // Convert falsy to null
+    originalTicketDataUri: ticketData.originalTicketDataUri || null, // Convert falsy to null
     status: 'available' as const,
     sellerId: currentUserId,
     sellerVerified: sellerIsNowVerified,
@@ -187,21 +188,29 @@ export async function postTicket(
     console.log("Ticket posted to Firestore with ID: ", docRef.id);
 
     // If the seller's verification status has changed, update all their existing tickets.
-    const batch = writeBatch(db);
-    userTicketsSnapshot.forEach((ticketDoc) => {
-      if (ticketDoc.data().sellerVerified !== sellerIsNowVerified) {
-        const ticketRef = doc(db, "tickets", ticketDoc.id);
-        batch.update(ticketRef, { sellerVerified: sellerIsNowVerified });
-      }
-    });
-    await batch.commit();
-    console.log(`Updated verification status for seller ${currentUserId}'s tickets if needed.`);
-
+    if (sellerIsNowVerified && userTicketsSnapshot.docs.some(d => d.data().sellerVerified === false)) {
+        const batch = writeBatch(db);
+        userTicketsSnapshot.forEach((ticketDoc) => {
+          const ticketRef = doc(db, "tickets", ticketDoc.id);
+          batch.update(ticketRef, { sellerVerified: true });
+        });
+        await batch.commit();
+        console.log(`Updated verification status for seller ${currentUserId}'s tickets.`);
+    }
+    
     // Construct the returned ticket object from the clean Firestore data
     const finalTicket: Ticket = {
       id: docRef.id,
-      ...ticketData,
+      type: newTicketDataForFirestore.type,
+      description: newTicketDataForFirestore.description,
+      price: newTicketDataForFirestore.price,
       date: newTicketDataForFirestore.date, // Use the Timestamp version
+      time: newTicketDataForFirestore.time,
+      title: newTicketDataForFirestore.title ?? undefined,
+      location: newTicketDataForFirestore.location ?? undefined,
+      fromCity: newTicketDataForFirestore.fromCity ?? undefined,
+      toCity: newTicketDataForFirestore.toCity ?? undefined,
+      originalTicketDataUri: newTicketDataForFirestore.originalTicketDataUri ?? undefined,
       status: 'available',
       sellerId: currentUserId,
       sellerVerified: newTicketDataForFirestore.sellerVerified,
@@ -443,20 +452,20 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
         // After deleting, re-evaluate and update verification status for remaining tickets of this seller
         const remainingUserTicketsQuery = query(collection(db, "tickets"), where("sellerId", "==", currentUserId));
         const remainingUserTicketsSnapshot = await getDocs(remainingUserTicketsQuery);
-        const remainingTickets: Ticket[] = [];
-        remainingUserTicketsSnapshot.forEach(doc => remainingTickets.push({ id: doc.id, ...doc.data() } as Ticket));
         
-        const sellerIsNowVerified = isUserVerifiedByTicketCountInternal(currentUserId, remainingTickets);
+        // After deletion, the new count determines the verification status.
+        const sellerIsStillVerified = remainingUserTicketsSnapshot.size >= 3;
 
-        const batch = writeBatch(db);
-        remainingUserTicketsSnapshot.forEach((ticketDoc) => {
-            if (ticketDoc.data().sellerVerified !== sellerIsNowVerified) {
+        // If their status has now dropped to unverified, update all remaining tickets.
+        if (!sellerIsStillVerified && remainingUserTicketsSnapshot.docs.some(d => d.data().sellerVerified === true)) {
+            const batch = writeBatch(db);
+            remainingUserTicketsSnapshot.forEach((ticketDoc) => {
                 const specificTicketRef = doc(db, "tickets", ticketDoc.id);
-                batch.update(specificTicketRef, { sellerVerified: sellerIsNowVerified });
-            }
-        });
-        await batch.commit();
-        console.log(`Updated verification status for seller ${currentUserId}'s remaining tickets after deletion.`);
+                batch.update(specificTicketRef, { sellerVerified: false });
+            });
+            await batch.commit();
+            console.log(`Updated verification status for seller ${currentUserId}'s remaining tickets to NOT VERIFIED.`);
+        }
 
         return { success: true, message: `Your ticket listing has been removed.` };
 
