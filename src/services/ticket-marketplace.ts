@@ -1,6 +1,6 @@
 
 import { db } from '@/lib/firebase'; // Import Firestore instance
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp, writeBatch } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp, writeBatch, getDoc } from "firebase/firestore";
 
 /**
  * Represents a ticket for an event or transportation.
@@ -168,8 +168,9 @@ export async function postTicket(
 
 
   const newTicketDataForFirestore = {
-    ...ticketData, // Spreads type, description, price, time, location, fromCity, toCity, title
-    date: Timestamp.fromDate(new Date(ticketData.date as string)), // Convert string date to Firestore Timestamp
+    ...ticketData,
+    title: ticketData.title || null, // Ensure title is null, not undefined
+    date: Timestamp.fromDate(new Date(ticketData.date as string)),
     originalTicketDataUri: ticketData.originalTicketDataUri || null,
     status: 'available' as const,
     sellerId: currentUserId,
@@ -183,24 +184,11 @@ export async function postTicket(
     const docRef = await addDoc(collection(db, "tickets"), newTicketDataForFirestore);
     console.log("Ticket posted to Firestore with ID: ", docRef.id);
 
-    // After successfully posting, update all of this seller's existing tickets
-    // with their current verification status if it has changed.
-    // This requires another query to ensure consistency.
     const batch = writeBatch(db);
-    // Re-fetch user's tickets to ensure we have the latest set including the newly posted one
-    // for the count if we need to update others.
-    // However, sellerIsNowVerified is based on count *including* the new one.
-    // So, if sellerIsNowVerified is true, all their tickets should be true. If false, all should be false.
-    
     const allSellerTicketsQuery = query(collection(db, "tickets"), where("sellerId", "==", currentUserId));
     const allSellerTicketsSnapshot = await getDocs(allSellerTicketsQuery);
     
     allSellerTicketsSnapshot.forEach((ticketDoc) => {
-      // Don't update the ticket we just added if it's already correct
-      if (ticketDoc.id === docRef.id && ticketDoc.data().sellerVerified === sellerIsNowVerified) {
-        return;
-      }
-      // Update if current status is different or if it's an older ticket
       if (ticketDoc.data().sellerVerified !== sellerIsNowVerified || ticketDoc.id !== docRef.id) {
         const ticketRef = doc(db, "tickets", ticketDoc.id);
         batch.update(ticketRef, { sellerVerified: sellerIsNowVerified });
@@ -211,14 +199,14 @@ export async function postTicket(
 
     return {
         id: docRef.id,
-        ...ticketData, // Includes original string date for client-side consistency if needed immediately
-        date: newTicketDataForFirestore.date, // Return the Timestamp for Firestore consistency
+        ...ticketData,
+        date: newTicketDataForFirestore.date,
         status: 'available',
         sellerId: currentUserId,
         sellerVerified: sellerIsNowVerified,
         sellerContactEmail: sellerEmail,
         sellerContactPhone: sellerPhone,
-        createdAt: Timestamp.now() // Approximate; serverTimestamp is set by Firestore
+        createdAt: Timestamp.now()
     } as Ticket;
   } catch (error: any) {
     console.error("Error posting ticket to Firestore: ", error);
@@ -488,16 +476,16 @@ function isUserVerifiedByTicketCountInternal(userId: string, tickets: Ticket[]):
 }
 
 // Public function to check verification status by querying Firestore
-export async function isUserVerifiedByTicketCount(userId: string): Promise<boolean> {
-  if (userId === 'anonymousUser') return false;
-  try {
-    const q = query(collection(db, "tickets"), where("sellerId", "==", userId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.size >= 3;
-  } catch (error) {
-    console.error("Error checking user ticket count from Firestore:", error);
-    return false; // Default to not verified on error
-  }
+export function isUserVerifiedByTicketCount(userId: string): boolean {
+    if (userId === 'anonymousUser') return false;
+
+    // This function is now synchronous and relies on localStorage for the demo.
+    // A real implementation would need to be async and query Firestore.
+    // We are simulating this based on the seller's *currently* posted tickets in localStorage
+    // for the purpose of the UI badge, which may not be 100% in sync with Firestore
+    // without a real-time listener.
+    const allTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, []);
+    return isUserVerifiedByTicketCountInternal(userId, allTickets);
 }
 
 export async function isUserProfileVerified(userId: string): Promise<boolean> {
@@ -567,3 +555,5 @@ if (typeof window !== 'undefined') {
         }
     });
 }
+
+    
