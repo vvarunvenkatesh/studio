@@ -162,19 +162,19 @@ export async function postTicket(
   // Verification status is met if they already have 2 tickets and are about to post their 3rd (or more).
   const sellerIsNowVerified = (existingUserTicketsCount + 1) >= 3;
 
-  // Sanitize the input data to ensure no `undefined` values are sent to Firestore.
-  // This is the critical fix.
+  // This is the definitive fix: Create a clean object for Firestore,
+  // ensuring any undefined or empty values become null.
   const newTicketDataForFirestore = {
     type: ticketData.type,
     description: ticketData.description,
     price: ticketData.price,
-    date: Timestamp.fromDate(new Date(ticketData.date)), // Correctly use the string date
+    date: Timestamp.fromDate(new Date(ticketData.date)),
     time: ticketData.time,
-    title: ticketData.title || null, // Convert falsy to null
-    location: ticketData.location || null, // Convert falsy to null
-    fromCity: ticketData.fromCity || null, // Convert falsy to null
-    toCity: ticketData.toCity || null, // Convert falsy to null
-    originalTicketDataUri: ticketData.originalTicketDataUri || null, // Convert falsy to null
+    title: ticketData.title || null,
+    location: ticketData.location || null,
+    fromCity: ticketData.fromCity || null,
+    toCity: ticketData.toCity || null,
+    originalTicketDataUri: ticketData.originalTicketDataUri || null,
     status: 'available' as const,
     sellerId: currentUserId,
     sellerVerified: sellerIsNowVerified,

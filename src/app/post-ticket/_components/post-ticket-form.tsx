@@ -271,7 +271,7 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
         originalTicketDataUri: values.originalTicketDataUri,
       };
 
-      // Only include title if it has a value
+      // Only include title if it has a value. This prevents sending undefined.
       if (values.title) {
         ticketPayloadForService.title = values.title;
       }
