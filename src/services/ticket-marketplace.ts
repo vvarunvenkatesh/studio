@@ -154,25 +154,22 @@ export async function postTicket(
     }
   }
 
-  // Seller verification logic (based on ticket count from Firestore)
+  // Seller verification logic: Fetch ONLY the seller's tickets to check count
   const userTicketsQuery = query(collection(db, "tickets"), where("sellerId", "==", currentUserId));
   const userTicketsSnapshot = await getDocs(userTicketsQuery);
-  const existingUserTickets: Ticket[] = [];
-  userTicketsSnapshot.forEach(doc => {
-    existingUserTickets.push({ id: doc.id, ...doc.data() } as Ticket);
-  });
+  const existingUserTicketsCount = userTicketsSnapshot.size;
 
-  // Check verification status *including* the ticket about to be posted.
-  const sellerIsNowVerified = isUserVerifiedByTicketCountInternal(currentUserId, [...existingUserTickets, ticketData as Ticket]);
+  // Verification status is met if they already have 2 tickets and are about to post their 3rd (or more).
+  const sellerIsNowVerified = (existingUserTicketsCount + 1) >= 3;
 
-
+  // Sanitize the input data to ensure no `undefined` values are sent to Firestore.
   const newTicketDataForFirestore = {
-    ...ticketData,
-    title: ticketData.title || null,
+    type: ticketData.type,
     description: ticketData.description,
     price: ticketData.price,
     date: Timestamp.fromDate(new Date(ticketData.date as string)),
     time: ticketData.time,
+    title: ticketData.title || null,
     location: ticketData.location || null,
     fromCity: ticketData.fromCity || null,
     toCity: ticketData.toCity || null,
@@ -189,33 +186,26 @@ export async function postTicket(
     const docRef = await addDoc(collection(db, "tickets"), newTicketDataForFirestore);
     console.log("Ticket posted to Firestore with ID: ", docRef.id);
 
+    // If the seller's verification status has changed, update all their existing tickets.
     const batch = writeBatch(db);
-    const allSellerTicketsQuery = query(collection(db, "tickets"), where("sellerId", "==", currentUserId));
-    const allSellerTicketsSnapshot = await getDocs(allSellerTicketsQuery);
-    
-    allSellerTicketsSnapshot.forEach((ticketDoc) => {
-      // Update verification status on all of the seller's tickets if it's different from the new status
+    userTicketsSnapshot.forEach((ticketDoc) => {
       if (ticketDoc.data().sellerVerified !== sellerIsNowVerified) {
         const ticketRef = doc(db, "tickets", ticketDoc.id);
         batch.update(ticketRef, { sellerVerified: sellerIsNowVerified });
       }
     });
-    // Add the just-created ticket to the batch update as well to ensure it has the correct status
-    const newTicketRef = doc(db, "tickets", docRef.id);
-    batch.update(newTicketRef, { sellerVerified: sellerIsNowVerified });
-
     await batch.commit();
-    console.log(`Updated verification status for seller ${currentUserId}'s tickets.`);
+    console.log(`Updated verification status for seller ${currentUserId}'s tickets if needed.`);
 
     // Construct the returned ticket object from the clean Firestore data
     const finalTicket: Ticket = {
       id: docRef.id,
-      ...ticketData, // Start with original data
+      ...ticketData,
       date: newTicketDataForFirestore.date, // Use the Timestamp version
       status: 'available',
       sellerId: currentUserId,
       sellerVerified: newTicketDataForFirestore.sellerVerified,
-      sellerContactEmail: newTicketDataForFirestore.sellerContactEmail ?? undefined, // Convert null back to undefined
+      sellerContactEmail: newTicketDataForFirestore.sellerContactEmail ?? undefined,
       sellerContactPhone: newTicketDataForFirestore.sellerContactPhone ?? undefined,
       createdAt: Timestamp.now()
     };
@@ -569,7 +559,3 @@ if (typeof window !== 'undefined') {
         }
     });
 }
-
-    
-
-    

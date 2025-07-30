@@ -265,13 +265,14 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
         price: values.price,
         date: format(values.date, 'yyyy-MM-dd'),
         time: values.time,
-        location: values.location || '',
+        location: values.location,
         fromCity: values.fromCity,
         toCity: values.toCity,
         originalTicketDataUri: values.originalTicketDataUri,
       };
 
-      if ((values.type === 'movie' || values.type === 'event' || values.type === 'sports') && values.title) {
+      // Only include title if it has a value
+      if (values.title) {
         ticketPayloadForService.title = values.title;
       }
 
@@ -646,5 +647,3 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     </>
   );
 }
-
-    
