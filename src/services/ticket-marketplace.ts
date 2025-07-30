@@ -162,14 +162,13 @@ export async function postTicket(
     existingUserTickets.push({ id: doc.id, ...doc.data() } as Ticket);
   });
 
-  // Add the current ticket being posted to the list before checking verification count for the new ticket
-  const tempNewTicketForVerificationCount = { ...ticketData, sellerId: currentUserId, type: ticketData.type }; // Ensure type is included
-  const sellerIsNowVerified = isUserVerifiedByTicketCountInternal(currentUserId, [...existingUserTickets, tempNewTicketForVerificationCount as Ticket]);
+  // Check verification status *including* the ticket about to be posted.
+  const sellerIsNowVerified = isUserVerifiedByTicketCountInternal(currentUserId, [...existingUserTickets, ticketData as Ticket]);
 
 
   const newTicketDataForFirestore = {
     ...ticketData,
-    title: ticketData.title || null, // Ensure title is null, not undefined
+    title: ticketData.title || null,
     description: ticketData.description,
     price: ticketData.price,
     date: Timestamp.fromDate(new Date(ticketData.date as string)),
@@ -195,25 +194,34 @@ export async function postTicket(
     const allSellerTicketsSnapshot = await getDocs(allSellerTicketsQuery);
     
     allSellerTicketsSnapshot.forEach((ticketDoc) => {
-      if (ticketDoc.data().sellerVerified !== sellerIsNowVerified || ticketDoc.id !== docRef.id) {
+      // Update verification status on all of the seller's tickets if it's different from the new status
+      if (ticketDoc.data().sellerVerified !== sellerIsNowVerified) {
         const ticketRef = doc(db, "tickets", ticketDoc.id);
         batch.update(ticketRef, { sellerVerified: sellerIsNowVerified });
       }
     });
+    // Add the just-created ticket to the batch update as well to ensure it has the correct status
+    const newTicketRef = doc(db, "tickets", docRef.id);
+    batch.update(newTicketRef, { sellerVerified: sellerIsNowVerified });
+
     await batch.commit();
     console.log(`Updated verification status for seller ${currentUserId}'s tickets.`);
 
-    return {
-        id: docRef.id,
-        ...ticketData,
-        date: newTicketDataForFirestore.date,
-        status: 'available',
-        sellerId: currentUserId,
-        sellerVerified: sellerIsNowVerified,
-        sellerContactEmail: sellerEmail,
-        sellerContactPhone: sellerPhone,
-        createdAt: Timestamp.now()
-    } as Ticket;
+    // Construct the returned ticket object from the clean Firestore data
+    const finalTicket: Ticket = {
+      id: docRef.id,
+      ...ticketData, // Start with original data
+      date: newTicketDataForFirestore.date, // Use the Timestamp version
+      status: 'available',
+      sellerId: currentUserId,
+      sellerVerified: newTicketDataForFirestore.sellerVerified,
+      sellerContactEmail: newTicketDataForFirestore.sellerContactEmail ?? undefined, // Convert null back to undefined
+      sellerContactPhone: newTicketDataForFirestore.sellerContactPhone ?? undefined,
+      createdAt: Timestamp.now()
+    };
+
+    return finalTicket;
+
   } catch (error: any) {
     console.error("Error posting ticket to Firestore: ", error);
     if (error.code === 'permission-denied') {
@@ -561,5 +569,7 @@ if (typeof window !== 'undefined') {
         }
     });
 }
+
+    
 
     
