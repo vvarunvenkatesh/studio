@@ -162,8 +162,8 @@ export async function postTicket(
   // Verification status is met if they already have 2 tickets and are about to post their 3rd (or more).
   const sellerIsNowVerified = (existingUserTicketsCount + 1) >= 3;
 
-  // This is the definitive fix: Create a clean object for Firestore,
-  // ensuring any undefined or empty values become null.
+  // *** ROBUST DATA SANITIZATION ***
+  // Create a clean object for Firestore, ensuring any undefined or empty values become null.
   const newTicketDataForFirestore = {
     type: ticketData.type,
     description: ticketData.description,
@@ -568,3 +568,5 @@ if (typeof window !== 'undefined') {
         }
     });
 }
+
+    
