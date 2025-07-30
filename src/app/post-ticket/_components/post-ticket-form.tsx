@@ -259,9 +259,8 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     }
     setIsSubmitting(true);
     try {
-      const ticketPayloadForService = {
+      const ticketPayloadForService: any = {
         type: values.type,
-        title: (values.type === 'movie' || values.type === 'event' || values.type === 'sports') ? values.title : undefined,
         description: values.description,
         price: values.price,
         date: format(values.date, 'yyyy-MM-dd'),
@@ -271,6 +270,10 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
         toCity: values.toCity,
         originalTicketDataUri: values.originalTicketDataUri,
       };
+
+      if ((values.type === 'movie' || values.type === 'event' || values.type === 'sports') && values.title) {
+        ticketPayloadForService.title = values.title;
+      }
 
       const createdTicket = await postTicketService(ticketPayloadForService);
 
@@ -643,3 +646,5 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     </>
   );
 }
+
+    
