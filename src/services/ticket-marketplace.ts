@@ -170,7 +170,13 @@ export async function postTicket(
   const newTicketDataForFirestore = {
     ...ticketData,
     title: ticketData.title || null, // Ensure title is null, not undefined
+    description: ticketData.description,
+    price: ticketData.price,
     date: Timestamp.fromDate(new Date(ticketData.date as string)),
+    time: ticketData.time,
+    location: ticketData.location || null,
+    fromCity: ticketData.fromCity || null,
+    toCity: ticketData.toCity || null,
     originalTicketDataUri: ticketData.originalTicketDataUri || null,
     status: 'available' as const,
     sellerId: currentUserId,
