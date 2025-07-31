@@ -84,11 +84,11 @@ interface UserData {
   gender: 'male' | 'female' | 'other' | string;
 }
 
-const marketplaceTicketsKey = 'marketplaceTickets'; // To be fully replaced by Firestore "tickets" collection
-const userOrdersKey = 'userOrders'; // To be fully replaced by Firestore "orders" collection
-const userDataKey = 'userData'; // User profile data, ideally from Firebase Auth user profile or a 'users' collection
+const marketplaceTicketsKey = 'marketplaceTickets';
+const userOrdersKey = 'userOrders';
+const userDataKey = 'userData';
 
-// --- LocalStorage Helper Functions (Still used for some UI aspects temporarily) ---
+// --- LocalStorage Helper Functions ---
 const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
     if (typeof window !== 'undefined') {
         const stored = localStorage.getItem(key);
@@ -122,17 +122,13 @@ const saveToLocalStorage = <T>(key: string, data: T) => {
     }
 };
 
-// --- User Orders (still uses localStorage for now, would migrate to Firestore) ---
+// --- User Orders ---
 const getUserOrders = (): Ticket[] => loadFromLocalStorage<Ticket[]>(userOrdersKey, []);
 const saveUserOrders = (orders: Ticket[]) => saveToLocalStorage(userOrdersKey, orders);
 const addUserOrder = (ticket: Ticket) => saveUserOrders([...getUserOrders(), ticket]);
 
+// --- Ticket Marketplace Service Functions (Using LocalStorage) ---
 
-// --- Ticket Marketplace Service Functions ---
-
-/**
- * Posts a new ticket to Firestore.
- */
 export async function postTicket(
   ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId' | 'sellerVerified' | 'sellerContactEmail' | 'sellerContactPhone' | 'createdAt' | 'date'> & { date: string, originalTicketDataUri?: string, title?: string }
 ): Promise<Ticket> {
@@ -154,83 +150,34 @@ export async function postTicket(
     }
   }
 
-  // Seller verification logic: Fetch ONLY the seller's tickets to check count
-  const userTicketsQuery = query(collection(db, "tickets"), where("sellerId", "==", currentUserId));
-  const userTicketsSnapshot = await getDocs(userTicketsQuery);
-  const existingUserTicketsCount = userTicketsSnapshot.size;
-
-  // Verification status is met if they already have 2 tickets and are about to post their 3rd (or more).
-  const sellerIsNowVerified = (existingUserTicketsCount + 1) >= 3;
-
-  // *** ROBUST DATA SANITIZATION ***
-  // Create a clean object for Firestore, ensuring any undefined or empty values become null.
-  const newTicketDataForFirestore = {
-    type: ticketData.type,
-    description: ticketData.description,
-    price: ticketData.price,
-    date: Timestamp.fromDate(new Date(ticketData.date)),
-    time: ticketData.time,
-    title: ticketData.title || null,
-    location: ticketData.location || null,
-    fromCity: ticketData.fromCity || null,
-    toCity: ticketData.toCity || null,
-    originalTicketDataUri: ticketData.originalTicketDataUri || null,
-    status: 'available' as const,
+  const allTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, []);
+  
+  const newTicket: Ticket = {
+    id: new Date().getTime().toString(), // Simple unique ID for localStorage
+    ...ticketData,
+    status: 'available',
     sellerId: currentUserId,
-    sellerVerified: sellerIsNowVerified,
-    sellerContactEmail: sellerEmail || null,
-    sellerContactPhone: sellerPhone || null,
-    createdAt: serverTimestamp(),
+    sellerContactEmail: sellerEmail,
+    sellerContactPhone: sellerPhone,
   };
 
-  try {
-    const docRef = await addDoc(collection(db, "tickets"), newTicketDataForFirestore);
-    console.log("Ticket posted to Firestore with ID: ", docRef.id);
+  const updatedTickets = [...allTickets, newTicket];
+  
+  const sellerIsNowVerified = isUserVerifiedByTicketCountInternal(currentUserId, updatedTickets);
+  newTicket.sellerVerified = sellerIsNowVerified;
 
-    // If the seller's verification status has changed, update all their existing tickets.
-    if (sellerIsNowVerified && userTicketsSnapshot.docs.some(d => d.data().sellerVerified === false)) {
-        const batch = writeBatch(db);
-        userTicketsSnapshot.forEach((ticketDoc) => {
-          const ticketRef = doc(db, "tickets", ticketDoc.id);
-          batch.update(ticketRef, { sellerVerified: true });
-        });
-        await batch.commit();
-        console.log(`Updated verification status for seller ${currentUserId}'s tickets.`);
-    }
-    
-    // Construct the returned ticket object from the clean Firestore data
-    const finalTicket: Ticket = {
-      id: docRef.id,
-      type: newTicketDataForFirestore.type,
-      description: newTicketDataForFirestore.description,
-      price: newTicketDataForFirestore.price,
-      date: newTicketDataForFirestore.date, // Use the Timestamp version
-      time: newTicketDataForFirestore.time,
-      title: newTicketDataForFirestore.title ?? undefined,
-      location: newTicketDataForFirestore.location ?? undefined,
-      fromCity: newTicketDataForFirestore.fromCity ?? undefined,
-      toCity: newTicketDataForFirestore.toCity ?? undefined,
-      originalTicketDataUri: newTicketDataForFirestore.originalTicketDataUri ?? undefined,
-      status: 'available',
-      sellerId: currentUserId,
-      sellerVerified: newTicketDataForFirestore.sellerVerified,
-      sellerContactEmail: newTicketDataForFirestore.sellerContactEmail ?? undefined,
-      sellerContactPhone: newTicketDataForFirestore.sellerContactPhone ?? undefined,
-      createdAt: Timestamp.now()
-    };
-
-    return finalTicket;
-
-  } catch (error: any) {
-    console.error("Error posting ticket to Firestore: ", error);
-    if (error.code === 'permission-denied') {
-        throw new Error("You do not have permission to post tickets. Please check Firestore rules.");
-    }
-    throw new Error(`Failed to post ticket to Firestore. ${error.message || 'Unknown error'}`);
+  // If seller is now verified, update all their tickets
+  if (sellerIsNowVerified) {
+      for (const ticket of updatedTickets) {
+          if (ticket.sellerId === currentUserId) {
+              ticket.sellerVerified = true;
+          }
+      }
   }
-}
 
-// --- Functions below use a mix or primarily localStorage and need to be refactored for Firestore ---
+  saveToLocalStorage(marketplaceTicketsKey, updatedTickets);
+  return newTicket;
+}
 
 export async function getAvailableTickets(filters?: {
   category?: Ticket['type'] | 'transport' | 'all';
@@ -242,292 +189,196 @@ export async function getAvailableTickets(filters?: {
   endDate?: string;
   searchTerm?: string;
   ticketId?: string;
-  location?: string; // Added for event-like location filtering
+  location?: string;
 }): Promise<Ticket[]> {
-  // This function should now primarily fetch from Firestore
-  console.warn("getAvailableTickets is being refactored for Firestore. Current implementation may be partial.");
+  const allTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+  let availableTickets = allTickets.filter(ticket => ticket.status === 'available');
 
-  let q = query(collection(db, "tickets"), where("status", "==", "available"));
-
-  if (filters?.ticketId) {
-    // This case is tricky if we want to fetch ONLY by ID without status.
-    // For now, let's assume if ID is passed, we fetch that specific one, regardless of status (handled by caller if needed).
-    // Or, if the intent is to get an *available* ticket by ID:
-    // q = query(collection(db, "tickets"), where("id", "==", filters.ticketId), where("status", "==", "available"));
-    // However, querying by document ID is direct:
-    try {
-        const docRef = doc(db, "tickets", filters.ticketId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const ticket = { id: docSnap.id, ...docSnap.data() } as Ticket;
-            // If filtering by ID, usually we only expect one, so just return it if found and available (or as needed)
-            return ticket.status === 'available' ? [ticket] : [];
-        } else {
-            return [];
+  if (!filters) {
+    return availableTickets;
+  }
+  
+  return availableTickets.filter(ticket => {
+    // Category filter
+    if (filters.category && filters.category !== 'all') {
+        if (filters.category === 'transport') {
+            if (ticket.type !== 'train' && ticket.type !== 'bus') return false;
+        } else if (ticket.type !== filters.category) {
+            return false;
         }
-    } catch (error) {
-        console.error("Error fetching ticket by ID from Firestore: ", error);
-        return [];
     }
-  }
+    
+    const isEventLike = ticket.type === 'movie' || ticket.type === 'event' || ticket.type === 'sports';
 
-  if (filters?.category) {
-    if (filters.category === 'transport') {
-      q = query(q, where("type", "in", ["train", "bus"]));
-    } else if (filters.category !== 'all') {
-      q = query(q, where("type", "==", filters.category));
+    // From/To city filters (apply only to non-event-like tickets)
+    if (!isEventLike) {
+        if (filters.fromCity && ticket.fromCity?.toLowerCase() !== filters.fromCity.toLowerCase()) return false;
+        if (filters.toCity && ticket.toCity?.toLowerCase() !== filters.toCity.toLowerCase()) return false;
     }
-  }
 
-  // Firestore doesn't support case-insensitive 'contains' or OR queries on different fields easily.
-  // For searchTerm, you'd typically:
-  // 1. Store searchable fields in a dedicated, lowercased array field.
-  // 2. Use a third-party search service like Algolia or Typesense.
-  // 3. Perform multiple queries and merge results (complex).
-  // For this prototype, if searchTerm is present, we might have to do more client-side filtering after a broader fetch,
-  // or accept that Firestore search will be limited (e.g., exact match or prefix on one field).
-  // The current localStorage-based filtering is more flexible for searchTerm but doesn't apply to Firestore.
-  // For now, Firestore part of searchTerm is omitted due to complexity.
+    // Location filter (apply only to event-like tickets)
+    if (isEventLike) {
+        if (filters.location && !ticket.location?.toLowerCase().includes(filters.location.toLowerCase())) return false;
+    }
 
-  if (filters?.location && (filters.category === 'movie' || filters.category === 'event' || filters.category === 'sports')) {
-    // This is also tricky for Firestore "contains". A common pattern is to store location parts in an array.
-    // For simplicity, we'll assume location is a direct field to query if needed (e.g., exact city match).
-    // q = query(q, where("location", ">=", filters.location.toLowerCase()), where("location", "<=", filters.location.toLowerCase() + '\uf8ff')); // Basic prefix
-    // This is not a true "contains". A better approach for "contains" would be a more complex data structure or third-party search.
-    // Let's filter this client-side for now if using Firestore.
-  }
+    // Price filters (apply only to non-event-like tickets)
+    if (!isEventLike) {
+        if (filters.minPrice !== undefined && ticket.price < filters.minPrice) return false;
+        if (filters.maxPrice !== undefined && ticket.price > filters.maxPrice) return false;
+    }
 
-  if (filters?.fromCity && !(filters.category === 'movie' || filters.category === 'event' || filters.category === 'sports')) {
-    q = query(q, where("fromCity", "==", filters.fromCity)); // Assumes exact match for Firestore
-  }
+    // Date filters
+    if (filters.startDate) {
+        const startDate = new Date(filters.startDate + 'T00:00:00');
+        const ticketDate = new Date(ticket.date as string);
+        if (ticketDate < startDate) return false;
+    }
+    if (filters.endDate) {
+        const endDate = new Date(filters.endDate + 'T23:59:59');
+        const ticketDate = new Date(ticket.date as string);
+        if (ticketDate > endDate) return false;
+    }
 
-  if (filters?.toCity && !(filters.category === 'movie' || filters.category === 'event' || filters.category === 'sports')) {
-    q = query(q, where("toCity", "==", filters.toCity)); // Assumes exact match for Firestore
-  }
+    // Search term filter
+    if (filters.searchTerm) {
+        const term = filters.searchTerm.toLowerCase();
+        const ticketTitle = (ticket.title || '').toLowerCase();
+        const ticketDesc = ticket.description.toLowerCase();
+        const ticketFrom = (ticket.fromCity || '').toLowerCase();
+        const ticketTo = (ticket.toCity || '').toLowerCase();
+        const ticketLoc = (ticket.location || '').toLowerCase();
+        const ticketType = ticket.type.toLowerCase();
 
-  if (filters?.minPrice !== undefined && !(filters.category === 'movie' || filters.category === 'event' || filters.category === 'sports')) {
-      q = query(q, where("price", ">=", filters.minPrice));
-  }
-  if (filters?.maxPrice !== undefined && !(filters.category === 'movie' || filters.category === 'event' || filters.category === 'sports')) {
-      q = query(q, where("price", "<=", filters.maxPrice));
-  }
+        if (
+            !ticketTitle.includes(term) &&
+            !ticketDesc.includes(term) &&
+            !ticketFrom.includes(term) &&
+            !ticketTo.includes(term) &&
+            !ticketLoc.includes(term) &&
+            !ticketType.includes(term)
+        ) {
+            return false;
+        }
+    }
 
-  if (filters?.startDate) {
-      q = query(q, where("date", ">=", Timestamp.fromDate(new Date(filters.startDate + 'T00:00:00'))));
-  }
-  if (filters?.endDate) {
-      q = query(q, where("date", "<=", Timestamp.fromDate(new Date(filters.endDate + 'T23:59:59'))));
-  }
+    // Ticket ID filter
+    if (filters.ticketId && ticket.id !== filters.ticketId) return false;
 
-  let fetchedTickets: Ticket[] = [];
-  try {
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-      fetchedTickets.push({ id: doc.id, ...doc.data() } as Ticket);
-    });
-  } catch (error) {
-      console.error("Error fetching tickets from Firestore: ", error);
-      throw new Error("Failed to fetch tickets from database.");
-  }
-
-  // Client-side filtering for searchTerm and event location if not effectively handled by Firestore query
-  if (filters?.searchTerm) {
-    const term = filters.searchTerm.toLowerCase();
-    fetchedTickets = fetchedTickets.filter(ticket =>
-        (ticket.title && ticket.title.toLowerCase().includes(term)) ||
-        ticket.description.toLowerCase().includes(term) ||
-        (ticket.location && ticket.location.toLowerCase().includes(term)) ||
-        (ticket.fromCity && ticket.fromCity.toLowerCase().includes(term)) ||
-        (ticket.toCity && ticket.toCity.toLowerCase().includes(term)) ||
-        (ticket.type.toLowerCase().includes(term))
-    );
-  }
-  if (filters?.location && (filters.category === 'movie' || filters.category === 'event' || filters.category === 'sports')) {
-    const locationLower = filters.location.toLowerCase();
-    // This ensures we apply the location filter for event-like categories if searchTerm didn't already cover it
-    // or if the Firestore query for location was too broad/not implemented.
-    fetchedTickets = fetchedTickets.filter(ticket => ticket.location?.toLowerCase().includes(locationLower));
-  }
-
-
-  return fetchedTickets;
+    return true;
+  });
 }
 
 export async function getTicketById(ticketId: string): Promise<Ticket | null> {
-  console.warn("getTicketById is being refactored for Firestore.");
-  try {
-    const docRef = doc(db, "tickets", ticketId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as Ticket;
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error(`Error fetching ticket ${ticketId} from Firestore:`, error);
-    return null;
-  }
+  const allTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, getDefaultTickets());
+  return allTickets.find(ticket => ticket.id === ticketId) || null;
 }
 
 export async function purchaseTicket(ticketId: string): Promise<{ success: boolean; message: string; ticket?: Ticket }> {
-  console.warn("purchaseTicket is being refactored for Firestore.");
   const buyerId = getSimulatedCurrentUserId();
   if (buyerId === 'anonymousUser') {
       return { success: false, message: "User must be logged in to purchase." };
   }
 
-  const ticketRef = doc(db, "tickets", ticketId);
-  try {
-    const ticketSnap = await getDoc(ticketRef);
-    if (!ticketSnap.exists()) {
-      return { success: false, message: `Ticket with ID ${ticketId} not found.` };
-    }
+  const allTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, []);
+  const ticketIndex = allTickets.findIndex(t => t.id === ticketId);
 
-    const ticketToUpdate = { id: ticketSnap.id, ...ticketSnap.data() } as Ticket;
-
-    if (ticketToUpdate.status === 'sold') {
-      return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: ticketToUpdate };
-    }
-    if (ticketToUpdate.sellerId === buyerId) {
-        return { success: false, message: `You cannot purchase your own ticket.` };
-    }
-
-    await updateDoc(ticketRef, {
-      status: 'sold',
-      // Potentially add buyerId to the ticket document if needed for history
-      // buyerId: buyerId,
-      // updatedAt: serverTimestamp() // Firestore automatically updates this if timestamps:true in schema
-    });
-
-    const updatedTicketData = { ...ticketToUpdate, status: 'sold' as const };
-
-    // Add to user's orders (still localStorage for this part of the example, would be Firestore collection)
-    addUserOrder(updatedTicketData);
-
-    let contactMessage = "Contact the seller ";
-      if (updatedTicketData.sellerContactEmail && updatedTicketData.sellerContactPhone) {
-          contactMessage += `at ${updatedTicketData.sellerContactEmail} or by phone at ${updatedTicketData.sellerContactPhone}`;
-      } else if (updatedTicketData.sellerContactEmail) {
-          contactMessage += `at ${updatedTicketData.sellerContactEmail}`;
-      } else if (updatedTicketData.sellerContactPhone) {
-          contactMessage += `by phone at ${updatedTicketData.sellerContactPhone}`;
-      } else {
-          contactMessage += "using their listed contact details";
-      }
-    contactMessage += " to complete your purchase.";
-    return { success: true, message: `Ticket ${ticketId} purchase initiated! ${contactMessage}`, ticket: updatedTicketData };
-
-  } catch (error: any) {
-    console.error("Error purchasing ticket from Firestore: ", error);
-    if (error.code === 'permission-denied') {
-        throw new Error("You do not have permission to purchase tickets. Please check Firestore rules.");
-    }
-    throw new Error(`Failed to purchase ticket from Firestore. ${error.message || 'Unknown error'}`);
+  if (ticketIndex === -1) {
+    return { success: false, message: `Ticket with ID ${ticketId} not found.` };
   }
+  
+  const ticketToUpdate = allTickets[ticketIndex];
+
+  if (ticketToUpdate.status === 'sold') {
+    return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: ticketToUpdate };
+  }
+  if (ticketToUpdate.sellerId === buyerId) {
+      return { success: false, message: `You cannot purchase your own ticket.` };
+  }
+
+  ticketToUpdate.status = 'sold';
+  allTickets[ticketIndex] = ticketToUpdate;
+  
+  saveToLocalStorage(marketplaceTicketsKey, allTickets);
+  addUserOrder(ticketToUpdate);
+
+  let contactMessage = "Contact the seller ";
+    if (ticketToUpdate.sellerContactEmail && ticketToUpdate.sellerContactPhone) {
+        contactMessage += `at ${ticketToUpdate.sellerContactEmail} or by phone at ${ticketToUpdate.sellerContactPhone}`;
+    } else if (ticketToUpdate.sellerContactEmail) {
+        contactMessage += `at ${ticketToUpdate.sellerContactEmail}`;
+    } else if (ticketToUpdate.sellerContactPhone) {
+        contactMessage += `by phone at ${ticketToUpdate.sellerContactPhone}`;
+    } else {
+        contactMessage += "using their listed contact details";
+    }
+  contactMessage += " to complete your purchase.";
+
+  return { success: true, message: `Ticket ${ticketId} purchase initiated!`, ticket: ticketToUpdate };
 }
+
 
 export async function deleteTicket(ticketId: string): Promise<{ success: boolean; message: string }> {
-    console.warn("deleteTicket is being refactored for Firestore.");
     const currentUserId = getSimulatedCurrentUserId();
     if (currentUserId === 'anonymousUser') {
-        // This check should ideally happen before calling the service,
-        // but it's good to have it here too for direct service calls.
         throw new Error("User must be logged in to delete a ticket.");
     }
+    
+    let allTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, []);
+    const ticketIndex = allTickets.findIndex(t => t.id === ticketId);
 
-    const ticketRef = doc(db, "tickets", ticketId);
-    try {
-        const ticketSnap = await getDoc(ticketRef);
-        if (!ticketSnap.exists()) {
-            return { success: false, message: `Ticket ${ticketId} not found.` };
-        }
-        const ticketData = ticketSnap.data();
-        if (ticketData.sellerId !== currentUserId) {
-            return { success: false, message: `You are not authorized to delete this ticket.` };
-        }
-
-        await deleteDoc(ticketRef);
-        console.log(`Ticket ${ticketId} deleted from Firestore.`);
-
-        // After deleting, re-evaluate and update verification status for remaining tickets of this seller
-        const remainingUserTicketsQuery = query(collection(db, "tickets"), where("sellerId", "==", currentUserId));
-        const remainingUserTicketsSnapshot = await getDocs(remainingUserTicketsQuery);
-        
-        // After deletion, the new count determines the verification status.
-        const sellerIsStillVerified = remainingUserTicketsSnapshot.size >= 3;
-
-        // If their status has now dropped to unverified, update all remaining tickets.
-        if (!sellerIsStillVerified && remainingUserTicketsSnapshot.docs.some(d => d.data().sellerVerified === true)) {
-            const batch = writeBatch(db);
-            remainingUserTicketsSnapshot.forEach((ticketDoc) => {
-                const specificTicketRef = doc(db, "tickets", ticketDoc.id);
-                batch.update(specificTicketRef, { sellerVerified: false });
-            });
-            await batch.commit();
-            console.log(`Updated verification status for seller ${currentUserId}'s remaining tickets to NOT VERIFIED.`);
-        }
-
-        return { success: true, message: `Your ticket listing has been removed.` };
-
-    } catch (error: any) {
-        console.error("Error deleting ticket from Firestore: ", error);
-        if (error.code === 'permission-denied') {
-            throw new Error("You do not have permission to delete this ticket. Please check Firestore rules.");
-        }
-        throw new Error(`Failed to delete ticket from Firestore. ${error.message || 'Unknown error'}`);
+    if (ticketIndex === -1) {
+        return { success: false, message: `Ticket ${ticketId} not found.` };
     }
+
+    if (allTickets[ticketIndex].sellerId !== currentUserId) {
+        return { success: false, message: `You are not authorized to delete this ticket.` };
+    }
+
+    allTickets.splice(ticketIndex, 1);
+    
+    const sellerIsStillVerified = isUserVerifiedByTicketCountInternal(currentUserId, allTickets);
+    // If their status has now dropped to unverified, update all remaining tickets.
+    if (!sellerIsStillVerified) {
+        allTickets.forEach(ticket => {
+            if (ticket.sellerId === currentUserId) {
+                ticket.sellerVerified = false;
+            }
+        });
+    }
+
+    saveToLocalStorage(marketplaceTicketsKey, allTickets);
+    return { success: true, message: `Your ticket listing has been removed.` };
 }
 
+// --- Verification Logic ---
 
-// --- Verification Logic (Requires Firestore queries) ---
-
-// Internal helper to check verification based on a provided list of tickets (e.g., including one about to be posted)
 function isUserVerifiedByTicketCountInternal(userId: string, tickets: Ticket[]): boolean {
   if (userId === 'anonymousUser') return false;
   const userTicketCount = tickets.filter(ticket => ticket.sellerId === userId).length;
   return userTicketCount >= 3;
 }
 
-// Public function to check verification status by querying Firestore
 export function isUserVerifiedByTicketCount(userId: string): boolean {
     if (userId === 'anonymousUser') return false;
-
-    // This function is now synchronous and relies on localStorage for the demo.
-    // A real implementation would need to be async and query Firestore.
-    // We are simulating this based on the seller's *currently* posted tickets in localStorage
-    // for the purpose of the UI badge, which may not be 100% in sync with Firestore
-    // without a real-time listener.
     const allTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, []);
     return isUserVerifiedByTicketCountInternal(userId, allTickets);
 }
 
 export async function isUserProfileVerified(userId: string): Promise<boolean> {
     if (userId === 'anonymousUser') return false;
-    try {
-        const postedTicketsQuery = query(collection(db, "tickets"), where("sellerId", "==", userId));
-        const postedTicketsSnapshot = await getDocs(postedTicketsQuery);
-        const postedTicketCount = postedTicketsSnapshot.size;
-
-        if (postedTicketCount < 3) return false;
-
-        const soldTicketsQuery = query(collection(db, "tickets"), where("sellerId", "==", userId), where("status", "==", "sold"));
-        const soldTicketsSnapshot = await getDocs(soldTicketsQuery);
-        const soldTicketCount = soldTicketsSnapshot.size;
-
-        return soldTicketCount > 0;
-    } catch (error) {
-        console.error("Error checking user profile verification from Firestore:", error);
-        return false;
-    }
+    const allTickets = loadFromLocalStorage<Ticket[]>(marketplaceTicketsKey, []);
+    const postedTicketCount = allTickets.filter(t => t.sellerId === userId).length;
+    if (postedTicketCount < 3) return false;
+    const soldTicketCount = allTickets.filter(t => t.sellerId === userId && t.status === 'sold').length;
+    return soldTicketCount > 0;
 }
 
 
-// --- User Authentication Simulation (Client-side only) ---
-// This needs to be replaced with Firebase Authentication for a real app.
+// --- User Authentication Simulation ---
 export function getSimulatedCurrentUserId(): string {
     if (typeof window !== 'undefined') {
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const userId = localStorage.getItem('userId'); // User's email/phone used as ID
+        const userId = localStorage.getItem('userId');
         if (isLoggedIn && userId) {
             return userId;
         }
@@ -535,11 +386,8 @@ export function getSimulatedCurrentUserId(): string {
     return 'anonymousUser';
 }
 
-// Default tickets are used if localStorage is empty.
-// This part would be removed or changed if data is solely from Firestore.
 const getDefaultTickets = (): Ticket[] => {
-  const verifiedSellerAmongDefaults = "verifiedSeller@example.com"; // Example ID for a verified default seller
-
+  const verifiedSellerAmongDefaults = "verifiedSeller@example.com";
   return [
     {
       id: '1', type: 'movie', title: 'Action Movie Premiere', description: 'Best seats for the latest action blockbuster.', price: 250, date: '2024-08-15', time: '20:00', location: 'Cityplex Screen 1', sellerId: 'seller1@example.com', status: 'available', sellerVerified: false, sellerContactEmail: 'seller1@example.com', sellerContactPhone: '1111111111'
@@ -556,8 +404,6 @@ const getDefaultTickets = (): Ticket[] => {
   ];
 };
 
-// Initialize localStorage with default tickets if it's empty (for prototype)
-// This will be less relevant once all reads are from Firestore.
 if (typeof window !== 'undefined' && !localStorage.getItem(marketplaceTicketsKey)) {
     saveToLocalStorage(marketplaceTicketsKey, getDefaultTickets());
 }
