@@ -30,7 +30,7 @@ interface OrderItemProps {
 function OrderItem({ order, onDelete }: OrderItemProps) { 
   const { toast } = useToast();
   const CategorySpecificIcon = categoryIconMap[order.type] || TicketCategoryIcon;
-  const formattedDate = format(new Date(order.date.toDate()), 'PPP');
+  const formattedDate = format(new Date(order.date), 'PPP');
 
    const handleDownload = async (dataUri: string | undefined, ticketId: string, ticketType: string) => {
      if (!dataUri) {
@@ -269,12 +269,8 @@ export default function ProfileOrdersPage() {
             const storedOrdersString = localStorage.getItem('userOrders');
             if (storedOrdersString) {
                 const storedOrders: any[] = JSON.parse(storedOrdersString);
-                // Firestore Timestamps need to be converted back to Date objects
-                const ordersWithDates = storedOrders.map(order => ({
-                    ...order,
-                    date: order.date ? new Date(order.date.seconds * 1000) : new Date()
-                }));
-                setOrders(getUniqueOrders(ordersWithDates).reverse()); 
+                // The 'date' is already a string from the service, so we just use it.
+                setOrders(getUniqueOrders(storedOrders).reverse());
             }
         } catch (e) {
             console.error("Failed to load orders from localStorage:", e);
@@ -289,11 +285,7 @@ export default function ProfileOrdersPage() {
                     const newValue = event.newValue;
                     if (newValue) {
                         const updatedStoredOrders: any[] = JSON.parse(newValue);
-                        const ordersWithDates = updatedStoredOrders.map(order => ({
-                            ...order,
-                            date: order.date ? new Date(order.date.seconds * 1000) : new Date()
-                        }));
-                        setOrders(getUniqueOrders(ordersWithDates).reverse());
+                        setOrders(getUniqueOrders(updatedStoredOrders).reverse());
                     } else {
                         setOrders([]);
                     }

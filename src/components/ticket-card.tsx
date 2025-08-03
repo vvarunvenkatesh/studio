@@ -62,7 +62,7 @@ export function TicketCard({
     return () => unsubscribe();
   }, []);
 
-  const formattedDate = format(new Date(ticketProp.date.toDate()), 'PPP');
+  const formattedDate = format(new Date(ticketProp.date), 'PPP');
   const CategorySpecificIcon = categoryIconMap[ticketProp.type] || TicketIconLucide;
 
   const isTicketSold = ticketProp.status === 'sold';
@@ -104,13 +104,13 @@ export function TicketCard({
         } else {
             contactMessage += "using their listed contact details";
         }
-        contactMessage += " to arrange ticket transfer.";
+        contactMessage += " to arrange ticket transfer. You can find this order in your profile.";
 
         toast({
-          title: 'Purchase Initiated!',
+          title: 'Purchase Success!',
           description: contactMessage,
           variant: 'success',
-          duration: 7000,
+          duration: 9000,
         });
         if (onPurchaseSuccess) {
           onPurchaseSuccess(result.ticket.id);
@@ -118,7 +118,7 @@ export function TicketCard({
       } else {
         toast({
           title: 'Purchase Failed',
-          description: result.message || 'Could not initiate purchase for the ticket.',
+          description: result.message || 'Could not complete the purchase.',
           variant: 'destructive',
         });
         if (result.ticket && result.message?.includes('already sold')) {
@@ -131,7 +131,7 @@ export function TicketCard({
       console.error('Error initiating purchase:', error);
       toast({
           title: 'Purchase Error',
-          description: error.message || 'Something went wrong during the purchase initiation.',
+          description: error.message || 'Something went wrong during the purchase.',
           variant: 'destructive',
       });
     } finally {

@@ -30,9 +30,9 @@ export interface Ticket {
    */
   price: number;
   /**
-   * The date of the event or travel. Stored as a Firestore Timestamp.
+   * The date of the event or travel.
    */
-  date: Timestamp;
+  date: string;
   /**
    * The time of the event or travel (HH:MM).
    */
@@ -75,10 +75,15 @@ export interface Ticket {
     */
    sellerContactPhone?: string | null;
    /**
-    * Timestamp of when the ticket was created.
+    * Timestamp of when the ticket was created. Stored as an ISO string.
     */
-   createdAt?: Timestamp;
+   createdAt?: string;
+   /**
+    * The ID of the user who bought the ticket.
+    */
+   buyerId?: string | null;
 }
+
 
 interface UserData {
   name: string;
@@ -94,11 +99,18 @@ const getCurrentUser = () => {
     return auth.currentUser;
 };
 
+// This function simulates getting a user ID. In a real app, this would come from a session.
+export const getSimulatedCurrentUserId = (): string => {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('userId') || 'anonymousUser';
+    }
+    return 'anonymousUser';
+};
 
 // --- Firestore-based Service Functions ---
 
 export async function postTicket(
-  ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId' | 'sellerVerified' | 'sellerContactEmail' | 'sellerContactPhone' | 'createdAt' | 'date'> & { date: string }
+  ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId' | 'sellerVerified' | 'sellerContactEmail' | 'sellerContactPhone' | 'createdAt'>
 ): Promise<Ticket> {
   const currentUser = getCurrentUser();
   if (!currentUser) {
@@ -128,7 +140,7 @@ export async function postTicket(
 
   const ticketToCreate = {
     ...ticketData,
-    date: Timestamp.fromDate(new Date(ticketData.date)),
+    date: Timestamp.fromDate(new Date(ticketData.date)), // Convert string date to Timestamp for Firestore
     status: 'available' as const,
     sellerId: currentUserId,
     sellerVerified: sellerIsVerified,
@@ -156,10 +168,17 @@ export async function postTicket(
     });
     await batch.commit();
   }
-
+  
   const newTicketData = (await getDoc(docRef)).data();
+  // When returning the ticket, convert Timestamp back to string for client-side consistency
+  const finalTicket = {
+      ...newTicketData,
+      id: docRef.id,
+      date: (newTicketData?.date as Timestamp)?.toDate().toISOString(),
+      createdAt: (newTicketData?.createdAt as Timestamp)?.toDate().toISOString(),
+  };
 
-  return { id: docRef.id, ...newTicketData } as Ticket;
+  return finalTicket as Ticket;
 }
 
 export async function getAvailableTickets(filters?: {
@@ -193,10 +212,15 @@ export async function getAvailableTickets(filters?: {
   }
 
   const snapshot = await getDocs(q);
-  const tickets: Ticket[] = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  } as Ticket));
+  const tickets: Ticket[] = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+          id: doc.id,
+          ...data,
+          date: (data.date as Timestamp)?.toDate().toISOString(),
+          createdAt: (data.createdAt as Timestamp)?.toDate().toISOString(),
+      } as Ticket
+  });
   
   // Client-side filtering for searchTerm as a workaround for more complex queries
   if (filters?.searchTerm) {
@@ -220,7 +244,13 @@ export async function getTicketById(ticketId: string): Promise<Ticket | null> {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Ticket;
+        const data = docSnap.data();
+        return { 
+            id: docSnap.id, 
+            ...data,
+            date: (data.date as Timestamp)?.toDate().toISOString(),
+            createdAt: (data.createdAt as Timestamp)?.toDate().toISOString(),
+        } as Ticket;
     } else {
         return null;
     }
@@ -231,6 +261,7 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
   if (!buyer) {
     return { success: false, message: "User must be logged in to purchase." };
   }
+  const buyerId = buyer.uid;
 
   const ticketRef = doc(db, "tickets", ticketId);
   
@@ -240,29 +271,47 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
       return { success: false, message: `Ticket with ID ${ticketId} not found.` };
     }
 
-    const ticketData = ticketDoc.data() as Ticket;
+    const ticketDataRaw = ticketDoc.data();
+    const ticketData = {
+        ...ticketDataRaw,
+        id: ticketDoc.id,
+        date: (ticketDataRaw.date as Timestamp)?.toDate().toISOString(),
+        createdAt: (ticketDataRaw.createdAt as Timestamp)?.toDate().toISOString(),
+    } as Ticket;
+
 
     if (ticketData.status === 'sold') {
-      return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: { ...ticketData, id: ticketDoc.id} };
+      return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: ticketData };
     }
-    if (ticketData.sellerId === buyer.uid) {
+    if (ticketData.sellerId === buyerId) {
       return { success: false, message: `You cannot purchase your own ticket.` };
     }
     
-    await updateDoc(ticketRef, { status: 'sold' });
+    await updateDoc(ticketRef, { 
+        status: 'sold',
+        buyerId: buyerId
+    });
 
-    // Simulate adding to user's orders in localStorage
+    // Save purchased ticket to user's orders in localStorage
     if (typeof window !== 'undefined') {
-        const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
-        // Ensure not to add duplicates
+        const userOrdersString = localStorage.getItem('userOrders');
+        const userOrders = userOrdersString ? JSON.parse(userOrdersString) : [];
+        
+        // Add the newly purchased ticket if it's not already in the list
         if (!userOrders.some((order: Ticket) => order.id === ticketId)) {
-            userOrders.push({ ...ticketData, id: ticketId });
+            const updatedTicketForStorage = { ...ticketData, status: 'sold' as const, buyerId: buyerId };
+            userOrders.push(updatedTicketForStorage);
             localStorage.setItem('userOrders', JSON.stringify(userOrders));
-            window.dispatchEvent(new StorageEvent('storage', { key: 'userOrders' }));
+            // Dispatch a storage event to notify other components/tabs
+            window.dispatchEvent(new StorageEvent('storage', { 
+                key: 'userOrders',
+                newValue: JSON.stringify(userOrders),
+                storageArea: localStorage 
+            }));
         }
     }
     
-    const updatedTicket = { ...ticketData, id: ticketId, status: 'sold' as const };
+    const updatedTicket = { ...ticketData, status: 'sold' as const, buyerId };
     return { success: true, message: `Ticket ${ticketId} purchase initiated!`, ticket: updatedTicket };
     
   } catch (error: any) {
