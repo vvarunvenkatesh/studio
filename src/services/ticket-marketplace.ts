@@ -1,6 +1,6 @@
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp, writeBatch, getDoc, documentId,getCountFromServer } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp, writeBatch, getDoc, documentId, getCountFromServer } from "firebase/firestore";
 
 /**
  * Represents a ticket for an event or transportation.
@@ -305,3 +305,5 @@ export function getSimulatedCurrentUserId(): string {
     }
     return 'anonymousUser';
 }
+
+    

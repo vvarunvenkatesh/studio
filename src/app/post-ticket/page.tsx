@@ -9,7 +9,7 @@ import type { Ticket } from '@/services/ticket-marketplace';
 import { TicketCard } from '@/components/ticket-card';
 import { Ticket as TicketIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getSimulatedCurrentUserId, deleteTicket as deleteTicketService } from '@/services/ticket-marketplace';
+import { getSimulatedCurrentUserId, deleteTicket as deleteTicketService, getAvailableTickets } from '@/services/ticket-marketplace';
 
 export default function PostTicketPage() {
   const [ticketType, setTicketType] = React.useState<string | undefined>(undefined);
@@ -17,14 +17,13 @@ export default function PostTicketPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
   const { toast } = useToast();
-  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null); // Initialize as null
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
 
-  // Effect to set and update currentUserId based on login state changes
   React.useEffect(() => {
     const updateCurrentUserId = () => {
       setCurrentUserId(getSimulatedCurrentUserId());
     };
-    updateCurrentUserId(); // Initial set
+    updateCurrentUserId();
 
     const handleLoginStorageChange = (event: StorageEvent) => {
       if (event.key === 'isLoggedIn' || event.key === 'userId') {
@@ -33,52 +32,38 @@ export default function PostTicketPage() {
     };
     window.addEventListener('storage', handleLoginStorageChange);
     return () => window.removeEventListener('storage', handleLoginStorageChange);
-  }, []); 
+  }, []);
 
-  // Callback to load posted tickets, depends on currentUserId
-  const loadPostedTickets = React.useCallback(() => {
-    if (typeof window !== 'undefined' && currentUserId && currentUserId !== 'anonymousUser') {
+  const loadPostedTickets = React.useCallback(async () => {
+    if (currentUserId && currentUserId !== 'anonymousUser') {
         setIsLoading(true);
         try {
-            const allMarketplaceTicketsString = localStorage.getItem('marketplaceTickets');
-            const allMarketplaceTickets: Ticket[] = allMarketplaceTicketsString ? JSON.parse(allMarketplaceTicketsString) : [];
-            
-            const userActiveListings = allMarketplaceTickets.filter(
+            // Using getAvailableTickets which filters by status: 'available'
+            // We need to fetch all tickets by the user, regardless of status for a true "manage" page,
+            // but for "Active Listings" this is correct.
+            const allTickets = await getAvailableTickets(); // This fetches ALL available tickets
+            const userActiveListings = allTickets.filter(
                 ticket => ticket.sellerId === currentUserId && ticket.status === 'available'
             );
             setPostedTickets(userActiveListings.reverse());
         } catch (e) {
             console.error("Failed to load user's active listings:", e);
+            toast({ title: "Error", description: "Could not load your active listings.", variant: "destructive" });
             setPostedTickets([]);
         } finally {
             setIsLoading(false);
         }
     } else {
-      setPostedTickets([]); 
+      setPostedTickets([]);
       setIsLoading(false);
     }
-  }, [currentUserId, setIsLoading, setPostedTickets]);
+  }, [currentUserId, toast]);
 
-  // Effect to load tickets when currentUserId is available or marketplaceTickets change
   React.useEffect(() => {
-    // Only load if currentUserId is determined (not null)
-    // This ensures loadPostedTickets runs with the correct ID for filtering
-    if (currentUserId !== null) { 
+    if (currentUserId !== null) {
       loadPostedTickets();
     }
-
-    const handleMarketplaceStorageChange = (event: StorageEvent) => {
-      if (event.key === 'marketplaceTickets') {
-        // Reload tickets if marketplaceTickets itself changes,
-        // but only if currentUserId is already determined.
-        if (currentUserId !== null) {
-            loadPostedTickets(); 
-        }
-      }
-    };
-    window.addEventListener('storage', handleMarketplaceStorageChange);
-    return () => window.removeEventListener('storage', handleMarketplaceStorageChange);
-  }, [currentUserId, loadPostedTickets]); 
+  }, [currentUserId, loadPostedTickets]);
 
   const handleTypeChange = (type: string | undefined) => {
     setTicketType(type);
@@ -87,15 +72,13 @@ export default function PostTicketPage() {
   const handleDeleteTicket = async (ticketId: string) => {
     setIsDeleting(ticketId);
     try {
-        // Call service directly
-        const result = await deleteTicketService(ticketId); 
-
+        const result = await deleteTicketService(ticketId);
         if (result.success) {
             toast({
                 title: 'Listing Cancelled',
                 description: result.message || 'Your ticket listing has been removed.',
             });
-            // loadPostedTickets will be called by the storage event listener for 'marketplaceTickets'
+            loadPostedTickets();
         } else {
             throw new Error(result.message || 'Could not cancel the ticket listing.');
         }
@@ -132,8 +115,8 @@ export default function PostTicketPage() {
                        <TicketCard
                             key={ticket.id}
                             ticket={ticket}
-                            variant="manage" // For "Your Active Listings", the user is always the seller
-                            isSeller={true} 
+                            variant="manage"
+                            isSeller={true}
                             onCancelListing={handleDeleteTicket}
                             isCancelling={isDeleting === ticket.id}
                             className="ml-0 md:ml-0" 

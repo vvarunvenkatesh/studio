@@ -256,25 +256,15 @@ export default function TicketsPage() {
   }, [searchParams]);
 
   React.useEffect(() => {
-    loadTickets(); // Load tickets on initial render or when searchParams change
-    // Listener for when marketplaceTickets in localStorage changes
-    const handleMarketplaceStorageChange = (event: StorageEvent) => {
-      if (event.key === 'marketplaceTickets') {
-        loadTickets(); // Reload tickets if marketplaceTickets itself changes
-      }
-    };
-    window.addEventListener('storage', handleMarketplaceStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleMarketplaceStorageChange);
-    };
-  }, [loadTickets]); // loadTickets is stable due to useCallback and its dependencies
+    loadTickets();
+  }, [loadTickets]);
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
     toast({
         title: "Ticket Status Updated",
         description: "The ticket list has been refreshed.",
     });
-    // No need to manually call loadTickets here, storage event listener will handle it
+    loadTickets();
   };
 
   const handleCancelListing = async (ticketId: string) => {
@@ -286,7 +276,7 @@ export default function TicketsPage() {
           title: 'Listing Cancelled',
           description: result.message || 'Your ticket listing has been removed.',
         });
-         // No need to manually call loadTickets here, storage event listener will handle it
+         loadTickets();
       } else {
         throw new Error(result.message || 'Could not cancel the ticket listing.');
       }
@@ -544,3 +534,5 @@ export default function TicketsPage() {
     </div>
   );
 }
+
+    
