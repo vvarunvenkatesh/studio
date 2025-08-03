@@ -3,7 +3,6 @@
 
 import { db, auth } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp, writeBatch, getDoc, documentId, getCountFromServer } from "firebase/firestore";
-import { onAuthStateChanged } from 'firebase/auth';
 
 /**
  * Represents a ticket for an event or transportation.
