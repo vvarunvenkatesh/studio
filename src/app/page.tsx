@@ -18,11 +18,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
-// Simple Advertisement Slider Component - Reduced to 3
+// Simple Advertisement Slider Component - Updated for new movies
 const advertisements = [
-  { id: 1, src: 'https://placehold.co/1200x448.png', alt: 'concert', hint: 'concert crowd music' },
-  { id: 2, src: 'https://placehold.co/1200x448.png', alt: 'train travel', hint: 'train window journey' },
-  { id: 3, src: 'https://placehold.co/1200x448.png', alt: 'movie theatre', hint: 'movie theater screen' },
+  { id: 1, src: 'https://placehold.co/1200x448.png', alt: 'Kingdom movie banner', hint: 'movie poster action' },
+  { id: 2, src: 'https://placehold.co/1200x448.png', alt: 'Coolie movie banner', hint: 'movie poster thriller' },
+  { id: 3, src: 'https://placehold.co/1200x448.png', alt: 'OG movie banner', hint: 'movie poster drama' },
 ];
 
 function AdvertisementSlider() {
@@ -77,7 +77,7 @@ function AdvertisementSlider() {
       ))}
        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
        <div className="absolute bottom-4 left-4 text-white text-lg md:text-xl lg:text-2xl font-semibold z-20 p-4">
-          Last Minute Deals..!
+          Now Showing..!
        </div>
 
         <Button
