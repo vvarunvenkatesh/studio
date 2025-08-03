@@ -15,9 +15,11 @@ import {
 } from '@/components/ui/select';
 import {cn} from '@/lib/utils';
 import {useIsMobile} from '@/hooks/use-mobile';
-import {Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import {Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { TermsAndConditionsDialog } from './terms-and-conditions-dialog';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 interface HeaderProps {
   className?: string;
@@ -44,72 +46,54 @@ export function Header({className}: HeaderProps) {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = _React.useState(false);
   const [showTnCDialog, setShowTnCDialog] = _React.useState(false);
-  const [tncAccepted, setTncAccepted] = _React.useState(true); // Default to true
+  const [tncAccepted, setTncAccepted] = _React.useState(true);
 
   _React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-      const storedImageUrl = localStorage.getItem('profileImageUrl');
-      const storedLocation = localStorage.getItem('selectedLocation') || availableLocations[0];
-      const accepted = localStorage.getItem('tncAccepted') === 'true';
-
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const loggedInStatus = !!user;
       setIsLoggedIn(loggedInStatus);
-      setTncAccepted(accepted);
-      setSelectedLocation(storedLocation);
 
-      if (loggedInStatus && storedImageUrl) {
+      if (loggedInStatus) {
+        const storedImageUrl = localStorage.getItem('profileImageUrl');
         setProfileImageUrl(storedImageUrl);
+        
+        const accepted = localStorage.getItem('tncAccepted') === 'true';
+        setTncAccepted(accepted);
+        if (!accepted) {
+            setShowTnCDialog(true);
+        }
       } else {
         setProfileImageUrl(null);
       }
-      
-      if (loggedInStatus && !accepted) {
-        setShowTnCDialog(true);
+    });
+    
+    // Handle location from localStorage
+    const storedLocation = localStorage.getItem('selectedLocation') || availableLocations[0];
+    setSelectedLocation(storedLocation);
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'profileImageUrl' && isLoggedIn) {
+        setProfileImageUrl(event.newValue);
       }
-
-      const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'isLoggedIn') {
-          const newLoginStatus = event.newValue === 'true';
-          setIsLoggedIn(newLoginStatus);
-          const currentTncAccepted = localStorage.getItem('tncAccepted') === 'true';
-          setTncAccepted(currentTncAccepted);
-
-          if (!newLoginStatus) {
-            setProfileImageUrl(null);
-          } else {
-            const updatedImageUrl = localStorage.getItem('profileImageUrl');
-            setProfileImageUrl(updatedImageUrl);
-            if (!currentTncAccepted) {
-                setShowTnCDialog(true);
-            }
-          }
-        }
-        if (event.key === 'profileImageUrl') {
-          if (localStorage.getItem('isLoggedIn') === 'true') {
-            setProfileImageUrl(event.newValue);
-          } else {
-            setProfileImageUrl(null);
-          }
-        }
-        if (event.key === 'selectedLocation') {
-          setSelectedLocation(event.newValue || availableLocations[0]);
-        }
-        if (event.key === 'tncAccepted') {
+      if (event.key === 'selectedLocation') {
+        setSelectedLocation(event.newValue || availableLocations[0]);
+      }
+       if (event.key === 'tncAccepted') {
             const newTncStatus = event.newValue === 'true';
             setTncAccepted(newTncStatus);
             if (newTncStatus) {
                 setShowTnCDialog(false);
             }
         }
-      };
-
-      window.addEventListener('storage', handleStorageChange);
-
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-      };
-    }
-  }, []);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [isLoggedIn]);
 
   const handleLocationChange = (newLocation: string) => {
     setSelectedLocation(newLocation);
@@ -133,18 +117,20 @@ export function Header({className}: HeaderProps) {
     setShowTnCDialog(false);
   };
 
-  const handleLogout = () => {
-     if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('profileImageUrl');
-        localStorage.removeItem('userData'); // Ensure userData is also cleared
-        window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'userId', newValue: null, storageArea: localStorage }));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
+  const handleLogout = async () => {
+     try {
+        await signOut(auth);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('profileImageUrl');
+            localStorage.removeItem('userData');
+             window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
+        }
         window.location.href = '/'; 
-    }
+     } catch (error) {
+        console.error("Logout failed", error);
+     }
   };
 
   return (

@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { auth } from '@/lib/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = React.useState('');
@@ -30,20 +32,25 @@ export default function ForgotPasswordPage() {
 
     setIsSending(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Simulate success
-    setLinkSent(true);
-    toast({
-      title: 'Reset Link Sent',
-      description: `If an account exists for ${email}, you will receive a password reset link.`,
-    });
-    setIsSending(false);
-
-    // Note: In a real application, you would make an API call here
-    // to your backend to handle the password reset logic (generate token, send email).
-    // Handle potential errors from the API call.
+    try {
+        await sendPasswordResetEmail(auth, email);
+        setLinkSent(true);
+        toast({
+          title: 'Reset Link Sent',
+          description: `If an account exists for ${email}, you will receive a password reset link. Please check your inbox and spam folder.`,
+          variant: 'success'
+        });
+    } catch (error: any) {
+        console.error("Forgot Password Error: ", error);
+        // We show a generic message even on error to prevent email enumeration
+        setLinkSent(true); 
+        toast({
+            title: 'Reset Link Sent',
+            description: `If an account exists for ${email}, you will receive a password reset link.`,
+        });
+    } finally {
+        setIsSending(false);
+    }
   };
 
   return (

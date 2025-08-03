@@ -13,7 +13,9 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
-import { getSimulatedCurrentUserId, isUserVerifiedByTicketCount } from '@/services/ticket-marketplace'; // Import new verification
+import { isUserVerifiedByTicketCount } from '@/services/ticket-marketplace';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signOut, updateProfile, EmailAuthProvider, reauthenticateWithCredential, updateEmail } from 'firebase/auth';
 
 interface UserData {
   name: string;
@@ -32,13 +34,11 @@ const DEFAULT_AVATAR_INFO = GENDER_AVATARS.other;
 export default function ProfileBasicInfoPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [isClientLoggedIn, setIsClientLoggedIn] = React.useState(false);
+  const [firebaseUser, setFirebaseUser] = React.useState<import('firebase/auth').User | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = React.useState(true);
-  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
-
-
+  
   const [userData, setUserData] = React.useState<UserData>({
-    name: 'Alex Doe',
+    name: '',
     email: '',
     contact: '',
     gender: 'other',
@@ -49,113 +49,83 @@ export default function ProfileBasicInfoPage() {
   const [isUserVerified, setIsUserVerified] = React.useState(false);
 
   const [isEditingName, setIsEditingName] = React.useState(false);
-  const [tempName, setTempName] = React.useState(userData.name);
+  const [tempName, setTempName] = React.useState('');
 
   const [editingField, setEditingField] = React.useState<'email' | 'contact' | null>(null);
   const [tempValue, setTempValue] = React.useState('');
-  const [otp, setOtp] = React.useState('');
-  const [otpSent, setOtpSent] = React.useState(false);
-  const [isSendingOtp, setIsSendingOtp] = React.useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
-  const [otpError, setOtpError] = React.useState(false);
-
+  // This can be adapted for phone verification later
+  // const [otp, setOtp] = React.useState('');
+  // const [otpSent, setOtpSent] = React.useState(false);
+  // const [isSendingOtp, setIsSendingOtp] = React.useState(false);
+  // const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
+  
   const getAvatarInfoForGender = (gender: string): { url: string; hint: string } => {
     return GENDER_AVATARS[gender as keyof typeof GENDER_AVATARS] || DEFAULT_AVATAR_INFO;
   };
 
-  const checkUserVerificationStatus = React.useCallback(() => {
-    if (currentUserId && currentUserId !== 'anonymousUser') {
-      const verified = isUserVerifiedByTicketCount(currentUserId);
+  const checkUserVerificationStatus = React.useCallback(async () => {
+    if (firebaseUser) {
+      const verified = await isUserVerifiedByTicketCount(firebaseUser.uid);
       setIsUserVerified(verified);
-      if (verified) {
+      if (verified && typeof window !== 'undefined') {
         localStorage.setItem('hasSeenVerificationPrompt', 'true');
       }
     } else {
       setIsUserVerified(false);
     }
-  }, [currentUserId]);
-
+  }, [firebaseUser]);
 
   React.useEffect(() => {
-    const updateAuthAndUserData = () => {
-      if (typeof window !== 'undefined') {
-        const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const userIdFromStorage = getSimulatedCurrentUserId(); // Use service
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setFirebaseUser(user);
         
-        setIsClientLoggedIn(loggedIn);
-        setCurrentUserId(userIdFromStorage);
-        setIsLoadingAuth(false);
-
-        if (!loggedIn) {
-          router.replace('/login?redirect=/profile');
-          return;
-        }
-
+        // Load user data from localStorage
         const storedUserData = localStorage.getItem('userData');
         let currentGender = 'other';
-        let currentName = 'Alex Doe';
-        let initialEmail = '';
-        let initialContact = '';
+        let currentContact = '';
 
         if (storedUserData) {
-          try {
-            const parsedData: UserData = JSON.parse(storedUserData);
-            currentName = parsedData.name || currentName;
-            initialEmail = parsedData.email || '';
-            initialContact = parsedData.contact || '';
-            currentGender = parsedData.gender || 'other';
-          } catch (e) {
-            console.error("Failed to parse user data from localStorage", e);
-          }
+            try {
+                const parsedData: Partial<UserData> = JSON.parse(storedUserData);
+                currentGender = parsedData.gender || 'other';
+                currentContact = parsedData.contact || '';
+            } catch (e) {
+                console.error("Failed to parse user data from localStorage", e);
+            }
         }
         
-        setUserData({
-          name: currentName,
-          email: initialEmail,
-          contact: initialContact,
-          gender: currentGender,
-        });
-        setTempName(currentName);
+        const initialUserData = {
+            name: user.displayName || 'New User',
+            email: user.email || '',
+            contact: currentContact,
+            gender: currentGender,
+        };
 
-        const avatarInfo = getAvatarInfoForGender(currentGender);
+        setUserData(initialUserData);
+        setTempName(initialUserData.name);
+
+        const avatarInfo = getAvatarInfoForGender(initialUserData.gender);
         setProfileImage(avatarInfo.url);
         setProfileImageHint(avatarInfo.hint);
-        localStorage.setItem('profileImageUrl', avatarInfo.url);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: avatarInfo.url, storageArea: localStorage }));
+
+      } else {
+        router.replace('/login?redirect=/profile');
       }
-    };
+      setIsLoadingAuth(false);
+    });
 
-    updateAuthAndUserData();
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'isLoggedIn' || event.key === 'userId' || event.key === 'userData' || event.key === 'profileImageUrl' || event.key === 'marketplaceTickets') {
-        updateAuthAndUserData();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    return () => unsubscribe();
   }, [router]);
 
   React.useEffect(() => {
     checkUserVerificationStatus();
-  }, [currentUserId, userData, checkUserVerificationStatus]);
-
+  }, [firebaseUser, checkUserVerificationStatus]);
 
   const saveUserDataToLocalStorage = (updatedData: UserData) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('userData', JSON.stringify(updatedData));
       
-      if (currentUserId) { // Ensure currentUserId is available
-        const isNowVerified = isUserVerifiedByTicketCount(currentUserId);
-        setIsUserVerified(isNowVerified); // Update local state
-         if (isNowVerified) {
-           localStorage.setItem('hasSeenVerificationPrompt', 'true');
-         }
-      }
-
       const newAvatarInfo = getAvatarInfoForGender(updatedData.gender);
       if (profileImage !== newAvatarInfo.url) {
         setProfileImage(newAvatarInfo.url);
@@ -163,24 +133,24 @@ export default function ProfileBasicInfoPage() {
         localStorage.setItem('profileImageUrl', newAvatarInfo.url);
         window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: newAvatarInfo.url, storageArea: localStorage }));
       }
-      // Dispatch custom event or rely on storage event for other components like Header
       window.dispatchEvent(new CustomEvent('userDataChanged', { detail: updatedData }));
-      window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: JSON.stringify(updatedData), storageArea: localStorage }));
     }
   };
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('profileImageUrl');
-      localStorage.removeItem('userData');
-      window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
-      window.dispatchEvent(new StorageEvent('storage', { key: 'userId', newValue: null, storageArea: localStorage }));
-      window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
-      window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('profileImageUrl');
+        localStorage.removeItem('userData');
+        window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
+      }
       toast({ title: "Logged Out", description: "You have been successfully logged out.", variant: "success" });
       router.push('/');
+    } catch (error) {
+      toast({ title: "Logout Failed", description: "Something went wrong.", variant: "destructive" });
     }
   };
 
@@ -189,116 +159,58 @@ export default function ProfileBasicInfoPage() {
     setTempName(userData.name);
   };
 
-  const handleSaveName = () => {
-    if (tempName.trim() === '') {
+  const handleSaveName = async () => {
+    if (!firebaseUser || tempName.trim() === '') {
         toast({ title: "Invalid Name", description: "Name cannot be empty.", variant: "destructive" });
         return;
     }
-    const updatedUserData = { ...userData, name: tempName };
-    setUserData(updatedUserData);
-    saveUserDataToLocalStorage(updatedUserData);
-    setIsEditingName(false);
-    toast({ title: "Name Updated", description: "Your name has been saved.", variant: "success" });
+    try {
+        await updateProfile(firebaseUser, { displayName: tempName });
+        const updatedUserData = { ...userData, name: tempName };
+        setUserData(updatedUserData);
+        saveUserDataToLocalStorage(updatedUserData);
+        setIsEditingName(false);
+        toast({ title: "Name Updated", description: "Your name has been saved.", variant: "success" });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update your name.", variant: "destructive" });
+    }
   };
 
   const handleCancelEditName = () => {
     setIsEditingName(false);
-    setTempName(userData.name);
   };
 
   const handleGenderChange = (value: string) => {
     const updatedUserData = { ...userData, gender: value };
     setUserData(updatedUserData);
-    saveUserDataToLocalStorage(updatedUserData); // Save immediately on gender change
-    toast({ title: "Gender Updated", description: "Your gender selection has been updated.", variant: "success" });
+    saveUserDataToLocalStorage(updatedUserData);
+    toast({ title: "Gender Updated", description: "Your selection has been updated.", variant: "success" });
+  };
+  
+  // Phone verification is complex and requires a backend or Firebase Functions.
+  // We will keep contact as a simple localStorage value for now.
+  const handleEditContact = () => {
+    setEditingField('contact');
+    setTempValue(userData.contact);
   };
 
-  const handleEditField = (field: 'email' | 'contact') => {
-    setEditingField(field);
-    setOtp('');
-    setOtpSent(false);
-    setOtpError(false);
-    if (field === 'email') setTempValue(userData.email);
-    if (field === 'contact') setTempValue(userData.contact);
-  };
-
-  const handleCancelEditField = () => {
-    setEditingField(null);
-    setOtp('');
-    setOtpSent(false);
-    setOtpError(false);
-  };
-
-  const handleSendOtpForUpdate = async () => {
-    if (!editingField) return;
-    setOtpError(false);
-
-    let valueToVerify = tempValue;
-    let originalValue = '';
-
-    if (editingField === 'email') {
-        originalValue = userData.email;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(valueToVerify)) {
-            toast({title: `Invalid Email`, description: "Please enter a valid email address (e.g., user@example.com).", variant: "destructive"});
-            return;
-        }
-    } else if (editingField === 'contact') {
-        originalValue = userData.contact;
-        const phoneRegex = /^\d{10}$/; // Indian phone number format
-        if (!phoneRegex.test(valueToVerify)) {
-            toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
-            return;
-        }
-    }
-
-    if (valueToVerify === originalValue && originalValue !== '') {
-        toast({title: "No Change", description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} is the same as current.`, variant: "default"});
-        setEditingField(null);
+  const handleSaveContact = () => {
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(tempValue)) {
+        toast({title: `Invalid Contact Number`, description: "Contact number must be exactly 10 digits.", variant: "destructive"});
         return;
-    }
-
-    setIsSendingOtp(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setOtpSent(true);
-    toast({
-      title: 'OTP Sent (Simulation)',
-      description: `An OTP has been sent for ${editingField} update. Use '123456' to verify.`,
-      variant: 'warning',
-    });
-    setIsSendingOtp(false);
-  };
-
-  const handleVerifyOtpForUpdate = async () => {
-    if (!editingField || !otp || otp.length !== 6) {
-      toast({ title: 'Invalid OTP', description: 'Please enter a valid 6-digit OTP.', variant: 'destructive' });
-      setOtpError(true);
-      return;
-    }
-    setIsVerifyingOtp(true);
-    setOtpError(false);
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    if (otp === '123456') { // Simulated OTP check
-      const updatedUserData = { ...userData };
-      if (editingField === 'email') {
-        updatedUserData.email = tempValue;
-      } else if (editingField === 'contact') {
-        updatedUserData.contact = tempValue;
       }
+      const updatedUserData = { ...userData, contact: tempValue };
       setUserData(updatedUserData);
       saveUserDataToLocalStorage(updatedUserData);
-      toast({ title: 'Update Successful', description: `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} has been updated.`, variant: 'success' });
       setEditingField(null);
-      setOtpSent(false);
-      setOtp('');
-    } else {
-      toast({ title: 'Verification Failed', description: 'Incorrect OTP. Please try again.', variant: 'destructive' });
-      setOtpError(true);
-    }
-    setIsVerifyingOtp(false);
+      toast({ title: "Contact Updated", description: "Your contact number has been saved.", variant: "success" });
   };
+  
+  const handleCancelEditField = () => {
+    setEditingField(null);
+  };
+
 
   if (isLoadingAuth) {
     return (
@@ -308,8 +220,7 @@ export default function ProfileBasicInfoPage() {
     );
   }
 
-  if (!isClientLoggedIn) {
-    // This case should ideally be handled by the redirect, but as a fallback:
+  if (!firebaseUser) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)] text-muted-foreground">
         <p>Redirecting to login...</p>
@@ -347,6 +258,7 @@ export default function ProfileBasicInfoPage() {
                 </Badge>
             )}
           </CardTitle>
+          <p className="text-sm text-muted-foreground">{userData.email}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
@@ -381,61 +293,14 @@ export default function ProfileBasicInfoPage() {
 
         <div className="space-y-2">
           <Label htmlFor="email" className="text-foreground">Email Address</Label>
-          {editingField === 'email' ? (
-            <div className="space-y-2">
-              <Input
-                id="email"
-                type="email"
-                value={tempValue}
-                onChange={(e) => setTempValue(e.target.value)}
-                className="text-foreground"
-                disabled={otpSent || isSendingOtp || isVerifyingOtp}
-              />
-              {!otpSent ? (
-                 <div className="flex gap-2">
-                    <Button onClick={handleSendOtpForUpdate} disabled={isSendingOtp || tempValue === userData.email} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                      {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                      {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
-                    </Button>
-                    <Button variant="ghost" onClick={handleCancelEditField} className="gap-2 hover:text-destructive hover:bg-destructive/10"> <X className="h-4 w-4" /> Cancel</Button>
-                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label htmlFor="emailOtp" className="text-foreground">Enter OTP for Email</Label>
-                  <Input
-                    id="emailOtp"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="6-digit OTP"
-                    value={otp}
-                    onChange={(e) => {
-                        setOtp(e.target.value.replace(/[^0-9]/g, ''));
-                        setOtpError(false);
-                    }}
-                    onFocus={() => setOtpError(false)}
-                    className={cn("text-foreground", otpError && "border-destructive focus-visible:ring-destructive")}
-                    disabled={isVerifyingOtp}
-                  />
-                   <div className="flex gap-2">
-                      <Button onClick={handleVerifyOtpForUpdate} disabled={isVerifyingOtp || otp.length !== 6} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                        {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-                        {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
-                      </Button>
-                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
-                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Input id="email" type="email" value={userData.email || 'Not set'} readOnly className={cn("bg-muted/50 text-foreground flex-grow", userData.email ? "cursor-pointer" : "cursor-not-allowed opacity-70")} onClick={() => handleEditField('email')} />
-              {userData.email && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-              <Button variant="outline" size="icon" onClick={() => handleEditField('email')} aria-label="Edit Email">
+           <div className="flex items-center gap-2">
+              <Input id="email" type="email" value={userData.email} readOnly className="bg-muted/50 text-foreground flex-grow cursor-not-allowed opacity-70" />
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <Button variant="outline" size="icon" disabled aria-label="Edit Email (disabled)">
                 <Edit2 className="h-4 w-4" />
               </Button>
             </div>
-          )}
+             <p className="text-xs text-muted-foreground">Changing email address is not supported in this version.</p>
         </div>
 
         <div className="space-y-2">
@@ -450,49 +315,19 @@ export default function ProfileBasicInfoPage() {
                 onChange={(e) => setTempValue(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={10}
                 className="text-foreground"
-                disabled={otpSent || isSendingOtp || isVerifyingOtp}
               />
-               {!otpSent ? (
-                 <div className="flex gap-2">
-                    <Button onClick={handleSendOtpForUpdate} disabled={isSendingOtp || tempValue === userData.contact} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                      {isSendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                      {isSendingOtp ? 'Sending OTP...' : 'Send OTP'}
+                <div className="flex gap-2">
+                    <Button onClick={handleSaveContact} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Save className="h-4 w-4" /> Save Contact
                     </Button>
                     <Button variant="ghost" onClick={handleCancelEditField} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
-                 </div>
-                ) : (
-                <div className="space-y-2">
-                  <Label htmlFor="contactOtp" className="text-foreground">Enter OTP for Contact</Label>
-                  <Input
-                    id="contactOtp"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="6-digit OTP"
-                    value={otp}
-                    onChange={(e) => {
-                        setOtp(e.target.value.replace(/[^0-9]/g, ''));
-                        setOtpError(false);
-                    }}
-                    onFocus={() => setOtpError(false)}
-                    className={cn("text-foreground", otpError && "border-destructive focus-visible:ring-destructive")}
-                    disabled={isVerifyingOtp}
-                  />
-                  <div className="flex gap-2">
-                      <Button onClick={handleVerifyOtpForUpdate} disabled={isVerifyingOtp || otp.length !== 6} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                        {isVerifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-                        {isVerifyingOtp ? 'Verifying...' : 'Verify & Save'}
-                      </Button>
-                      <Button variant="ghost" onClick={handleCancelEditField} disabled={isVerifyingOtp} className="gap-2 hover:text-destructive hover:bg-destructive/10"><X className="h-4 w-4" />Cancel</Button>
-                  </div>
                 </div>
-              )}
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Input id="contact" value={userData.contact || 'Not set'} readOnly className={cn("bg-muted/50 text-foreground flex-grow", userData.contact ? "cursor-pointer" : "cursor-not-allowed opacity-70")} onClick={() => handleEditField('contact')}/>
+              <Input id="contact" value={userData.contact || 'Not set'} readOnly className={cn("bg-muted/50 text-foreground flex-grow cursor-pointer")} onClick={handleEditContact}/>
               {userData.contact && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-              <Button variant="outline" size="icon" onClick={() => handleEditField('contact')} aria-label="Edit Contact">
+              <Button variant="outline" size="icon" onClick={handleEditContact} aria-label="Edit Contact">
                 <Edit2 className="h-4 w-4" />
               </Button>
             </div>

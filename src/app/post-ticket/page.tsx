@@ -10,6 +10,8 @@ import { TicketCard } from '@/components/ticket-card';
 import { Ticket as TicketIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getSimulatedCurrentUserId, deleteTicket as deleteTicketService, getAvailableTickets } from '@/services/ticket-marketplace';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function PostTicketPage() {
   const [ticketType, setTicketType] = React.useState<string | undefined>(undefined);
@@ -20,28 +22,22 @@ export default function PostTicketPage() {
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const updateCurrentUserId = () => {
-      setCurrentUserId(getSimulatedCurrentUserId());
-    };
-    updateCurrentUserId();
-
-    const handleLoginStorageChange = (event: StorageEvent) => {
-      if (event.key === 'isLoggedIn' || event.key === 'userId') {
-        updateCurrentUserId();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUserId(user.uid);
+      } else {
+        setCurrentUserId(null); // No user logged in
       }
-    };
-    window.addEventListener('storage', handleLoginStorageChange);
-    return () => window.removeEventListener('storage', handleLoginStorageChange);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loadPostedTickets = React.useCallback(async () => {
-    if (currentUserId && currentUserId !== 'anonymousUser') {
+    if (currentUserId) {
         setIsLoading(true);
         try {
-            // Using getAvailableTickets which filters by status: 'available'
-            // We need to fetch all tickets by the user, regardless of status for a true "manage" page,
-            // but for "Active Listings" this is correct.
-            const allTickets = await getAvailableTickets(); // This fetches ALL available tickets
+            const allTickets = await getAvailableTickets();
             const userActiveListings = allTickets.filter(
                 ticket => ticket.sellerId === currentUserId && ticket.status === 'available'
             );
@@ -60,9 +56,8 @@ export default function PostTicketPage() {
   }, [currentUserId, toast]);
 
   React.useEffect(() => {
-    if (currentUserId !== null) {
-      loadPostedTickets();
-    }
+    // Load tickets whenever the currentUserId changes
+    loadPostedTickets();
   }, [currentUserId, loadPostedTickets]);
 
   const handleTypeChange = (type: string | undefined) => {
@@ -126,7 +121,7 @@ export default function PostTicketPage() {
              ) : (
                 <div className="text-center text-muted-foreground mt-10 border border-dashed rounded-lg p-8 bg-muted/30">
                     <TicketIcon className="mx-auto h-12 w-12 mb-4" />
-                    <p>{currentUserId && currentUserId !== 'anonymousUser' ? "You have no active tickets listed for sale." : "Please log in to see your active listings."}</p>
+                    <p>{currentUserId ? "You have no active tickets listed for sale." : "Please log in to see your active listings."}</p>
                  </div>
              )}
          </div>
@@ -134,5 +129,3 @@ export default function PostTicketPage() {
     </div>
   );
 }
-
-    

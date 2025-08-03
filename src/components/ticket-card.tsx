@@ -12,7 +12,9 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useRouter, usePathname, useSearchParams as useNextSearchParams } from 'next/navigation';
-import { getSimulatedCurrentUserId, purchaseTicket as purchaseTicketService } from '@/services/ticket-marketplace';
+import { purchaseTicket as purchaseTicketService } from '@/services/ticket-marketplace';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -39,7 +41,7 @@ export function TicketCard({
     onCancelListing,
     isCancelling,
     className,
-    isSeller: propIsSeller // Renamed to avoid conflict with internal isSeller state
+    isSeller: propIsSeller
 }: TicketCardProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -47,40 +49,24 @@ export function TicketCard({
   const searchParamsHook = useNextSearchParams();
 
   const [isClientLoggedIn, setIsClientLoggedIn] = React.useState(false);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [showLoginDialog, setShowLoginDialog] = React.useState(false);
   const [isPurchasing, setIsPurchasing] = React.useState(false);
-  const [cardInternalCurrentUserId, setCardInternalCurrentUserId] = React.useState<string | null>(null);
   const [detailsVisible, setDetailsVisible] = React.useState(false);
 
-
   React.useEffect(() => {
-      const updateLoginStatus = () => {
-        if (typeof window !== 'undefined') {
-            const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-            setIsClientLoggedIn(loggedInStatus);
-            setCardInternalCurrentUserId(getSimulatedCurrentUserId());
-        }
-      }
-      updateLoginStatus(); // Initial check
-
-      // Listen for storage changes to update login status dynamically
-      const handleStorageChange = (event: StorageEvent) => {
-          if (event.key === 'isLoggedIn' || event.key === 'userId') {
-              updateLoginStatus();
-          }
-      };
-      window.addEventListener('storage', handleStorageChange);
-      return () => {
-          window.removeEventListener('storage', handleStorageChange);
-      };
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setIsClientLoggedIn(!!user);
+        setCurrentUserId(user ? user.uid : null);
+    });
+    return () => unsubscribe();
   }, []);
 
   const formattedDate = format(new Date(ticketProp.date), 'PPP');
   const CategorySpecificIcon = categoryIconMap[ticketProp.type] || TicketIconLucide;
 
   const isTicketSold = ticketProp.status === 'sold';
-  // This determines if the current logged-in user (from card's perspective) is the seller of THIS ticket
-  const actualIsSeller = !!cardInternalCurrentUserId && ticketProp.sellerId === cardInternalCurrentUserId && cardInternalCurrentUserId !== 'anonymousUser';
+  const actualIsSeller = !!currentUserId && ticketProp.sellerId === currentUserId;
 
   const cardTitle = (ticketProp.type === 'movie' || ticketProp.type === 'event' || ticketProp.type === 'sports') && ticketProp.title
     ? ticketProp.title
@@ -89,7 +75,6 @@ export function TicketCard({
 
   const redirectToLogin = () => {
     let currentRedirectPath = pathname;
-    // For ticket browse pages, preserve search params
     if (pathname.startsWith('/tickets')) {
         currentRedirectPath += '?' + searchParamsHook.toString();
     }
@@ -102,12 +87,10 @@ export function TicketCard({
         setShowLoginDialog(true);
         return;
     }
-    // Use 'actualIsSeller' for the check to prevent buying own ticket
     if (isTicketSold || actualIsSeller) return;
 
     setIsPurchasing(true);
     try {
-      // Directly call the service function
       const result = await purchaseTicketService(ticketProp.id);
 
       if (result.success && result.ticket) {
@@ -127,21 +110,19 @@ export function TicketCard({
           title: 'Purchase Initiated!',
           description: contactMessage,
           variant: 'success',
-          duration: 7000, // Increased duration for contact details
+          duration: 7000,
         });
         if (onPurchaseSuccess) {
-          onPurchaseSuccess(result.ticket.id); // Propagate success to parent for potential re-fetch
+          onPurchaseSuccess(result.ticket.id);
         }
-        // UI updates (like marking card as sold) will happen when parent re-renders with new ticket data
       } else {
         toast({
           title: 'Purchase Failed',
           description: result.message || 'Could not initiate purchase for the ticket.',
           variant: 'destructive',
         });
-        // If API indicates already sold, parent should refresh to reflect this
         if (result.ticket && result.message?.includes('already sold')) {
-           if (onPurchaseSuccess) { // Notify parent to refresh
+           if (onPurchaseSuccess) {
               onPurchaseSuccess(result.ticket.id);
            }
         }
@@ -176,7 +157,6 @@ export function TicketCard({
          'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
          'application/pdf': 'pdf', 'application/msword': 'doc',
          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-         // Add more mime types and extensions as needed
        };
        fileExtension = extensionMap[mimeType] || fileExtension;
        isImage = mimeType.startsWith('image/');
@@ -195,35 +175,29 @@ export function TicketCard({
            const ctx = canvas.getContext('2d');
            if (!ctx) {
              toast({ title: 'Watermark Failed', description: 'Could not process image.', variant: 'destructive' });
-             // Fallback to downloading original if canvas fails
              link.href = dataUri;
-             link.download = originalFilename; // Download original if watermarking fails
+             link.download = originalFilename;
              document.body.appendChild(link);
              link.click();
              document.body.removeChild(link);
              return;
            }
    
-           // Draw original image
            ctx.drawImage(img, 0, 0);
            
-           // Add watermark text
-           // Adjust font size based on image dimensions for better visibility
            const fontSize = Math.max(12, Math.min(img.width / 20, img.height / 15));
            ctx.font = `bold ${fontSize}px Arial`;
-           ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Semi-transparent black
+           ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
            ctx.textAlign = 'center';
            ctx.textBaseline = 'middle';
            
-           const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`; // Example watermark
-           // Position watermark (e.g., center)
+           const watermarkText = `Sold via LastMiniT - ID: ${ticketId.substring(0,8)}`;
            const x = canvas.width / 2;
            const y = canvas.height / 2;
            
            ctx.fillText(watermarkText, x, y);
-           // You can add more complex watermarking like diagonal text or patterns
 
-           link.href = canvas.toDataURL(mimeType); // Use original mimeType for canvas export
+           link.href = canvas.toDataURL(mimeType); 
            link.download = watermarkedFilename;
            document.body.appendChild(link);
            link.click();
@@ -233,11 +207,10 @@ export function TicketCard({
          img.onerror = () => {
            toast({ title: 'Download Failed', description: 'Could not load image for watermarking.', variant: 'destructive' });
          };
-         img.src = dataUri; // This triggers the img.onload or img.onerror
+         img.src = dataUri;
        } catch (error) {
          console.error("Error watermarking image:", error);
          toast({ title: 'Watermark Error', description: 'Could not apply watermark.', variant: 'destructive' });
-         // Fallback to downloading original
          link.href = dataUri;
          link.download = originalFilename;
          document.body.appendChild(link);
@@ -245,13 +218,12 @@ export function TicketCard({
          document.body.removeChild(link);
        }
      } else {
-       // For non-image files, download directly without watermarking attempt
        link.href = dataUri;
-       link.download = originalFilename; // Use original filename
+       link.download = originalFilename;
        document.body.appendChild(link);
        link.click();
        document.body.removeChild(link);
-       toast({ title: 'Download Started', description: `Downloading ${originalFilename}... (Watermark not applicable for this file type)` });
+       toast({ title: 'Download Started', description: `Downloading ${originalFilename}... (Watermark not applicable)` });
      }
    };
 
@@ -339,7 +311,6 @@ export function TicketCard({
                 <span className="truncate">{ticketProp.location}</span>
              </div>
          )}
-         {/* Case for train/bus where only general location (e.g., station name) might be provided */}
          {(ticketProp.type === 'train' || ticketProp.type === 'bus') && ticketProp.location && (!ticketProp.fromCity || !ticketProp.toCity) && (
              <div className="flex items-center text-xs text-muted-foreground">
                 <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
@@ -354,7 +325,6 @@ export function TicketCard({
             <Clock className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span>{ticketProp.time}</span>
          </div>
-         {/* Seller Contact Information Section - Now conditional */}
          {detailsVisible && !isTicketSold && !(propIsSeller && variant === 'browse') && (ticketProp.sellerContactEmail || ticketProp.sellerContactPhone) && (
              <div className="mt-2 pt-2 border-t border-dashed space-y-1">
                 {ticketProp.sellerContactEmail && (
@@ -396,11 +366,11 @@ export function TicketCard({
           ) : (
             <Badge variant="destructive">Sold</Badge>
           )
-        ) : variant === 'manage' ? ( // On Your Active Listings page (PostTicketPage)
+        ) : variant === 'manage' ? (
           renderCancelButton()
-        ) : propIsSeller ? ( // On browse pages (/tickets) if current user is the seller
+        ) : actualIsSeller ? (
           renderPendingIndicator()
-        ) : !detailsVisible ? ( // On browse pages, not seller, details not yet visible
+        ) : !detailsVisible ? (
           <Button
             size="sm"
             onClick={() => setDetailsVisible(true)}
@@ -410,7 +380,7 @@ export function TicketCard({
             <Info className="mr-2 h-4 w-4" />
             Get Details
           </Button>
-        ) : ( // On browse pages, not seller, details are visible
+        ) : (
           <Button
             size="sm"
             onClick={handlePurchase}

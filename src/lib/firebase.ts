@@ -10,12 +10,12 @@ import { getAuth } from "firebase/auth";
 // Replace the entire object below with the `firebaseConfig` object from the
 // Firebase console.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyATMtv9y0OKx1eK2FjdhBEgyUjwGTsT4MQ",
+  authDomain: "lastminit.firebaseapp.com",
+  projectId: "lastminit",
+  storageBucket: "lastminit.firebasestorage.app",
+  messagingSenderId: "1045845040540",
+  appId: "1:1045845040540:web:2b0aee1e109ac237437c59",
   measurementId: "YOUR_MEASUREMENT_ID"
 };
 // =================================================================================

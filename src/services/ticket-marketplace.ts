@@ -1,6 +1,7 @@
 
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp, writeBatch, getDoc, documentId, getCountFromServer } from "firebase/firestore";
+import { onAuthStateChanged } from 'firebase/auth';
 
 /**
  * Represents a ticket for an event or transportation.
@@ -86,26 +87,34 @@ interface UserData {
 
 const ticketsCollection = collection(db, "tickets");
 
+// --- Helper function to get current user ---
+const getCurrentUser = () => {
+    return auth.currentUser;
+};
+
+
 // --- Firestore-based Service Functions ---
 
 export async function postTicket(
   ticketData: Omit<Ticket, 'id' | 'status' | 'sellerId' | 'sellerVerified' | 'sellerContactEmail' | 'sellerContactPhone' | 'createdAt' | 'date'> & { date: string }
 ): Promise<Ticket> {
-  const currentUserId = getSimulatedCurrentUserId();
-  if (currentUserId === 'anonymousUser') {
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
     throw new Error("User must be logged in to post a ticket.");
   }
+  const currentUserId = currentUser.uid;
 
   // Fetch seller contact details from localStorage (as part of user profile simulation)
-  let sellerEmail: string | undefined = undefined;
+  let sellerEmail: string | undefined = currentUser.email || undefined;
   let sellerPhone: string | undefined = undefined;
   if (typeof window !== 'undefined') {
     const storedUserData = localStorage.getItem('userData');
     if (storedUserData) {
       try {
         const parsedData: UserData = JSON.parse(storedUserData);
-        sellerEmail = parsedData.email;
-        sellerPhone = parsedData.contact;
+        // Prefer contact info from profile form if available
+        sellerEmail = parsedData.email || sellerEmail;
+        sellerPhone = parsedData.contact || undefined;
       } catch (e) {
         console.error("Failed to parse userData for seller contact info", e);
       }
@@ -177,10 +186,6 @@ export async function getAvailableTickets(filters?: {
     if (filters.startDate) q = query(q, where("date", ">=", Timestamp.fromDate(new Date(filters.startDate))));
     if (filters.endDate) q = query(q, where("date", "<=", Timestamp.fromDate(new Date(filters.endDate))));
     if (filters.location) q = query(q, where("location", ">=", filters.location), where("location", "<=", filters.location + '\uf8ff'));
-    
-    // Note: Firestore does not support full-text search out of the box.
-    // A simple "searchTerm" filter would require a more complex setup (e.g., Algolia, or structuring data differently).
-    // The current filter logic will be basic. A more robust search would be a separate feature.
   }
 
   const snapshot = await getDocs(q);
@@ -218,8 +223,8 @@ export async function getTicketById(ticketId: string): Promise<Ticket | null> {
 }
 
 export async function purchaseTicket(ticketId: string): Promise<{ success: boolean; message: string; ticket?: Ticket }> {
-  const buyerId = getSimulatedCurrentUserId();
-  if (buyerId === 'anonymousUser') {
+  const buyer = getCurrentUser();
+  if (!buyer) {
     return { success: false, message: "User must be logged in to purchase." };
   }
 
@@ -236,7 +241,7 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
     if (ticketData.status === 'sold') {
       return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: ticketData };
     }
-    if (ticketData.sellerId === buyerId) {
+    if (ticketData.sellerId === buyer.uid) {
       return { success: false, message: `You cannot purchase your own ticket.` };
     }
     
@@ -259,8 +264,8 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
 }
 
 export async function deleteTicket(ticketId: string): Promise<{ success: boolean; message: string }> {
-  const currentUserId = getSimulatedCurrentUserId();
-  if (currentUserId === 'anonymousUser') {
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
     throw new Error("User must be logged in to delete a ticket.");
   }
 
@@ -271,7 +276,7 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
     return { success: false, message: `Ticket ${ticketId} not found.` };
   }
 
-  if (ticketDoc.data().sellerId !== currentUserId) {
+  if (ticketDoc.data().sellerId !== currentUser.uid) {
     return { success: false, message: `You are not authorized to delete this ticket.` };
   }
 
@@ -280,7 +285,6 @@ export async function deleteTicket(ticketId: string): Promise<{ success: boolean
 }
 
 async function isUserVerifiedByTicketCountInternal(userId: string, isPostingNew: boolean): Promise<boolean> {
-  if (userId === 'anonymousUser') return false;
   const q = query(ticketsCollection, where("sellerId", "==", userId));
   const snapshot = await getCountFromServer(q);
   const count = snapshot.data().count;
@@ -294,9 +298,15 @@ export async function isUserVerifiedByTicketCount(userId: string): Promise<boole
     return isUserVerifiedByTicketCountInternal(userId, false);
 }
 
-// This function still relies on localStorage as user profile is not in Firestore yet.
+
+// This function now uses the actual Firebase Auth state
 export function getSimulatedCurrentUserId(): string {
     if (typeof window !== 'undefined') {
+        const user = auth.currentUser;
+        if (user) {
+            return user.uid;
+        }
+        // Fallback for cases where auth state is not yet loaded, check localStorage
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         const userId = localStorage.getItem('userId');
         if (isLoggedIn && userId) {
@@ -305,5 +315,3 @@ export function getSimulatedCurrentUserId(): string {
     }
     return 'anonymousUser';
 }
-
-    
