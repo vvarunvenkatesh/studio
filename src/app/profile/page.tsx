@@ -53,11 +53,6 @@ export default function ProfileBasicInfoPage() {
 
   const [editingField, setEditingField] = React.useState<'email' | 'contact' | null>(null);
   const [tempValue, setTempValue] = React.useState('');
-  // This can be adapted for phone verification later
-  // const [otp, setOtp] = React.useState('');
-  // const [otpSent, setOtpSent] = React.useState(false);
-  // const [isSendingOtp, setIsSendingOtp] = React.useState(false);
-  // const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
   
   const getAvatarInfoForGender = (gender: string): { url: string; hint: string } => {
     return GENDER_AVATARS[gender as keyof typeof GENDER_AVATARS] || DEFAULT_AVATAR_INFO;
@@ -65,22 +60,28 @@ export default function ProfileBasicInfoPage() {
 
   const checkUserVerificationStatus = React.useCallback(async () => {
     if (firebaseUser) {
-      const verified = await isUserVerifiedByTicketCount(firebaseUser.uid);
-      setIsUserVerified(verified);
-      if (verified && typeof window !== 'undefined') {
-        localStorage.setItem('hasSeenVerificationPrompt', 'true');
+      try {
+        const verified = await isUserVerifiedByTicketCount(firebaseUser.uid);
+        setIsUserVerified(verified);
+        if (verified && typeof window !== 'undefined') {
+          // Set a flag to prevent the profile completion prompt from showing again
+          localStorage.setItem('hasSeenVerificationPrompt', 'true');
+        }
+      } catch (error) {
+        console.error("Failed to check user verification status:", error);
+        setIsUserVerified(false);
       }
     } else {
       setIsUserVerified(false);
     }
   }, [firebaseUser]);
 
+
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setFirebaseUser(user);
         
-        // Load user data from localStorage
         const storedUserData = localStorage.getItem('userData');
         let currentGender = 'other';
         let currentContact = '';
@@ -141,10 +142,7 @@ export default function ProfileBasicInfoPage() {
     try {
       await signOut(auth);
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('profileImageUrl');
-        localStorage.removeItem('userData');
+        localStorage.clear(); // Clear all local storage on logout
         window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
       }
       toast({ title: "Logged Out", description: "You have been successfully logged out.", variant: "success" });
@@ -187,8 +185,6 @@ export default function ProfileBasicInfoPage() {
     toast({ title: "Gender Updated", description: "Your selection has been updated.", variant: "success" });
   };
   
-  // Phone verification is complex and requires a backend or Firebase Functions.
-  // We will keep contact as a simple localStorage value for now.
   const handleEditContact = () => {
     setEditingField('contact');
     setTempValue(userData.contact);

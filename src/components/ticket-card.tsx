@@ -62,7 +62,7 @@ export function TicketCard({
     return () => unsubscribe();
   }, []);
 
-  const formattedDate = format(new Date(ticketProp.date), 'PPP');
+  const formattedDate = format(new Date(ticketProp.date.toDate()), 'PPP');
   const CategorySpecificIcon = categoryIconMap[ticketProp.type] || TicketIconLucide;
 
   const isTicketSold = ticketProp.status === 'sold';
@@ -104,7 +104,7 @@ export function TicketCard({
         } else {
             contactMessage += "using their listed contact details";
         }
-        contactMessage += " to complete your purchase.";
+        contactMessage += " to arrange ticket transfer.";
 
         toast({
           title: 'Purchase Initiated!',
@@ -353,7 +353,7 @@ export function TicketCard({
          </div>
 
         {isTicketSold ? (
-          ticketProp.originalTicketDataUri ? (
+          ticketProp.originalTicketDataUri && (actualIsSeller || ticketProp.buyerId === currentUserId) ? (
             <Button
               size="sm"
               onClick={() => handleDownload(ticketProp.originalTicketDataUri, ticketProp.id, ticketProp.type)}

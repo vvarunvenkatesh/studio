@@ -1,4 +1,6 @@
 
+'use client';
+
 import { db, auth } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp, writeBatch, getDoc, documentId, getCountFromServer } from "firebase/firestore";
 import { onAuthStateChanged } from 'firebase/auth';
@@ -155,7 +157,9 @@ export async function postTicket(
     await batch.commit();
   }
 
-  return { id: docRef.id, ...ticketToCreate } as Ticket; // Type assertion needed as serverTimestamp is resolved by server
+  const newTicketData = (await getDoc(docRef)).data();
+
+  return { id: docRef.id, ...newTicketData } as Ticket;
 }
 
 export async function getAvailableTickets(filters?: {
@@ -179,8 +183,8 @@ export async function getAvailableTickets(filters?: {
         q = query(q, where("type", "==", filters.category));
       }
     }
-    if (filters.fromCity) q = query(q, where("fromCity", "==", filters.fromCity));
-    if (filters.toCity) q = query(q, where("toCity", "==", filters.toCity));
+    if (filters.fromCity) q = query(q, where("fromCity", ">=", filters.fromCity), where("fromCity", "<=", filters.fromCity + '\uf8ff'));
+    if (filters.toCity) q = query(q, where("toCity", ">=", filters.toCity), where("toCity", "<=", filters.toCity + '\uf8ff'));
     if (filters.minPrice !== undefined) q = query(q, where("price", ">=", filters.minPrice));
     if (filters.maxPrice !== undefined) q = query(q, where("price", "<=", filters.maxPrice));
     if (filters.startDate) q = query(q, where("date", ">=", Timestamp.fromDate(new Date(filters.startDate))));
@@ -194,7 +198,7 @@ export async function getAvailableTickets(filters?: {
     ...doc.data(),
   } as Ticket));
   
-  // Client-side filtering for searchTerm as a workaround
+  // Client-side filtering for searchTerm as a workaround for more complex queries
   if (filters?.searchTerm) {
     const term = filters.searchTerm.toLowerCase();
     return tickets.filter(ticket => 
@@ -239,7 +243,7 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
     const ticketData = ticketDoc.data() as Ticket;
 
     if (ticketData.status === 'sold') {
-      return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: ticketData };
+      return { success: false, message: `Ticket with ID ${ticketId} is already sold.`, ticket: { ...ticketData, id: ticketDoc.id} };
     }
     if (ticketData.sellerId === buyer.uid) {
       return { success: false, message: `You cannot purchase your own ticket.` };
@@ -250,8 +254,12 @@ export async function purchaseTicket(ticketId: string): Promise<{ success: boole
     // Simulate adding to user's orders in localStorage
     if (typeof window !== 'undefined') {
         const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
-        userOrders.push({ id: ticketId, ...ticketData });
-        localStorage.setItem('userOrders', JSON.stringify(userOrders));
+        // Ensure not to add duplicates
+        if (!userOrders.some((order: Ticket) => order.id === ticketId)) {
+            userOrders.push({ ...ticketData, id: ticketId });
+            localStorage.setItem('userOrders', JSON.stringify(userOrders));
+            window.dispatchEvent(new StorageEvent('storage', { key: 'userOrders' }));
+        }
     }
     
     const updatedTicket = { ...ticketData, id: ticketId, status: 'sold' as const };
@@ -296,22 +304,4 @@ async function isUserVerifiedByTicketCountInternal(userId: string, isPostingNew:
 
 export async function isUserVerifiedByTicketCount(userId: string): Promise<boolean> {
     return isUserVerifiedByTicketCountInternal(userId, false);
-}
-
-
-// This function now uses the actual Firebase Auth state
-export function getSimulatedCurrentUserId(): string {
-    if (typeof window !== 'undefined') {
-        const user = auth.currentUser;
-        if (user) {
-            return user.uid;
-        }
-        // Fallback for cases where auth state is not yet loaded, check localStorage
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const userId = localStorage.getItem('userId');
-        if (isLoggedIn && userId) {
-            return userId;
-        }
-    }
-    return 'anonymousUser';
 }

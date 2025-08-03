@@ -15,6 +15,8 @@ import { Footer } from '@/components/footer'; // Import Footer
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // Simple Advertisement Slider Component - Reduced to 3
 const advertisements = [
@@ -203,25 +205,28 @@ export default function Home() {
   const [showVerificationDialog, setShowVerificationDialog] = React.useState(false);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      const hasSeenPrompt = localStorage.getItem('hasSeenVerificationPrompt') === 'true';
-      const storedUserData = localStorage.getItem('userData');
-      let isProfileFullyVerified = false;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const hasSeenPrompt = localStorage.getItem('hasSeenVerificationPrompt') === 'true';
+            const storedUserData = localStorage.getItem('userData');
+            let isProfileFullyVerified = false;
 
-      if (storedUserData) {
-        try {
-          const parsedData = JSON.parse(storedUserData);
-          isProfileFullyVerified = !!(parsedData.email && parsedData.contact);
-        } catch (e) {
-          console.error("Failed to parse user data for verification check", e);
+            if (storedUserData) {
+                try {
+                    const parsedData = JSON.parse(storedUserData);
+                    isProfileFullyVerified = !!(parsedData.email && parsedData.contact);
+                } catch (e) {
+                    console.error("Failed to parse user data for verification check", e);
+                }
+            }
+
+            if (!isProfileFullyVerified && !hasSeenPrompt) {
+                setShowVerificationDialog(true);
+            }
         }
-      }
+    });
 
-      if (isLoggedIn && !isProfileFullyVerified && !hasSeenPrompt) {
-        setShowVerificationDialog(true);
-      }
-    }
+    return () => unsubscribe();
   }, []);
 
   const handleGoToProfile = () => {
