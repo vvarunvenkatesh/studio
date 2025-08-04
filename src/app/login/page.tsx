@@ -13,6 +13,36 @@ import { Loader2, Mail, KeyRound, Phone, ShieldCheck } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
+
+
+// Animated Background Component
+function AnimatedBackground() {
+    const images = [
+        { src: 'https://placehold.co/1920/1080.png', alt: 'Sketch art of a speeding train', hint: 'train sketch art' },
+        { src: 'https://placehold.co/1920/1080.png', alt: 'Sketch art of a modern bus on a highway', hint: 'bus sketch art' },
+        { src: 'https://placehold.co/1920/1080.png', alt: 'Sketch art of a train station', hint: 'train station sketch' },
+    ];
+
+    return (
+        <div className="fixed inset-0 w-full h-full -z-10 overflow-hidden">
+            {images.map((image, index) => (
+                <Image
+                    key={index}
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    style={{ objectFit: 'cover', animationDelay: `${index * 5}s` }}
+                    className="absolute inset-0 w-full h-full opacity-0 animate-fade-in-out"
+                    data-ai-hint={image.hint}
+                    priority={index === 0}
+                />
+            ))}
+            <div className="absolute inset-0 bg-black/60"></div>
+        </div>
+    );
+}
 
 export default function LoginPage() {
   // Email state
@@ -188,28 +218,29 @@ export default function LoginPage() {
 
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-transparent p-4">
+      <AnimatedBackground />
       <div id="recaptcha-container"></div>
-      <Card className="w-full max-w-sm bg-card">
+      <Card className="w-full max-w-sm bg-card/80 backdrop-blur-sm border-white/20">
         <CardHeader className="text-center">
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
-                 <span className="text-3xl font-bold text-foreground">
+                 <span className="text-3xl font-bold text-white">
                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                  </span>
              </Link>
-              <span className="text-xs text-foreground mt-[-4px] opacity-80">
+              <span className="text-xs text-white/90 mt-[-4px] opacity-80">
                Ticket Reselling Platform
              </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="email" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="email">
+            <TabsList className="grid w-full grid-cols-2 bg-black/20">
+              <TabsTrigger value="email" className="text-white data-[state=active]:bg-card/80 data-[state=active]:text-foreground">
                 <Mail className="mr-2 h-4 w-4" /> Email
               </TabsTrigger>
-              <TabsTrigger value="phone">
+              <TabsTrigger value="phone" className="text-white data-[state=active]:bg-card/80 data-[state=active]:text-foreground">
                 <Phone className="mr-2 h-4 w-4" /> Phone
               </TabsTrigger>
             </TabsList>
@@ -218,7 +249,7 @@ export default function LoginPage() {
             <TabsContent value="email">
               <form onSubmit={handleEmailLogin} className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground flex items-center gap-2"><Mail className="h-4 w-4"/> Email</Label>
+                  <Label htmlFor="email" className="text-white flex items-center gap-2"><Mail className="h-4 w-4"/> Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -227,12 +258,12 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={isLoggingIn}
-                    className="bg-background text-foreground"
+                    className="bg-background/80 text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-foreground flex items-center gap-2"><KeyRound className="h-4 w-4"/> Password</Label>
+                    <Label htmlFor="password" className="text-white flex items-center gap-2"><KeyRound className="h-4 w-4"/> Password</Label>
                     <Link href="/forgot-password" passHref legacyBehavior>
                         <a className="text-sm text-primary hover:underline">Forgot?</a>
                     </Link>
@@ -244,7 +275,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoggingIn}
-                    className="bg-background text-foreground"
+                    className="bg-background/80 text-foreground"
                   />
                 </div>
                 <Button type="submit" className="w-full gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" disabled={isLoggingIn}>
@@ -266,7 +297,7 @@ export default function LoginPage() {
                 // Step 1: Enter Phone Number
                 <form onSubmit={handleSendOtp} className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-foreground flex items-center gap-2"><Phone className="h-4 w-4"/> Phone Number</Label>
+                    <Label htmlFor="phone" className="text-white flex items-center gap-2"><Phone className="h-4 w-4"/> Phone Number</Label>
                     <div className="flex items-center gap-2">
                         <span className="border rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">+91</span>
                         <Input
@@ -277,7 +308,7 @@ export default function LoginPage() {
                           value={phone}
                           onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                           disabled={isSendingOtp}
-                          className="bg-background text-foreground"
+                          className="bg-background/80 text-foreground"
                           maxLength={10}
                         />
                     </div>
@@ -297,7 +328,7 @@ export default function LoginPage() {
                 // Step 2: Enter OTP
                 <form onSubmit={handleVerifyOtp} className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="otp" className="text-foreground flex items-center gap-2"><ShieldCheck className="h-4 w-4"/> Verification Code</Label>
+                    <Label htmlFor="otp" className="text-white flex items-center gap-2"><ShieldCheck className="h-4 w-4"/> Verification Code</Label>
                     <Input
                       id="otp"
                       type="text"
@@ -306,7 +337,7 @@ export default function LoginPage() {
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                       disabled={isVerifyingOtp}
-                      className="bg-background text-foreground"
+                      className="bg-background/80 text-foreground"
                       maxLength={6}
                     />
                   </div>
@@ -328,7 +359,7 @@ export default function LoginPage() {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="text-center text-sm text-muted-foreground pt-4">
+        <CardFooter className="text-center text-sm text-white/80 pt-4">
           Don't have an account?{' '}
           <Link
             href="/signup"
