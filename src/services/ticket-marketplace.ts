@@ -353,3 +353,22 @@ async function isUserVerifiedByTicketCountInternal(userId: string, isPostingNew:
 export async function isUserVerifiedByTicketCount(userId: string): Promise<boolean> {
     return isUserVerifiedByTicketCountInternal(userId, false);
 }
+
+export async function getTicketsBySeller(sellerId: string): Promise<Ticket[]> {
+    if (!sellerId) return [];
+
+    const q = query(ticketsCollection, where("sellerId", "==", sellerId));
+    const snapshot = await getDocs(q);
+
+    const tickets: Ticket[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            date: (data.date as Timestamp)?.toDate().toISOString(),
+            createdAt: (data.createdAt as Timestamp)?.toDate().toISOString(),
+        } as Ticket;
+    });
+
+    return tickets;
+}

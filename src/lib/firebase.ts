@@ -7,16 +7,16 @@ import { getAuth } from "firebase/auth";
 // =================================================================================
 // TODO: PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE
 // =================================================================================
-// Replace the entire object below with the `firebaseConfig` object from the
-// Firebase console.
+// The firebaseConfig object is now built from environment variables.
+// See the .env.local file for where to put your credentials for local development.
 const firebaseConfig = {
-  apiKey: "AIzaSyATMtv9y0OKx1eK2FjdhBEgyUjwGTsT4MQ",
-  authDomain: "lastminit.firebaseapp.com",
-  projectId: "lastminit",
-  storageBucket: "lastminit.firebasestorage.app",
-  messagingSenderId: "1045845040540",
-  appId: "1:1045845040540:web:2b0aee1e109ac237437c59",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 // =================================================================================
 // END OF CONFIGURATION
