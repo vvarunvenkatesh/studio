@@ -11,7 +11,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <h5 className="font-semibold text-foreground mb-3">
-                <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
             </h5>
             <p className="text-sm">
               Your platform for reselling train, bus, event, and movie tickets at the last minute.
@@ -45,7 +45,7 @@ export function Footer() {
           </div>
         </div>
         <div className="pt-8 border-t border-muted-foreground/20 text-center text-xs">
-          <p>&copy; {new Date().getFullYear()} LastMiniT. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} LastMinIT. All rights reserved.</p>
           <p>This is a demonstration platform. Please read our Terms & Conditions.</p>
         </div>
       </div>

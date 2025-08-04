@@ -19,8 +19,9 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Label } from '@/components/ui/label';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { getSimulatedCurrentUserId, getAvailableTickets, deleteTicket as deleteTicketService } from '@/services/ticket-marketplace';
-// Removed BottomSlidingTab import
+import { getAvailableTickets, deleteTicket as deleteTicketService } from '@/services/ticket-marketplace';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const categoryMap: Record<Ticket['type'], { icon: React.ElementType; name: string }> = {
     bus: { icon: Bus, name: 'Bus' },
@@ -160,7 +161,6 @@ export default function TicketsPage() {
   const currentCategory = searchParams.get('category') as Ticket['type'] | 'transport' | 'all' | null;
   const isEventLikeCategory = currentCategory === 'movie' || currentCategory === 'event' || currentCategory === 'sports';
 
-
   const [fromCityFilter, setFromCityFilter] = React.useState(searchParams.get('from') || '');
   const [toCityFilter, setToCityFilter] = React.useState(searchParams.get('to') || '');
   const [priceRange, setPriceRange] = React.useState<[number | undefined, number | undefined]>(parsePriceRange(searchParams.get('price')));
@@ -169,21 +169,11 @@ export default function TicketsPage() {
   const [genericSearchTerm, setGenericSearchTerm] = React.useState(searchParams.get('q') || '');
   const [eventLocationFilter, setEventLocationFilter] = React.useState(searchParams.get('location') || '');
 
-
   React.useEffect(() => {
-    const updateCurrentUserId = () => {
-      const id = getSimulatedCurrentUserId();
-      setCurrentUserId(id);
-    };
-    updateCurrentUserId(); // Initial set
-
-    const handleLoginStorageChange = (event: StorageEvent) => {
-      if (event.key === 'isLoggedIn' || event.key === 'userId') {
-        updateCurrentUserId();
-      }
-    };
-    window.addEventListener('storage', handleLoginStorageChange);
-    return () => window.removeEventListener('storage', handleLoginStorageChange);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUserId(user ? user.uid : null);
+    });
+    return () => unsubscribe();
   }, []);
 
   const pageTitle = React.useMemo(() => {
@@ -205,7 +195,7 @@ export default function TicketsPage() {
       let title = `${categoryMap[currentCategory as Ticket['type']].name} Tickets`;
       if (isEventLikeCategory && currentEventLocation) {
         title += ` in ${currentEventLocation}`;
-      } else if (!isEventLikeCategory) { // Only add from/to for non-event like if eventLocation isn't primary
+      } else if (!isEventLikeCategory) {
         if (currentFrom) title += ` from ${currentFrom}`;
         if (currentTo) title += ` to ${currentTo}`;
       }
@@ -256,25 +246,15 @@ export default function TicketsPage() {
   }, [searchParams]);
 
   React.useEffect(() => {
-    loadTickets(); // Load tickets on initial render or when searchParams change
-    // Listener for when marketplaceTickets in localStorage changes
-    const handleMarketplaceStorageChange = (event: StorageEvent) => {
-      if (event.key === 'marketplaceTickets') {
-        loadTickets(); // Reload tickets if marketplaceTickets itself changes
-      }
-    };
-    window.addEventListener('storage', handleMarketplaceStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleMarketplaceStorageChange);
-    };
-  }, [loadTickets]); // loadTickets is stable due to useCallback and its dependencies
+    loadTickets();
+  }, [loadTickets]);
 
   const handlePurchaseSuccess = (purchasedTicketId: string) => {
     toast({
         title: "Ticket Status Updated",
         description: "The ticket list has been refreshed.",
     });
-    // No need to manually call loadTickets here, storage event listener will handle it
+    loadTickets();
   };
 
   const handleCancelListing = async (ticketId: string) => {
@@ -286,7 +266,7 @@ export default function TicketsPage() {
           title: 'Listing Cancelled',
           description: result.message || 'Your ticket listing has been removed.',
         });
-         // No need to manually call loadTickets here, storage event listener will handle it
+         loadTickets();
       } else {
         throw new Error(result.message || 'Could not cancel the ticket listing.');
       }
@@ -303,7 +283,7 @@ export default function TicketsPage() {
   };
 
   const handleFilterChange = () => {
-    const query = new URLSearchParams(); // Start fresh
+    const query = new URLSearchParams();
 
     const currentCat = searchParams.get('category');
     if (currentCat) query.set('category', currentCat);
@@ -377,10 +357,9 @@ export default function TicketsPage() {
         <Card className="mb-8 p-4 md:p-6 bg-muted/30 border border-dashed max-w-5xl mx-auto">
           <div className={cn(
               isEventLikeCategory
-                ? "flex flex-col md:flex-row md:items-end gap-4" // For movie/event/sports: horizontal on md+
-                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end gap-4" // For train/bus/all: grid layout
+                ? "flex flex-col md:flex-row md:items-end gap-4"
+                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end gap-4"
           )}>
-            {/* Generic Search Term Input */}
             <div className={cn(
                 "w-full",
                 isEventLikeCategory ? "md:flex-1" : "lg:col-span-2"
@@ -396,10 +375,8 @@ export default function TicketsPage() {
               />
             </div>
 
-            {/* Conditional Filters based on category */}
             {isEventLikeCategory ? (
               <>
-                {/* Event-specific Location Filter */}
                 <div className="w-full md:flex-1">
                   <Label htmlFor="eventLocationFilter" className="block text-sm font-medium text-muted-foreground mb-1">Location (City/Venue)</Label>
                   <Input
@@ -414,7 +391,6 @@ export default function TicketsPage() {
               </>
             ) : (
               <>
-                {/* Transport/All Specific Filters */}
                 <div className="w-full">
                   <Label htmlFor="fromCityFilter" className="block text-sm font-medium text-muted-foreground mb-1">From City</Label>
                   <Input
@@ -464,7 +440,6 @@ export default function TicketsPage() {
               </>
             )}
 
-            {/* Date Range Picker (Common to all) */}
             <div className={cn(
                 "w-full",
                 isEventLikeCategory ? "md:w-auto" : ""
@@ -479,7 +454,6 @@ export default function TicketsPage() {
                  />
              </div>
 
-            {/* Filter Buttons (Common to all) */}
             <div className={cn(
                 "flex flex-col sm:flex-row gap-2 w-full pt-2",
                  isEventLikeCategory ? "md:w-auto" : "lg:col-span-4 lg:justify-end"
@@ -516,7 +490,7 @@ export default function TicketsPage() {
                 ticket={ticket}
                 variant="browse"
                 onPurchaseSuccess={handlePurchaseSuccess}
-                isSeller={!!currentUserId && ticket.sellerId === currentUserId && currentUserId !== 'anonymousUser'}
+                isSeller={!!currentUserId && ticket.sellerId === currentUserId}
                 onCancelListing={handleCancelListing}
                 isCancelling={isDeleting === ticket.id}
                 className="ml-0 md:ml-0"
@@ -540,7 +514,6 @@ export default function TicketsPage() {
           </div>
         ) : null}
       </main>
-      {/* BottomSlidingTab component removed */}
     </div>
   );
 }

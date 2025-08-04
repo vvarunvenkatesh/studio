@@ -5,13 +5,14 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, IndianRupeeIcon, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2, Mail, Phone } from 'lucide-react';
+import { ShoppingBag, Download, Calendar, Clock, MapPin, ArrowRight, IndianRupeeIcon, Bus, Train, Film, Calendar as CalendarIconLucide, Ticket as TicketCategoryIcon, Trash2, Mail, Phone, CheckCircle2 } from 'lucide-react';
 import type { Ticket } from '@/services/ticket-marketplace';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"; 
-
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const categoryIconMap: Record<Ticket['type'], React.ElementType> = {
   bus: Bus,
@@ -127,7 +128,7 @@ function OrderItem({ order, onDelete }: OrderItemProps) {
 
        <div className="flex-grow grid gap-1.5 text-sm">
           <div className="flex justify-between items-start">
-             <h3 className="font-semibold capitalize text-foreground">{order.type} Ticket</h3>
+             <h3 className="font-semibold capitalize text-foreground flex items-center">{order.type} Ticket {order.sellerVerified && <CheckCircle2 className="ml-2 h-4 w-4 text-green-500" title="Verified Seller" />}</h3>
              <Badge variant="secondary" className="text-xs whitespace-nowrap">ID: {order.id.substring(0,6)}</Badge>
           </div>
           <p className="text-muted-foreground text-xs line-clamp-2">{order.description}</p>
@@ -236,6 +237,15 @@ export default function ProfileOrdersPage() {
   const { toast } = useToast(); 
   const [orders, setOrders] = React.useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setCurrentUserId(user ? user.uid : null);
+    });
+    return () => unsubscribe();
+  }, []);
+
 
   const getUniqueOrders = (tickets: Ticket[]): Ticket[] => {
       const seenIds = new Set<string>();
@@ -252,31 +262,40 @@ export default function ProfileOrdersPage() {
       });
   };
 
-
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      try {
-        const storedOrdersString = localStorage.getItem('userOrders');
-        const storedOrders: Ticket[] = storedOrdersString ? JSON.parse(storedOrdersString) : [];
-        setOrders(getUniqueOrders(storedOrders).reverse()); 
-      } catch (e) {
-        console.error("Failed to load orders from localStorage:", e);
-      } finally {
-        setIsLoading(false);
-      }
+        setIsLoading(true);
+        try {
+            const storedOrdersString = localStorage.getItem('userOrders');
+            if (storedOrdersString) {
+                const storedOrders: any[] = JSON.parse(storedOrdersString);
+                // The 'date' is already a string from the service, so we just use it.
+                setOrders(getUniqueOrders(storedOrders).reverse());
+            }
+        } catch (e) {
+            console.error("Failed to load orders from localStorage:", e);
+        } finally {
+            setIsLoading(false);
+        }
 
-       const handleStorageChange = (event: StorageEvent) => {
-           if (event.key === 'userOrders' && event.newValue) {
-             try {
-               const updatedStoredOrders: Ticket[] = JSON.parse(event.newValue);
-               setOrders(getUniqueOrders(updatedStoredOrders).reverse()); 
-             } catch (e) {
-               console.error("Failed to parse updated orders:", e);
-             }
-           } else if (event.key === 'userOrders' && event.newValue === null) {
-               setOrders([]); 
+        const handleStorageChange = (event: StorageEvent) => {
+           if (event.key === 'userOrders') {
+                setIsLoading(true);
+                try {
+                    const newValue = event.newValue;
+                    if (newValue) {
+                        const updatedStoredOrders: any[] = JSON.parse(newValue);
+                        setOrders(getUniqueOrders(updatedStoredOrders).reverse());
+                    } else {
+                        setOrders([]);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse updated orders:", e);
+                } finally {
+                    setIsLoading(false);
+                }
            }
-       };
+        };
 
        window.addEventListener('storage', handleStorageChange);
        return () => {
@@ -285,7 +304,7 @@ export default function ProfileOrdersPage() {
     } else {
         setIsLoading(false); 
     }
-  }, []);
+  }, [currentUserId]);
 
   const handleDeleteOrder = (orderId: string) => {
     if (typeof window !== 'undefined') {
@@ -331,7 +350,7 @@ export default function ProfileOrdersPage() {
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 border border-dashed rounded-lg text-center text-muted-foreground bg-muted/30">
              <ShoppingBag className="h-10 w-10 mb-2" />
-            <p>You haven't purchased any tickets yet.</p>
+            <p>{currentUserId ? "You haven't purchased any tickets yet." : "Please log in to see your orders."}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -347,4 +366,3 @@ export default function ProfileOrdersPage() {
     </Card>
   );
 }
-

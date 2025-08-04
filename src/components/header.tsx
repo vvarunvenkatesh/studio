@@ -4,7 +4,7 @@
 import * as _React from 'react'; // _React to avoid conflict with React namespace
 import Link from 'next/link';
 import {Button} from '@/components/ui/button';
-import {User, MapPin, Menu, LogIn, LogOut, Building } from 'lucide-react'; // Added Menu, LogIn, LogOut, Building
+import {User, MapPin, Menu, LogIn, LogOut } from 'lucide-react'; // Added Menu, LogIn, LogOut
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   Select,
@@ -15,9 +15,11 @@ import {
 } from '@/components/ui/select';
 import {cn} from '@/lib/utils';
 import {useIsMobile} from '@/hooks/use-mobile';
-import {Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose} from '@/components/ui/sheet'; // Added DialogTitle
+import {Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { TermsAndConditionsDialog } from './terms-and-conditions-dialog';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 interface HeaderProps {
   className?: string;
@@ -44,72 +46,54 @@ export function Header({className}: HeaderProps) {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = _React.useState(false);
   const [showTnCDialog, setShowTnCDialog] = _React.useState(false);
-  const [tncAccepted, setTncAccepted] = _React.useState(true); // Default to true
+  const [tncAccepted, setTncAccepted] = _React.useState(true);
 
   _React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-      const storedImageUrl = localStorage.getItem('profileImageUrl');
-      const storedLocation = localStorage.getItem('selectedLocation') || availableLocations[0];
-      const accepted = localStorage.getItem('tncAccepted') === 'true';
-
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const loggedInStatus = !!user;
       setIsLoggedIn(loggedInStatus);
-      setTncAccepted(accepted);
-      setSelectedLocation(storedLocation);
 
-      if (loggedInStatus && storedImageUrl) {
+      if (loggedInStatus) {
+        const storedImageUrl = localStorage.getItem('profileImageUrl');
         setProfileImageUrl(storedImageUrl);
+        
+        const accepted = localStorage.getItem('tncAccepted') === 'true';
+        setTncAccepted(accepted);
+        if (!accepted) {
+            setShowTnCDialog(true);
+        }
       } else {
         setProfileImageUrl(null);
       }
-      
-      if (loggedInStatus && !accepted) {
-        setShowTnCDialog(true);
+    });
+    
+    // Handle location from localStorage
+    const storedLocation = localStorage.getItem('selectedLocation') || availableLocations[0];
+    setSelectedLocation(storedLocation);
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'profileImageUrl' && isLoggedIn) {
+        setProfileImageUrl(event.newValue);
       }
-
-      const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'isLoggedIn') {
-          const newLoginStatus = event.newValue === 'true';
-          setIsLoggedIn(newLoginStatus);
-          const currentTncAccepted = localStorage.getItem('tncAccepted') === 'true';
-          setTncAccepted(currentTncAccepted);
-
-          if (!newLoginStatus) {
-            setProfileImageUrl(null);
-          } else {
-            const updatedImageUrl = localStorage.getItem('profileImageUrl');
-            setProfileImageUrl(updatedImageUrl);
-            if (!currentTncAccepted) {
-                setShowTnCDialog(true);
-            }
-          }
-        }
-        if (event.key === 'profileImageUrl') {
-          if (localStorage.getItem('isLoggedIn') === 'true') {
-            setProfileImageUrl(event.newValue);
-          } else {
-            setProfileImageUrl(null);
-          }
-        }
-        if (event.key === 'selectedLocation') {
-          setSelectedLocation(event.newValue || availableLocations[0]);
-        }
-        if (event.key === 'tncAccepted') {
+      if (event.key === 'selectedLocation') {
+        setSelectedLocation(event.newValue || availableLocations[0]);
+      }
+       if (event.key === 'tncAccepted') {
             const newTncStatus = event.newValue === 'true';
             setTncAccepted(newTncStatus);
             if (newTncStatus) {
                 setShowTnCDialog(false);
             }
         }
-      };
-
-      window.addEventListener('storage', handleStorageChange);
-
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-      };
-    }
-  }, []);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [isLoggedIn]);
 
   const handleLocationChange = (newLocation: string) => {
     setSelectedLocation(newLocation);
@@ -133,18 +117,20 @@ export function Header({className}: HeaderProps) {
     setShowTnCDialog(false);
   };
 
-  const handleLogout = () => {
-     if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('profileImageUrl');
-        localStorage.removeItem('userData'); // Ensure userData is also cleared
-        window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'userId', newValue: null, storageArea: localStorage }));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'profileImageUrl', newValue: null, storageArea: localStorage }));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'userData', newValue: null, storageArea: localStorage }));
+  const handleLogout = async () => {
+     try {
+        await signOut(auth);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('profileImageUrl');
+            localStorage.removeItem('userData');
+             window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: null, storageArea: localStorage }));
+        }
         window.location.href = '/'; 
-    }
+     } catch (error) {
+        console.error("Logout failed", error);
+     }
   };
 
   return (
@@ -163,12 +149,11 @@ export function Header({className}: HeaderProps) {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-full xs:w-3/4 sm:max-w-xs p-0 flex flex-col">
-                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     {/* Brand Title Section */}
                     <div className="p-4 border-b">
                       <Link href="/" className="flex flex-col items-start" onClick={() => setMobileMenuOpen(false)}>
                         <span className="text-xl font-bold text-foreground">
-                          <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                          <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                         </span>
                         <span className="text-xs text-muted-foreground">
                           Ticket Reselling Platform
@@ -234,7 +219,7 @@ export function Header({className}: HeaderProps) {
               <div className="flex flex-col items-center text-center">
                 <span className="whitespace-nowrap flex items-baseline justify-center gap-1">
                   <span className="text-2xl font-bold text-foreground">
-                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                     <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                   </span>
                 </span>
                 <span className="text-[10px] text-foreground opacity-80 truncate max-w-[150px]">
@@ -249,7 +234,7 @@ export function Header({className}: HeaderProps) {
                   className="w-auto h-auto p-1.5 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-foreground hover:bg-accent hover:text-accent-foreground"
                   aria-label="Select Location"
                 >
-                   <MapPin className="h-5 w-5 flex-shrink-0" /> {/* Changed to MapPin */}
+                   <MapPin className="h-5 w-5 flex-shrink-0" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableLocations.map((location) => (
@@ -278,7 +263,7 @@ export function Header({className}: HeaderProps) {
                 className="whitespace-nowrap flex items-baseline justify-center gap-1"
               >
                 <span className="text-3xl font-bold text-foreground">
-                  <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                  <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                 </span>
               </Link>
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
@@ -286,7 +271,7 @@ export function Header({className}: HeaderProps) {
               </span>
             </div>
 
-            <div className="flex items-center gap-4"> {/* Increased gap for desktop */}
+            <div className="flex items-center gap-4">
                 {isLoggedIn ? (
                     <Link href="/profile" className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary">
                     <Avatar className="h-8 w-8 cursor-pointer">

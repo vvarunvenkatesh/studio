@@ -7,130 +7,76 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Mail, Phone, KeyRound } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, Mail, KeyRound } from 'lucide-react';
+import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
-  const [loginMethod, setLoginMethod] = React.useState<'email' | 'phone'>('email');
-  const [identifier, setIdentifier] = React.useState(''); // Unified state for email/phone
-  const [otp, setOtp] = React.useState(''); // State for OTP input
-  const [isSendingOtp, setIsSendingOtp] = React.useState(false);
-  const [otpSent, setOtpSent] = React.useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
-  const [otpError, setOtpError] = React.useState(false); // New state for OTP error
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
+  const [loginError, setLoginError] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const isValidIdentifier = () => {
-    if (loginMethod === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(identifier);
-    } else {
-      const phoneRegex = /^\+?[1-9]\d{1,14}$/; // Simple international phone regex
-      return phoneRegex.test(identifier);
-    }
-  };
-
-  const handleSendOtp = async (e?: React.MouseEvent<HTMLButtonElement>) => {
-      if (e) e.preventDefault();
-      if (!isValidIdentifier()) {
-         toast({
-             title: 'Invalid Input',
-             description: `Please enter a valid ${loginMethod}.`,
-             variant: 'destructive',
-         });
-         return;
-      }
-
-      setIsSendingOtp(true);
-      setOtpError(false); // Reset OTP error on new OTP request
-      console.log(`Sending OTP to ${loginMethod}: ${identifier}`);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      setOtpSent(true);
-      toast({
-        title: 'OTP Sent (Simulation)',
-        description: `An OTP has been sent to your ${loginMethod}. Use '123456' to login.`,
-        variant: 'warning', // Use the new warning variant
-      });
-      setIsSendingOtp(false);
-  };
-
-  const handleOtpVerification = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || otp.length !== 6) {
-        toast({
-            title: 'Invalid OTP',
-            description: 'Please enter a valid 6-digit OTP.',
-            variant: 'destructive',
-        });
-        setOtpError(true); // Set error for invalid OTP format
-        return;
-    }
-    setIsVerifyingOtp(true);
-    setOtpError(false); // Reset error before verification attempt
-
-    console.log(`Verifying OTP: ${otp} for ${identifier}`);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    let loginSuccess = false;
-    if (otp === '123456') { // Simulated OTP check
-        loginSuccess = true;
+    if (!email || !password) {
+      toast({
+        title: 'Login Failed',
+        description: 'Please enter both email and password.',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    if (loginSuccess) {
-      try {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('isLoggedIn', 'true');
-            // Set a unique userId for the simulation, using the identifier
-            localStorage.setItem('userId', identifier);
+    setIsLoggingIn(true);
+    setLoginError(false);
 
-             window.dispatchEvent(new StorageEvent('storage', {
-                key: 'isLoggedIn',
-                newValue: 'true',
-                storageArea: localStorage,
-             }));
-             window.dispatchEvent(new StorageEvent('storage', { // Dispatch event for userId change
-                key: 'userId',
-                newValue: identifier,
-                storageArea: localStorage,
-             }));
-          }
-      } catch (error) {
-         console.error("Failed to set login status in localStorage", error);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Upon successful login, set flags in localStorage for client-side state management
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+        // Use Firebase UID as the unique user identifier
+        localStorage.setItem('userId', user.uid);
+
+        // Dispatch storage events to notify other components (like Header)
+        window.dispatchEvent(new StorageEvent('storage', { key: 'isLoggedIn', newValue: 'true', storageArea: localStorage }));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'userId', newValue: user.uid, storageArea: localStorage }));
       }
 
       const redirectPath = searchParams.get('redirect');
-
       toast({
         title: 'Login Successful',
-        description: redirectPath ? 'Redirecting you back...' : 'Redirecting you to the homepage...',
-        variant: 'success', // Use the new success variant
+        description: redirectPath ? 'Redirecting you back...' : 'Redirecting to homepage...',
+        variant: 'success',
       });
+      // Use window.location.href for a full page reload to ensure all states are fresh
       window.location.href = redirectPath || '/';
-    } else {
+
+    } catch (error: any) {
+      console.error("Firebase Login Error: ", error);
+      let errorMessage = 'Invalid email or password.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password. Please try again.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      }
       toast({
         title: 'Login Failed',
-        description: 'Incorrect OTP. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
-      setOtpError(true); // Set error for incorrect OTP
-      setIsVerifyingOtp(false);
+      setLoginError(true);
+    } finally {
+      setIsLoggingIn(false);
     }
-  };
-
-  const handleTabChange = (value: string) => {
-    setIdentifier('');
-    setOtp('');
-    setOtpSent(false);
-    setIsSendingOtp(false);
-    setIsVerifyingOtp(false);
-    setOtpError(false); // Reset OTP error on tab change
-    setLoginMethod(value as 'email' | 'phone');
   };
 
   return (
@@ -140,7 +86,7 @@ export default function LoginPage() {
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
                  <span className="text-3xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                  </span>
              </Link>
               <span className="text-xs text-foreground mt-[-4px] opacity-80">
@@ -149,102 +95,47 @@ export default function LoginPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={loginMethod} onValueChange={handleTabChange} className="w-full mb-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="email" className="gap-2">
-                <Mail className="h-4 w-4"/> Email
-              </TabsTrigger>
-              <TabsTrigger value="phone" className="gap-2">
-                <Phone className="h-4 w-4"/> Phone
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <form onSubmit={handleOtpVerification} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor={loginMethod} className="text-foreground">{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Label>
-              <div className="flex gap-2">
-                  <Input
-                    id={loginMethod}
-                    type={loginMethod === 'email' ? 'email' : 'tel'}
-                    placeholder={loginMethod === 'email' ? 'm@example.com' : 'Enter phone number'}
-                    required
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    disabled={isSendingOtp || otpSent || isVerifyingOtp}
-                    className="bg-background text-foreground"
-                  />
-                  {!otpSent && (
-                      <Button
-                          type="button"
-                          onClick={handleSendOtp}
-                          className="w-auto bg-[#FF2459] text-white hover:bg-[#FF2459]/90"
-                          disabled={isSendingOtp || !isValidIdentifier()}
-                      >
-                          {isSendingOtp ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                              Sending...
-                            </>
-                          ) : (
-                            'Send OTP'
-                          )}
-                      </Button>
-                  )}
-              </div>
+              <Label htmlFor="email" className="text-foreground flex items-center gap-2"><Mail className="h-4 w-4"/> Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoggingIn}
+                className="bg-background text-foreground"
+              />
             </div>
-
-            {otpSent && (
-              <div className="space-y-2">
-                 <div className="flex items-center justify-between">
-                    <Label htmlFor="otp" className="text-foreground">Enter OTP</Label>
-                    <Button
-                        variant="link"
-                        type="button"
-                        onClick={() => handleSendOtp()} // Resend OTP
-                        disabled={isSendingOtp || isVerifyingOtp}
-                        className="text-sm text-primary hover:underline p-0 h-auto"
-                    >
-                        Resend OTP
-                    </Button>
-                 </div>
-                <Input
-                  id="otp"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="Enter 6-digit OTP"
-                  required
-                  value={otp}
-                  onChange={(e) => {
-                    setOtp(e.target.value.replace(/[^0-9]/g, ''));
-                    setOtpError(false); // Clear error on input change
-                  }}
-                  onFocus={() => setOtpError(false)} // Clear error on focus
-                  disabled={isVerifyingOtp || isSendingOtp}
-                  className={cn(
-                    "bg-background text-foreground",
-                    otpError && "border-destructive focus-visible:ring-destructive" // Apply red border if otpError is true
-                  )}
-                />
-              </div>
-            )}
-
-            {otpSent && (
-                <Button type="submit" className="w-full gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" disabled={isVerifyingOtp || isSendingOtp || otp.length !== 6}>
-                  {isVerifyingOtp ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      <KeyRound className="h-4 w-4" />
-                      Verify OTP & Login
-                    </>
-                  )}
-                </Button>
-            )}
+            <div className="space-y-2">
+               <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-foreground flex items-center gap-2"><KeyRound className="h-4 w-4"/> Password</Label>
+                <Link href="/forgot-password" passHref legacyBehavior>
+                    <a className="text-sm text-primary hover:underline">Forgot?</a>
+                </Link>
+               </div>
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoggingIn}
+                className="bg-background text-foreground"
+              />
+            </div>
+            <Button type="submit" className="w-full gap-2 bg-[#FF2459] text-white hover:bg-[#FF2459]/90" disabled={isLoggingIn}>
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Logging In...
+                </>
+              ) : (
+                'Login'
+              )}
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="text-center text-sm text-muted-foreground">

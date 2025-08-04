@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { auth } from '@/lib/firebase'; // Import auth instance
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'; // Import Firebase auth functions
 
 export default function SignupPage() {
   const [name, setName] = React.useState('');
@@ -23,35 +25,65 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSigningUp(true);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Basic validation (replace with actual auth logic)
     if (password !== confirmPassword) {
       toast({
         title: 'Signup Failed',
         description: 'Passwords do not match.',
         variant: 'destructive',
       });
-      setIsSigningUp(false);
       return;
     }
+    if (!name || !email || !password) {
+        toast({
+            title: 'Signup Failed',
+            description: 'Please fill in all fields.',
+            variant: 'destructive',
+        });
+        return;
+    }
 
-    if (name && email && password) {
+    setIsSigningUp(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Update user's profile with their name
+      await updateProfile(user, { displayName: name });
+
+      // Create a basic user data object in localStorage (can be moved to Firestore later)
+      const userData = {
+        name: name,
+        email: email,
+        contact: '',
+        gender: 'other',
+      };
+      localStorage.setItem('userData', JSON.stringify(userData));
+
       toast({
         title: 'Signup Successful',
-        description: 'Account created! Redirecting you to login...',
+        description: 'Account created! Please log in.',
+        variant: 'success',
       });
-      // Redirect to login page after successful signup simulation
       router.push('/login');
-    } else {
+
+    } catch (error: any) {
+      console.error("Firebase Signup Error: ", error);
+      let errorMessage = 'An unknown error occurred.';
+      // Provide more specific error messages
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email address is already in use by another account.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'The password is too weak. It must be at least 6 characters long.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'The email address is not valid.';
+      }
       toast({
         title: 'Signup Failed',
-        description: 'Please fill in all fields.',
+        description: errorMessage,
         variant: 'destructive',
       });
+    } finally {
       setIsSigningUp(false);
     }
   };
@@ -75,9 +107,9 @@ export default function SignupPage() {
            {/* CardTitle now contains the brand name and slogan */}
           <CardTitle className="flex flex-col items-center">
              <Link href="/" className="whitespace-nowrap flex items-baseline justify-center gap-1">
-                 {/* Consistent LastMiniT styling - Use text-foreground defined in globals.css */}
+                 {/* Consistent LastMinIT styling - Use text-foreground defined in globals.css */}
                  <span className="text-3xl font-bold text-foreground">
-                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>ini<span className="text-primary">T</span>
+                    <span className="text-destructive">L</span>ast<span className="text-destructive">M</span>inI<span className="text-primary">T</span>
                  </span>
              </Link>
               {/* Slogan - Use text-foreground defined in globals.css */}
@@ -124,6 +156,7 @@ export default function SignupPage() {
               <Input
                 id="password"
                 type="password"
+                placeholder="Must be at least 6 characters"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -259,18 +259,22 @@ export function PostTicketForm({ onTypeChange }: PostTicketFormProps) {
     }
     setIsSubmitting(true);
     try {
-      const ticketPayloadForService = {
+      const ticketPayloadForService: any = {
         type: values.type,
-        title: (values.type === 'movie' || values.type === 'event' || values.type === 'sports') ? values.title : undefined,
         description: values.description,
         price: values.price,
         date: format(values.date, 'yyyy-MM-dd'),
         time: values.time,
-        location: values.location || '',
+        location: values.location,
         fromCity: values.fromCity,
         toCity: values.toCity,
         originalTicketDataUri: values.originalTicketDataUri,
       };
+
+      // Only include title if it has a value. This prevents sending undefined.
+      if (values.title) {
+        ticketPayloadForService.title = values.title;
+      }
 
       const createdTicket = await postTicketService(ticketPayloadForService);
 
