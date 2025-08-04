@@ -12,6 +12,23 @@ import { useToast } from '@/hooks/use-toast';
 import { getSimulatedCurrentUserId, deleteTicket as deleteTicketService, getAvailableTickets } from '@/services/ticket-marketplace';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function PostTicketFormFallback() {
+  return (
+    <div className="space-y-6 max-w-2xl p-6 md:p-8 rounded-lg shadow bg-card">
+      <Skeleton className="h-10 w-1/3" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-10 w-full" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+      <Skeleton className="h-10 w-full" />
+    </div>
+  )
+}
 
 export default function PostTicketPage() {
   const [ticketType, setTicketType] = React.useState<string | undefined>(undefined);
@@ -98,7 +115,9 @@ export default function PostTicketPage() {
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12 relative z-10">
         <div className="max-w-3xl mx-auto">
             <h1 className="text-3xl font-bold mb-6 text-center md:text-left text-foreground">Post a New Ticket</h1>
-           <PostTicketForm onTypeChange={handleTypeChange} />
+            <React.Suspense fallback={<PostTicketFormFallback />}>
+              <PostTicketForm onTypeChange={handleTypeChange} />
+            </React.Suspense>
         </div>
          <div className="max-w-5xl mx-auto mt-12 md:mt-16">
              <h2 className="text-2xl font-bold mb-6 text-center text-foreground">Your Active Listings</h2>
