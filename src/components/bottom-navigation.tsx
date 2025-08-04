@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, PlusSquare, User } from 'lucide-react';
+import { Home, Search, Ticket, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile'; // Ensure this hook exists
 
@@ -47,10 +47,9 @@ export function BottomNavigation() {
         <NavItem href="/" icon={Home} label="Home" />
         {/* <NavItem href="/search" icon={Search} label="Search" />  Optional Search */}
         {/* Removed Browse Tickets NavItem */}
-        <NavItem href="/post-ticket" icon={PlusSquare} label="Post Ticket" />
+        <NavItem href="/post-ticket" icon={Ticket} label="Post Ticket" />
         <NavItem href="/profile" icon={User} label="Profile" /> {/* Added Profile NavItem */}
       </div>
     </nav>
   );
 }
-
