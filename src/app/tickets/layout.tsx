@@ -4,8 +4,8 @@
 import * as React from 'react';
 
 // This component is a simple pass-through for its children.
-// It's created to add a Suspense boundary around the post-ticket page.
-export default function PostTicketLayout({
+// It's created to add a Suspense boundary around the tickets page.
+export default function TicketsLayout({
   children,
 }: {
   children: React.ReactNode;
