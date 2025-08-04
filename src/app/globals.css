@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -123,4 +124,24 @@ body {
   /* Use a transparent overlay that works with both light/dark modes */
   background-color: hsla(var(--background) / 0.5);
   z-index: -1;
+}
+
+@layer utilities {
+  .animate-fade-in-out {
+    animation: fade-in-out 15s infinite;
+  }
+
+  @keyframes fade-in-out {
+    0%, 100% { opacity: 0; }
+    20%, 80% { opacity: 1; }
+  }
+
+  .animate-preloader-fade-out {
+      animation: preloader-fade-out 0.5s ease-out forwards;
+  }
+
+  @keyframes preloader-fade-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+  }
 }
