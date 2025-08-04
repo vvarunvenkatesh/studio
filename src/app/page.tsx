@@ -61,7 +61,7 @@ function AdvertisementSlider() {
   }, [goToNext]);
 
   return (
-    <div className="relative w-full h-72 md:h-96 lg:h-[28rem] overflow-hidden shadow-lg group">
+    <div className="relative w-full aspect-[1200/448] overflow-hidden shadow-lg group">
       {advertisements.map((ad, index) => (
         <Image
           key={ad.id}
